@@ -89,8 +89,8 @@ subtest 'tracing', {
             sub classified(--> Str:D) is raw is traced {
                 state Str:D $info = 'DIBU DUBU DABA LUBA DABA DU DA BI JI KI CBLABLALABLALAB ITS A SECRET';
                 Proxy.new:
-                    FETCH => my method FETCH(--> '[REDACTED]')        { },
-                    STORE => my method STORE(Str:D $update --> Str:D) { $info = $update }
+                    FETCH => sub FETCH($ --> '[REDACTED]')         { },
+                    STORE => sub STORE($, Str:D $update --> Str:D) { $info = $update }
             }() ~= ' PABUDUBU CIBUDU PAPABU CIBUDUD PAPUBABU CIBUBU BLULULU BLULULU';
         }, 'traced routines handle containers OK';
     };
