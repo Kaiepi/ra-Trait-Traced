@@ -12,7 +12,7 @@
 	"MetamodelX::Traced::MethodContainer" : "lib/MetamodelX/Traced/MethodContainer.pm6",
 	"MetamodelX::Traced::MultiMethodContainer" : "lib/MetamodelX/Traced/MultiMethodContainer.pm6",
 	"Traced" : "lib/Traced.pm6",
-	"Traced::Routine" : "lib/Trait/Traced.pm6",
+	"Traced::Routine" : "lib/Traced/Routine.pm6",
     "Trait::Traced" : "lib/Trait/Traced.pm6"
   },
   "resources" : [ ],
