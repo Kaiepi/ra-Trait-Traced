@@ -1,5 +1,7 @@
 =begin pod
 
+[![Build Status](https://travis-ci.com/Kaiepi/p6-Trait-Traced.svg?branch=master)](https://travis-ci.com/Kaiepi/p6-Trait-Traced)
+
 =head1 NAME
 
 Trait::Traced - Automagic tracing
