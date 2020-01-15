@@ -1,0 +1,6 @@
+Revision history for Trait::Traced
+
+v0.0.1
+    - Implement support for tracing routine calls
+    - Implement support for tracing methods of types
+    - Implement support for tracing multi methods of types
