@@ -82,7 +82,7 @@ proto method parameter-to-argument(::?CLASS:D: Parameter:D --> Mu) {*}
 multi method parameter-to-argument(::?CLASS:D: Parameter:D $ where { .capture } --> Capture:D) {
     my Str:D @remaining = $!unseen.keys;
     LEAVE {
-        $!idx = +$.parameters;
+        $!idx = +$!arguments;
         $!unseen{@remaining}:delete;
     }
     \(|($!idx < +$!arguments.list ?? $!arguments.list[$!idx..*] !! ()),
@@ -94,7 +94,7 @@ multi method parameter-to-argument(::?CLASS:D: Parameter:D $ where { .slurpy & .
     %($!arguments.hash{@remaining}:p // ())
 }
 multi method parameter-to-argument(::?CLASS:D: Parameter:D $ where { .slurpy } --> List:D) {
-    LEAVE $!idx = +$.parameters;
+    LEAVE $!idx = +$!arguments;
     $!idx < +$!arguments.list ?? $!arguments.list[$!idx..*] !! ()
 }
 multi method parameter-to-argument(::?CLASS:D: Parameter:D $parameter where { .named } --> Mu) {
