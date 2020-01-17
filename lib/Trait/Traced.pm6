@@ -7,7 +7,7 @@ sub EXPORT(--> Map:D) {
     PROCESS::<$TRACER> := $*OUT;
     Map.new
 }
-unit module Trait::Traced:ver<0.0.1>:auth<github:Kaiepi>;
+unit module Trait::Traced:ver<0.0.1>:auth<github:Kaiepi>:api<1>;
 
 #|[ Exception thrown by the "is traced" trait when a feature is not yet implemented. ]
 my class X::Trait::Traced::NYI is Exception is export {
