@@ -8,32 +8,6 @@ has Instant:D $.moment is required;
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
 
-BEGIN my $THREAD-INDENT-LEVELS = %();
-sub increment-indent-level(%indent) {
-    my Int:D $id = $*THREAD.id;
-    if %indent{$id}:exists {
-        %indent{$id}++;
-    } else {
-        %indent{$id} = 0;
-    }
-    %indent
-}
-sub decrement-indent-level(%indent) {
-    my Int:D $id = $*THREAD.id;
-    if %indent{$id}:exists {
-        %indent{$id}--;
-    } else {
-        %indent{$id} = 0;
-    }
-    %indent
-}
-#|[ Bumps the indentation level of a trace while executing the given block. ]
-method !protect(::?CLASS:_: &block is raw --> Mu) is raw {
-    cas $THREAD-INDENT-LEVELS, &increment-indent-level;
-    LEAVE cas $THREAD-INDENT-LEVELS, &decrement-indent-level;
-    block
-}
-
 #|[ The colour to use for the key of the trace's output. ]
 method colour(::?CLASS:_: --> Int:D) { ... }
 #|[ The key of the trace's output. ]
@@ -76,6 +50,32 @@ multi method lines(::?CLASS:D: --> Seq:D) {
         take ' ' x 4 ~ $_ for @.entries;
         take $.footer;
     }
+}
+
+BEGIN my $THREAD-INDENT-LEVELS = %();
+sub increment-indent-level(%indent) {
+    my Int:D $id = $*THREAD.id;
+    if %indent{$id}:exists {
+        %indent{$id}++;
+    } else {
+        %indent{$id} = 0;
+    }
+    %indent
+}
+sub decrement-indent-level(%indent) {
+    my Int:D $id = $*THREAD.id;
+    if %indent{$id}:exists {
+        %indent{$id}--;
+    } else {
+        %indent{$id} = 0;
+    }
+    %indent
+}
+#|[ Bumps the indentation level of a trace while executing the given block. ]
+method !protect(::?CLASS:_: &block is raw --> Mu) is raw {
+    cas $THREAD-INDENT-LEVELS, &increment-indent-level;
+    LEAVE cas $THREAD-INDENT-LEVELS, &decrement-indent-level;
+    block
 }
 
 multi method Str(::?CLASS:D: --> Str:D) {
