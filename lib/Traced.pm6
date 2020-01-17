@@ -24,8 +24,8 @@ method key(::?CLASS:_: --> Str:D)    { ... }
 method success(::?CLASS:D: --> Bool:D) { ... }
 
 #|[ Produces the header of the trace's output. ]
-proto method header(::?CLASS:D: Bool:D :$gist! --> Str:D) {
-    $gist
+proto method header(::?CLASS:D: Bool:D :$colour! --> Str:D) {
+    $colour
         ?? sprintf("<== \e[%s;1m[%s]\e[0m \e[1m%s\e[0m [%s @ %s]",
                    $.colour, $.key, {*}, $*THREAD.id, $!moment.Rat)
         !! sprintf("<== [%s] %s [%s @ %s]",
@@ -33,9 +33,9 @@ proto method header(::?CLASS:D: Bool:D :$gist! --> Str:D) {
 }
 
 #|[ Produces the entries of the trace's output, if any. ]
-proto method entries(::?CLASS:D: Bool:D :$gist! --> Seq:D) {
+proto method entries(::?CLASS:D: Bool:D :$colour! --> Seq:D) {
     my Pair:D @entries = {*} ==> map({
-        state Str:D $format  = $gist ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
+        state Str:D $format  = $colour ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
         state Int:D $width   = @entries.map(*.key.chars).max;
         my    Str:D $padding = ' ' x $width - .key.chars;
         sprintf $format, .key, $padding, .value
@@ -44,18 +44,18 @@ proto method entries(::?CLASS:D: Bool:D :$gist! --> Seq:D) {
 multi method entries(::?CLASS:D: --> Seq:D) { ().Seq }
 
 #|[ Produces the footer of the trace's output. ]
-proto method footer(::?CLASS:D: Bool:D :$gist! --> Str:D) {
+proto method footer(::?CLASS:D: Bool:D :$colour! --> Str:D) {
     my Str:D $prefix = $.success ?? '==>' !! '!!!';
-    $gist
+    $colour
         ?? sprintf("%s \e[1m%s\e[0m", $prefix, {*})
         !! sprintf("%s %s", $prefix, {*})
 }
 
-multi method lines(::?CLASS:D: Bool:D :$gist = False --> Seq:D) {
+multi method lines(::?CLASS:D: Bool:D :$colour = False --> Seq:D) {
     gather {
-        take $.header: :$gist;
-        take ' ' x 4 ~ $_ for @.entries: :$gist;
-        take $.footer: :$gist;
+        take $.header: :$colour;
+        take ' ' x 4 ~ $_ for @.entries: :$colour;
+        take $.footer: :$colour;
     }
 }
 
@@ -91,7 +91,7 @@ multi method Str(::?CLASS:D: --> Str:D) {
 ==> join($?NL)
 }
 multi method gist(::?CLASS:D: --> Str:D) {
-    @.lines(:gist)
+    @.lines(:colour)
 ==> map(&INDENT)
 ==> join($?NL)
 }
