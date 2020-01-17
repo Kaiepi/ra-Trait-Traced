@@ -9,9 +9,15 @@ subtest 'mapping parameters to arguments', {
     plan 5;
 
     sub make-is-arg(&routine, Capture:D $arguments is raw --> Sub:D) {
-        my Traced::Routine:D $traced .= new: &routine, $arguments;
+        my Mu @args = do {
+            my Instant:D         $moment  = now;
+            my Traced::Routine:D $traced .= new:
+                &routine, $arguments, (try routine |$arguments), $!,
+                :$moment;
+            $traced.arguments-from-parameters;
+        };
         sub is-arg(Int:D $idx, Mu $expected is raw, Str:D $message) {
-            my Mu $got := $traced.parameter-to-argument($traced.parameters.[$idx]);
+            my Mu $got := @args[$idx];
             my    &cmp  = $expected ~~ Positional | Associative | Capture ?? &[eqv] !! &[===];
             cmp-ok $got, &cmp, $expected, $message;
         }

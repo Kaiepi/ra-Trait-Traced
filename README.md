@@ -30,22 +30,21 @@ class Power is traced {
 # ...and it will automatically get traced! With the output this generates, it's
 # clear the bug's in the Numeric method:
 my Power:D $two-cubed .= new: 2, 3;
-quietly +$two-cubed;
-# OUTPUT:
-# [CALL] (Power) method new
-# self:      (Power)
-# $base:     2
-# $exponent: 3
-# *%_:       {}
-# --> Power.new(base => 2, exponent => 3)
-#     [CALL] (Power) multi method Numeric
+quietly +$two-cubed; # OUTPUT:
+# <== [CALL] (Power) method new [1 @ 1579296506.980222]
+#     self:      (Power)
+#     $base:     2
+#     $exponent: 3
+#     *%_:       {}
+# ==> Power.new(base => 2, exponent => 3)
+#     <== [CALL] (Power) multi method Numeric [1 @ 1579296507.011734]
+#         self: Power.new(base => 2, exponent => 3)
+#         *%_:  {}
+#     ==> 9
+# <== [CALL] (Mu) proto method Numeric [1 @ 1579296507.009236]
 #     self: Power.new(base => 2, exponent => 3)
-#     *%_:  {}
-#     --> 9
-# [CALL] (Mu) proto method Numeric
-# self: Power.new(base => 2, exponent => 3)
-# |:    \()
-# --> 9
+#     |:    \()
+# ==> 9
 ```
 
 DESCRIPTION

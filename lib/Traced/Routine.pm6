@@ -2,43 +2,24 @@ use v6.d;
 use Traced;
 unit class Traced::Routine does Traced;
 
-role Proto {
-    method declarator(::?CLASS:D: --> Str:D) { 'proto ' ~ callsame }
-}
-role Multi {
-    method declarator(::?CLASS:D: --> Str:D) { 'multi ' ~ callsame }
-}
-
 has Routine:D $.routine   is required;
 has Capture:D $.arguments is required;
-
-has Int:D            $!idx     = 0;
-has SetHash:D[Str:D] $!unseen .= new: $!arguments.hash.keys;
-
-method new(::?CLASS:_: Routine:D $routine is raw, Capture:D $arguments is raw --> ::?CLASS:D) {
-    self.bless: :$routine, :$arguments
-}
-
-method parameters(::?CLASS:D: --> List:D) { $!routine.signature.params }
-method name(::?CLASS:D: --> Str:D)        { $!routine.name }
-method package(::?CLASS:D: --> Mu)        { $!routine.package.^name }
-method declarator(::?CLASS:D: --> Str:D)  {
-    my Mu $base := $!routine.^is_mixin ?? $!routine.^mixin_base !! $!routine.WHAT;
-    $base.^name.lc
-}
+has Mu        $.result    is required;
+has Mu        $.exception is required;
+has Bool:D    $.multi     is required;
 
 multi method wrap(::?CLASS:U: Routine:D $routine is raw --> Mu) {
     $routine.wrap: &TRACED-ROUTINE
 }
 sub TRACED-ROUTINE(|arguments --> Mu) is raw {
-    $?CLASS.new(nextcallee, arguments).trace
-}
-
-multi method wrap(::?CLASS:U: Routine:D $routine is raw where *.is_dispatcher --> Mu) {
-    $routine.wrap: &TRACED-PROTO-ROUTINE
-}
-sub TRACED-PROTO-ROUTINE(|arguments --> Mu) is raw {
-    $?CLASS.^mixin(Proto).new(nextcallee, arguments).trace
+    my Routine:D $routine := nextcallee;
+    $?CLASS!protect({
+        my Instant:D $moment = ENTER now;
+        my Mu        \result = try $routine.(|arguments);
+        LEAVE $*TRACER.put: $?CLASS.new: $routine, arguments, result, $!, :$moment;
+        $!.rethrow with $!;
+        result
+    })
 }
 
 # Rakudo expects multi routines to be Code instances (which is no longer the
@@ -69,70 +50,112 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw, Bool:D :$multi! where ?
 # we need another candidate to handle these.
 multi method wrap(::?CLASS:U: Mu $wrapper is raw, Bool:D :$multi! where ?* --> Mu) {
     use nqp;
+
     my Routine:D $tracer := MAKE-TRACED-MULTI-ROUTINE $wrapper.code;
     nqp::bindattr($wrapper, $wrapper.WHAT, '$!code', $tracer);
 }
 sub MAKE-TRACED-MULTI-ROUTINE(Routine:D $routine is raw --> Sub:D) {
     sub TRACED-MULTI-ROUTINE(|arguments --> Mu) is raw {
-        $?CLASS.^mixin(Multi).new($routine, arguments).trace
+        $?CLASS!protect({
+            my Instant:D $moment = ENTER now;
+            my Mu        \result = try $routine.(|arguments);
+            LEAVE $*TRACER.put: $?CLASS.new: $routine, arguments, result, $!, :multi, :$moment;
+            $!.rethrow with $!;
+            result
+        })
     }
 }
 
-proto method parameter-to-argument(::?CLASS:D: Parameter:D --> Mu) {*}
-multi method parameter-to-argument(::?CLASS:D: Parameter:D $ where { .capture } --> Capture:D) {
-    my Str:D @remaining = $!unseen.keys;
-    LEAVE {
-        $!idx = +$!arguments;
-        $!unseen{@remaining}:delete;
+method colour(::?CLASS:_: --> 31)  { }
+method key(::?CLASS:_: --> 'CALL') { }
+
+method new(
+    ::?CLASS:_:
+    Routine:D  $routine   is raw,
+    Capture:D  $arguments is raw,
+    Mu         $result    is raw,
+    Mu         $exception is raw,
+    Bool:D    :$multi     = False,
+              *%rest
+    --> ::?CLASS:D
+) {
+    self.bless:
+        :$routine, :$arguments, :$result, :$exception, :$multi,
+        |%rest
+}
+
+method package(::?CLASS:D: --> Mu) { $!routine.package.^name }
+
+method declarator(::?CLASS:D: --> Str:D)  {
+    my Mu $base := $!routine.^is_mixin ?? $!routine.^mixin_base !! $!routine.WHAT;
+    $!routine.is_dispatcher
+        ?? 'proto ' ~ $base.^name.lc
+        !! $!multi
+            ?? 'multi ' ~ $base.^name.lc
+            !! $base.^name.lc
+}
+
+method name(::?CLASS:D: --> Str:D) { $!routine.name }
+
+method parameters(::?CLASS:D: --> List:D) { $!routine.signature.params }
+
+method arguments-from-parameters(::?CLASS:D: --> Seq:D) {
+    gather {
+        my Mu               @positional  = $!arguments.list;
+        my Mu               %named       = $!arguments.hash;
+        my Int:D            $idx         = 0;
+        my SetHash:D[Str:D] $unseen     .= new: %named.keys;
+        for @.parameters {
+            when .capture {
+                my Str:D @remaining = $unseen.keys;
+                take \(|($idx < +@positional ?? @positional[$idx..*] !! ()),
+                       |%(%named{@remaining}:p // ()));
+                $idx = +@positional;
+                $unseen{@remaining}:delete;
+            }
+            when .slurpy & .named {
+                my Str:D @remaining = $unseen.keys;
+                take %(%named{@remaining}:p // ());
+                $unseen{@remaining}:delete;
+            }
+            when .slurpy {
+                take $idx < +@positional ?? @positional[$idx..*] !! ();
+                $idx = +@positional;
+            }
+            when .named {
+                my Str:D $name = .usage-name;
+                take %named{$name};
+                %named{$name}:delete;
+            }
+            when .positional {
+                take @positional[$idx++]
+            }
+        }
     }
-    \(|($!idx < +$!arguments.list ?? $!arguments.list[$!idx..*] !! ()),
-      |%($!arguments.hash{@remaining}:p // ()))
-}
-multi method parameter-to-argument(::?CLASS:D: Parameter:D $ where { .slurpy & .named } --> Hash:D[Mu]) {
-    my Str:D @remaining = $!unseen.keys;
-    LEAVE $!unseen{@remaining}:delete;
-    %($!arguments.hash{@remaining}:p // ())
-}
-multi method parameter-to-argument(::?CLASS:D: Parameter:D $ where { .slurpy } --> List:D) {
-    LEAVE $!idx = +$!arguments;
-    $!idx < +$!arguments.list ?? $!arguments.list[$!idx..*] !! ()
-}
-multi method parameter-to-argument(::?CLASS:D: Parameter:D $parameter where { .named } --> Mu) {
-    LEAVE $!unseen.hash{$parameter.usage-name}:delete;
-    $!arguments.hash{$parameter.usage-name}
-}
-multi method parameter-to-argument(::?CLASS:D: Parameter:D $ where { .positional } --> Mu) {
-    $!arguments.list[$!idx++]
 }
 
-multi method trace(::?CLASS:D: --> Mu) is raw {
-    my Mu \result = try $!routine.(|$!arguments);
-    $*TRACER.say: gather {
-        my Bool:D $colour = $*TRACER.t;
-        my Str:D  $format = $colour ?? "\e[1;31m[CALL]\e[0m \e[1m(%s) %s %s\e[0m" !! "[CALL] (%s) %s %s";
-        take sprintf $format, $.package, $.declarator, $.name;
+method success(::?CLASS:D: --> Bool:D) { ! $!exception.DEFINITE }
 
-        $format = $colour ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
-        my Pair:D @params = @.parameters.map({
-            my Str:D $parameter = ~.gist.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
-            my Str:D $argument  = self.parameter-to-argument($_).gist;
-            once $parameter = 'self' if .invocant && !.name.defined;
-            $parameter => $argument
-        });
-        my Int:D  $width  = @params ?? @params.map(*.key.chars).max !! 0;
-        for @params -> Pair:D (Str:D :key($parameter), Str:D :value($argument)) {
-            my Str:D $padding = ' ' x $width - $parameter.chars;
-            take sprintf $format, $parameter, $padding, $argument;
-        }
+multi method header(::?CLASS:D: --> Str:D) {
+    sprintf "(%s) %s %s", $.package, $.declarator, $.name
+}
 
-        with $! {
-            $format = $colour ?? "\e[1m!!!\e[0m %s" !! "!!! %s";
-            take sprintf $format, $!.^name;
-        } else {
-            $format = $colour ?? "\e[1m-->\e[0m %s" !! "--> %s";
-            take sprintf $format, result.gist;
-        }
-    }.map({ self!indent: $_ }).join($?NL);
-    $!.rethrow with $!;
-    result
+multi method entries(::?CLASS:D: --> Seq:D) {
+    my Pair:D @gists = gather for @.parameters Z=> @.arguments-from-parameters {
+        my Str:D $parameter = ~.key.gist.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
+        my Str:D $argument  = .value.gist;
+        once $parameter = 'self' if .key.invocant && !.key.name.defined;
+        take $parameter => $argument;
+    } ==> map({
+        state Str:D $format  = $*TRACER.t ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
+        state Int:D $width   = @gists.map(*.key.chars).max;
+        my    Str:D $padding = ' ' x $width - .key.chars;
+        sprintf $format, .key, $padding, .value
+    })
+}
+
+multi method footer(::?CLASS:D: --> Str:D) {
+    $!exception.DEFINITE
+        ?? $!exception.^name
+        !! $!result.gist
 }
