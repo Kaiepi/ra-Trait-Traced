@@ -53,6 +53,12 @@ multi method lines(::?CLASS:D: --> Seq:D) {
 }
 
 BEGIN my $THREAD-INDENT-LEVELS = %();
+#|[ Bumps the indentation level of a trace while executing the given block. ]
+method !protect(::?CLASS:_: &block is raw --> Mu) is raw {
+    cas $THREAD-INDENT-LEVELS, &increment-indent-level;
+    LEAVE cas $THREAD-INDENT-LEVELS, &decrement-indent-level;
+    block
+}
 sub increment-indent-level(%indent) {
     my Int:D $id = $*THREAD.id;
     if %indent{$id}:exists {
@@ -70,12 +76,6 @@ sub decrement-indent-level(%indent) {
         %indent{$id} = 0;
     }
     %indent
-}
-#|[ Bumps the indentation level of a trace while executing the given block. ]
-method !protect(::?CLASS:_: &block is raw --> Mu) is raw {
-    cas $THREAD-INDENT-LEVELS, &increment-indent-level;
-    LEAVE cas $THREAD-INDENT-LEVELS, &decrement-indent-level;
-    block
 }
 
 multi method Str(::?CLASS:D: --> Str:D) {
