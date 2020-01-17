@@ -33,11 +33,6 @@ method !protect(::?CLASS:_: &block is raw --> Mu) is raw {
     LEAVE cas $THREAD-INDENT-LEVELS, &decrement-indent-level;
     block
 }
-#|[ Given a line of trace output, indents and returns it. ]
-method !indent(::?CLASS:_: Str:D $line --> Str:D) {
-    my Int:D $level = (⚛$THREAD-INDENT-LEVELS){$*THREAD.id};
-    ' ' x 4 * $level ~ $line
-}
 
 #|[ The colour to use for the key of the trace's output. ]
 method colour(::?CLASS:_: --> Int:D) { ... }
@@ -85,6 +80,10 @@ multi method lines(::?CLASS:D: --> Seq:D) {
 
 multi method Str(::?CLASS:D: --> Str:D) {
     @.lines
-==> map({ self!indent: $_ })
+==> map(&INDENT)
 ==> join($?NL)
+}
+sub INDENT(Str:D $line --> Str:D) {
+    my Int:D $level = (⚛$THREAD-INDENT-LEVELS){$*THREAD.id};
+    ' ' x 4 * $level ~ $line
 }
