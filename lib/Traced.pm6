@@ -57,7 +57,14 @@ proto method header(::?CLASS:D: --> Str:D) {
 }
 
 #|[ Produces the entries of the trace's output, if any. ]
-proto method entries(::?CLASS:D: --> Seq:D) {*}
+proto method entries(::?CLASS:D: --> Seq:D) {
+    my Pair:D @entries = {*} ==> map({
+        state Str:D $format  = $*TRACER.t ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
+        state Int:D $width   = @entries.map(*.key.chars).max;
+        my    Str:D $padding = ' ' x $width - .key.chars;
+        sprintf $format, .key, $padding, .value
+    })
+}
 multi method entries(::?CLASS:D: --> Seq:D) { ().Seq }
 
 #|[ Produces the footer of the trace's output. ]

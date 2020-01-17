@@ -141,17 +141,12 @@ multi method header(::?CLASS:D: --> Str:D) {
 }
 
 multi method entries(::?CLASS:D: --> Seq:D) {
-    my Pair:D @gists = gather for @.parameters Z=> @.arguments-from-parameters {
+    gather for @.parameters Z=> @.arguments-from-parameters {
         my Str:D $parameter = ~.key.gist.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
         my Str:D $argument  = .value.gist;
         once $parameter = 'self' if .key.invocant && !.key.name.defined;
         take $parameter => $argument;
-    } ==> map({
-        state Str:D $format  = $*TRACER.t ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
-        state Int:D $width   = @gists.map(*.key.chars).max;
-        my    Str:D $padding = ' ' x $width - .key.chars;
-        sprintf $format, .key, $padding, .value
-    })
+    }
 }
 
 multi method footer(::?CLASS:D: --> Str:D) {
