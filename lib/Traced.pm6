@@ -8,6 +8,13 @@ has Instant:D $.moment is required;
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
 
+#|[ Traces an event. ]
+method trace(::?CLASS:U: |args --> Bool:D) {
+    my ::?CLASS:D $trace .= new: |args;
+    my Str:D      $method = $*TRACER.t ?? 'say' !! 'put';
+    $*TRACER."$method"($trace)
+}
+
 #|[ The colour to use for the key of the trace's output. ]
 method colour(::?CLASS:_: --> Int:D) { ... }
 #|[ The key of the trace's output. ]
@@ -17,8 +24,8 @@ method key(::?CLASS:_: --> Str:D)    { ... }
 method success(::?CLASS:D: --> Bool:D) { ... }
 
 #|[ Produces the header of the trace's output. ]
-proto method header(::?CLASS:D: --> Str:D) {
-    $*TRACER.t
+proto method header(::?CLASS:D: Bool:D :$gist! --> Str:D) {
+    $gist
         ?? sprintf("<== \e[%s;1m[%s]\e[0m \e[1m%s\e[0m [%s @ %s]",
                    $.colour, $.key, {*}, $*THREAD.id, $!moment.Rat)
         !! sprintf("<== [%s] %s [%s @ %s]",
@@ -26,9 +33,9 @@ proto method header(::?CLASS:D: --> Str:D) {
 }
 
 #|[ Produces the entries of the trace's output, if any. ]
-proto method entries(::?CLASS:D: --> Seq:D) {
+proto method entries(::?CLASS:D: Bool:D :$gist! --> Seq:D) {
     my Pair:D @entries = {*} ==> map({
-        state Str:D $format  = $*TRACER.t ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
+        state Str:D $format  = $gist ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
         state Int:D $width   = @entries.map(*.key.chars).max;
         my    Str:D $padding = ' ' x $width - .key.chars;
         sprintf $format, .key, $padding, .value
@@ -37,18 +44,18 @@ proto method entries(::?CLASS:D: --> Seq:D) {
 multi method entries(::?CLASS:D: --> Seq:D) { ().Seq }
 
 #|[ Produces the footer of the trace's output. ]
-proto method footer(::?CLASS:D: --> Str:D) {
+proto method footer(::?CLASS:D: Bool:D :$gist! --> Str:D) {
     my Str:D $prefix = $.success ?? '==>' !! '!!!';
-    $*TRACER.t
+    $gist
         ?? sprintf("%s \e[1m%s\e[0m", $prefix, {*})
         !! sprintf("%s %s", $prefix, {*})
 }
 
-multi method lines(::?CLASS:D: --> Seq:D) {
+multi method lines(::?CLASS:D: Bool:D :$gist = False --> Seq:D) {
     gather {
-        take $.header;
-        take ' ' x 4 ~ $_ for @.entries;
-        take $.footer;
+        take $.header: :$gist;
+        take ' ' x 4 ~ $_ for @.entries: :$gist;
+        take $.footer: :$gist;
     }
 }
 
@@ -80,6 +87,11 @@ sub decrement-indent-level(%indent) {
 
 multi method Str(::?CLASS:D: --> Str:D) {
     @.lines
+==> map(&INDENT)
+==> join($?NL)
+}
+multi method gist(::?CLASS:D: --> Str:D) {
+    @.lines(:gist)
 ==> map(&INDENT)
 ==> join($?NL)
 }

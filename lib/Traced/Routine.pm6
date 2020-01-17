@@ -16,7 +16,7 @@ sub TRACED-ROUTINE(|arguments --> Mu) is raw {
     $?CLASS!protect({
         my Instant:D $moment = ENTER now;
         my Mu        \result = try $routine.(|arguments);
-        LEAVE $*TRACER.put: $?CLASS.new: $routine, arguments, result, $!, :$moment;
+        LEAVE $?CLASS.trace: $routine, arguments, result, $!, :$moment;
         $!.rethrow with $!;
         result
     })
@@ -59,7 +59,7 @@ sub MAKE-TRACED-MULTI-ROUTINE(Routine:D $routine is raw --> Sub:D) {
         $?CLASS!protect({
             my Instant:D $moment = ENTER now;
             my Mu        \result = try $routine.(|arguments);
-            LEAVE $*TRACER.put: $?CLASS.new: $routine, arguments, result, $!, :multi, :$moment;
+            LEAVE $?CLASS.trace: $routine, arguments, result, $!, :multi, :$moment;
             $!.rethrow with $!;
             result
         })
