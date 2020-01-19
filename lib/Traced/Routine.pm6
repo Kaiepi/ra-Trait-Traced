@@ -14,9 +14,9 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw --> Mu) {
 sub TRACED-ROUTINE(|arguments --> Mu) is raw {
     my Routine:D $routine := nextcallee;
     $?CLASS!protect({
-        my Instant:D $moment = ENTER now;
-        my Mu        \result = try $routine.(|arguments);
-        LEAVE $?CLASS.trace: $routine, arguments, result, $!, :$moment;
+        my Instant:D $timestamp = ENTER now;
+        my Mu        \result    = try $routine.(|arguments);
+        LEAVE $?CLASS.trace: $routine, arguments, result, $!, :$timestamp;
         $!.rethrow with $!;
         result
     })
@@ -57,9 +57,9 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, Bool:D :$multi! where ?* --> M
 sub MAKE-TRACED-MULTI-ROUTINE(Routine:D $routine is raw --> Sub:D) {
     sub TRACED-MULTI-ROUTINE(|arguments --> Mu) is raw {
         $?CLASS!protect({
-            my Instant:D $moment = ENTER now;
-            my Mu        \result = try $routine.(|arguments);
-            LEAVE $?CLASS.trace: $routine, arguments, result, $!, :multi, :$moment;
+            my Instant:D $timestamp = ENTER now;
+            my Mu        \result    = try $routine.(|arguments);
+            LEAVE $?CLASS.trace: $routine, arguments, result, $!, :multi, :$timestamp;
             $!.rethrow with $!;
             result
         })

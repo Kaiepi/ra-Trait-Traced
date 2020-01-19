@@ -10,11 +10,10 @@ subtest 'mapping parameters to arguments', {
 
     sub make-is-arg(&routine, Capture:D $arguments is raw --> Sub:D) {
         my Mu @args = do {
-            my Instant:D         $moment  = now;
             my Traced::Routine:D $traced .= new:
                 &routine, $arguments, (try routine |$arguments), $!,
-                :$moment;
-            $traced.arguments-from-parameters;
+                thread-id => $*THREAD.id, timestamp => now;
+            $traced.arguments-from-parameters
         };
         sub is-arg(Int:D $idx, Mu $expected is raw, Str:D $message) {
             my Mu $got := @args[$idx];
