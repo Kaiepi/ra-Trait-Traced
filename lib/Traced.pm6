@@ -29,7 +29,7 @@ method title(::?CLASS:D: Bool:D :$colour! --> Str:D) {
 #|[ Produces the header of the trace's output. ]
 proto method header(::?CLASS:D: Bool:D :$colour! --> Str:D) {
     $colour
-        ?? sprintf("<== \e[%s;1m[%s]\e[0m \e[1m%s\e[0m", $.colour, $.key, {*})
+        ?? sprintf("\e[2m<==\e[0m \e[%s;1m[%s]\e[0m \e[1m%s\e[0m", $.colour, $.key, {*})
         !! sprintf("<== [%s] %s", $.key, {*})
 }
 
@@ -47,7 +47,9 @@ multi method entries(::?CLASS:D: --> Seq:D) { ().Seq }
 #|[ Produces the footer of the trace's output. ]
 proto method footer(::?CLASS:D: Bool:D :$colour! --> Str:D) {
     my Str:D $prefix = $.success ?? '==>' !! '!!!';
-    sprintf '%s %s', $prefix, {*}
+    $colour
+        ?? sprintf("\e[2m%s\e[0m %s", $prefix, {*})
+        !! sprintf('%s %s', $prefix, {*})
 }
 
 multi method lines(::?CLASS:D: Bool:D :$colour = False --> Seq:D) {
