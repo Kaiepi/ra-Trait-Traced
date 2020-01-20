@@ -6,38 +6,22 @@ has Routine:D $.routine   is required;
 has Capture:D $.arguments is required;
 has Mu        $.result    is required;
 has Mu        $.exception is required;
-has Bool:D    $.multi     is required;
+has Str:D     $.multiness = '';
 
-multi method wrap(::?CLASS:U: Routine:D $routine is raw --> Mu) {
-    $routine.wrap: &TRACED-ROUTINE
-}
-sub TRACED-ROUTINE(|arguments --> Mu) is raw {
-    my &routine := nextcallee;
-    $?CLASS!protect({
-        my Int:D     $id        := $?CLASS.next-id;
-        my Int:D     $thread-id := $*THREAD.id;
-        my Instant:D $timestamp := now;
-        my Mu        \result    := try routine |arguments;
-        $?CLASS.trace:
-            &routine, arguments, result, $!,
-            :$id, :$thread-id, :$timestamp;
-        $!.rethrow with $!;
-        result
-    })
-}
-
-# Rakudo expects multi routines to be Code instances (which is no longer the
+# Rakudo often expects routines to be Code instances (which is no longer the
 # case for routines after they've been wrapped) so we can't deal with them the
 # same way we have been so far. This will get a bit ugly!
-multi method wrap(::?CLASS:U: Routine:D $routine is raw, Bool:D :$multi! where ?* --> Mu) {
+multi method wrap(::?CLASS:U: Routine:D $routine is raw, Str:D :$multiness = '' --> Mu) {
     use nqp;
+    return if $routine.?is-traced;
 
     # The same logic that's used for NativeCall's "is native" trait is used
     # here. There's some extra work we need to do if this is being called
     # at compile-time:
-    if DYNAMIC::<$*W>:exists {
+    with $*W {
         # Finish compiling the routine...
-        nqp::getattr($routine, Code, '@!compstuff')[1]();
+        my Mu $compstuff := nqp::getattr($routine, Code, '@!compstuff');
+        $compstuff[1]() with $compstuff;
         # ...and prevent the compiler from undoing the changes we're about to
         # make:
         my str $cuid = nqp::getcodecuid(nqp::getattr($routine, Code, '$!do'));
@@ -45,21 +29,24 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw, Bool:D :$multi! where ?
     }
 
     # Override the routine's code with its traced version's code:
-    my Routine:D $traced := MAKE-TRACED-MULTI-ROUTINE $routine.clone;
+    my Routine:D $traced := MAKE-TRACED-ROUTINE $routine.clone, :$multiness;
     my Mu        $do     := nqp::getattr($traced, Code, '$!do');
     nqp::bindattr($routine, Code, '$!do', $do);
     nqp::setcodename($do, $routine.name);
+    $routine does role :: { method is-traced(::?CLASS:D: --> True) { } }
 }
 # Metamodel::MultiMethodContainer wraps multi routines with an internal class;
 # we need another candidate to handle these.
-multi method wrap(::?CLASS:U: Mu $wrapper is raw, Bool:D :$multi! where ?* --> Mu) {
+multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
     use nqp;
+    return if $wrapper.code.?is-traced;
 
-    my Routine:D $tracer := MAKE-TRACED-MULTI-ROUTINE $wrapper.code;
+    my Routine:D $tracer := MAKE-TRACED-ROUTINE $wrapper.code, :$multiness;
     nqp::bindattr($wrapper, $wrapper.WHAT, '$!code', $tracer);
+    $tracer does role :: { method is-traced(::?CLASS:D: --> True) { } }
 }
-sub MAKE-TRACED-MULTI-ROUTINE(&routine is raw --> Sub:D) {
-    sub TRACED-MULTI-ROUTINE(|arguments --> Mu) is raw {
+sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$multiness! --> Sub:D) {
+    sub TRACED-ROUTINE(|arguments --> Mu) is raw {
         $?CLASS!protect({
             my Int:D     $id        := $?CLASS.next-id;
             my Int:D     $thread-id := $*THREAD.id;
@@ -67,7 +54,7 @@ sub MAKE-TRACED-MULTI-ROUTINE(&routine is raw --> Sub:D) {
             my Mu        \result    := try routine |arguments;
             $?CLASS.trace:
                 &routine, arguments, result, $!,
-                :$id, :$thread-id, :$timestamp, :multi;
+                :$id, :$thread-id, :$timestamp, :$multiness;
             $!.rethrow with $!;
             result
         })
@@ -96,11 +83,7 @@ method package(::?CLASS:D: --> Mu) { $!routine.package.^name }
 
 method declarator(::?CLASS:D: --> Str:D)  {
     my Mu $base := $!routine.^is_mixin ?? $!routine.^mixin_base !! $!routine.WHAT;
-    $!routine.is_dispatcher
-        ?? 'proto ' ~ $base.^name.lc
-        !! $!multi
-            ?? 'multi ' ~ $base.^name.lc
-            !! $base.^name.lc
+    $!multiness ?? "$!multiness " ~ $base.^name.lc !! $base.^name.lc;
 }
 
 method name(::?CLASS:D: --> Str:D) { $!routine.name }

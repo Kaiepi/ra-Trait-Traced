@@ -40,28 +40,26 @@ subtest 'mapping parameters to arguments', {
 subtest 'tracing', {
     sub wrap-tests(&block) {
         my Str:D      $filename  = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
-        my IO::Pipe:D $*TRACER  := $*TMPDIR.child($filename).open(:w);
-        LEAVE {
-            $*TRACER.close;
-            $*TRACER.path.unlink;
-        }
+        my IO::Pipe:D $*TRACER  := $*TMPDIR.child($filename).open(:mode<rw>, :create, :append);
         block
     }
 
-    plan 11;
+    plan 17;
 
     wrap-tests {
         lives-ok {
             sub traced($foo) is traced { $foo }(1)
         }, 'traced subroutines do not throw while tracing...';
-        ok $*TRACER.path.slurp, '...and produce output';
+        $*TRACER.flush;
+        ok $*TRACER.path.slurp(:close), '...and produce output';
     };
 
     wrap-tests {
         lives-ok {
             my method traced() is traced { self }(1)
         }, 'traced methods do not throw while tracing...';
-        ok $*TRACER.path.slurp, '...and produce output';
+        $*TRACER.flush;
+        ok $*TRACER.path.slurp(:close), '...and produce output';
     };
 
     wrap-tests {
@@ -70,23 +68,41 @@ subtest 'tracing', {
             multi sub multi-sub()           { }
             multi-sub
         }, 'traced proto routines do not throw while tracing...';
-        ok $*TRACER.path.slurp, '...and produce output';
+        $*TRACER.flush;
+        ok (my Str:D $output = $*TRACER.path.slurp(:close)), '...and produce output...';
+        cmp-ok $output, '~~', / proto /, '...which contains "proto"';
     };
 
     wrap-tests {
         lives-ok {
-            proto sub multi-sub() {*}
+            proto sub multi-sub()           {*}
             multi sub multi-sub() is traced { }
             multi-sub
         }, 'traced multi routines do not throw while tracing...';
-        ok $*TRACER.path.slurp, '...and produce output';
+        $*TRACER.flush;
+        ok (my Str:D $output = $*TRACER.path.slurp(:close)), '...and produce output...';
+        cmp-ok $output, '~~', / multi /, '...which contains "multi"';
+    };
+
+    wrap-tests {
+        lives-ok {
+            proto sub multi-sub() is traced {*}
+            multi sub multi-sub() is traced { }
+            multi-sub;
+            sleep 0.1; # XXX FIXME: I/O buffering might not have the chance to finish in certain cases.
+        }, 'a combination of traced proto and multi routines do not throw while tracing...';
+        $*TRACER.flush;
+        ok (my Str:D $output = $*TRACER.path.slurp(:close)), '...and produce output...';
+        cmp-ok $output, '~~', / proto /, '...which contains "proto"...';
+        cmp-ok $output, '~~', / multi /, '...as well as "multi"';
     };
 
     wrap-tests {
         dies-ok {
             sub throws() is traced { die }()
         }, 'traced routines rethrow exceptions...';
-        ok $*TRACER.path.slurp, '...but still produce output';
+        $*TRACER.flush;
+        ok $*TRACER.path.slurp(:close), '...but still produce output';
     };
 
     wrap-tests {

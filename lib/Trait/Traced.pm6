@@ -28,11 +28,11 @@ multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :$traced! where ?*) is e
 }
 
 multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :$traced! where ?*) is export {
-    Traced::Routine.wrap: $routine, multi => $routine.dispatcher.DEFINITE;
+    Traced::Routine.wrap: $routine, multiness => $*MULTINESS;
 }
 
 multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :$traced! where ?*) is export {
-    Traced::Routine.wrap: $method, multi => $method.dispatcher.DEFINITE;
+    Traced::Routine.wrap: $method, multiness => $*MULTINESS;
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :$traced! where ?*) is export {

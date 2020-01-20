@@ -6,7 +6,7 @@ plan 2;
 
 sub wrap-tests(&block) {
     my Str:D      $filename  = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
-    my IO::Pipe:D $*TRACER  := $filename.IO.open: :w;
+    my IO::Pipe:D $*TRACER  := $*TMPDIR.child($filename).IO.open: :w;
     LEAVE {
         $*TRACER.close;
         $*TRACER.path.unlink;
@@ -15,7 +15,7 @@ sub wrap-tests(&block) {
 }
 
 subtest 'Metamodel::MethodContainer', {
-    plan 3;
+    plan 6;
 
     wrap-tests {
         lives-ok {
@@ -24,6 +24,16 @@ subtest 'Metamodel::MethodContainer', {
             }.method;
         }, 'can call methods of traced classes...';
         ok $*TRACER.path.slurp, '...which produces output';
+    };
+
+    wrap-tests {
+        lives-ok {
+            my class WithTracedMethod is traced {
+                method method(|) is traced {*}
+            }.method;
+        }, 'can call multi methods of traced classes...';
+        ok (my Str:D $output = $*TRACER.path.slurp), '...which produces output...';
+        nok $output ~~ / 'TRACED-ROUTINE' /, '...and does not rewrap themselves';
     };
 
     wrap-tests {
@@ -40,7 +50,7 @@ subtest 'Metamodel::MethodContainer', {
 };
 
 subtest 'Metamodel::MultiMethodContainer', {
-    plan 3;
+    plan 6;
 
     wrap-tests {
         lives-ok {
@@ -54,8 +64,19 @@ subtest 'Metamodel::MultiMethodContainer', {
 
     wrap-tests {
         lives-ok {
+            my class WithTracedMultiMethod is traced {
+                proto method multi-method(|)     is traced {*}
+                multi method multi-method(--> 1) is traced { }
+            }.multi-method;
+        }, 'can call traced multi methods of traced classes...';
+        ok my Str:D $output = $*TRACER.path.slurp, '...which produces output...';
+        nok $output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themeselves';
+    };
+
+    wrap-tests {
+        lives-ok {
             my class WithProxyMultiMethod is traced {
-                proto method proxy(|) is raw {*}
+                proto method proxy(|)                     is raw {*}
                 multi method proxy(::?CLASS:U: --> Int:D) is raw {
                     Proxy.new:
                         FETCH => sub FETCH($ --> 0)    { },
