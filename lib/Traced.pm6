@@ -106,18 +106,22 @@ my atomicint $next-id = 1;
 #|[ Gets the next trace ID to use. ]
 method next-id(::?CLASS:_: --> Int:D) { $next-id⚛++ }
 
+# XXX: $*IN, $*OUT, and $*ERR aren't thread-safe as Raku handles them, and
+# IO::Handle.lock/.unlock don't help in this case! Luckily, on Windows an
+# POSIX platforms, using fputs instead is. This isn't entirely ideal, but
+# it's good enough for now.
 my class FILE is repr<CPointer> { }
 sub fdopen(int32, Str --> FILE) is native is symbol($*DISTRO.is-win ?? '_fdopen' !! 'fdopen') {*}
 sub fputs(Str, FILE --> int32) is native {*}
 
 #|[ Traces an event. ]
 method trace(::?CLASS:_: |args --> True) {
-    my Junction:D constant STANDARD = ($*OUT, $*ERR, $*IN).any.native-descriptor;
+    state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
 
     my IO::Handle:D $tracer  = $*TRACER;
     my ::?CLASS:D   $traced .= new: |args;
     my Int:D        $fd     := $tracer.native-descriptor;
-    if $fd == STANDARD {
+    if $fd == $standard {
         fputs $traced.gist ~ $?NL, fdopen $fd, 'w';
     } elsif $tracer.t {
         $tracer.say: $traced;
