@@ -109,11 +109,13 @@ sub fdopen(int32, Str --> FILE) is native is symbol($*DISTRO.is-win ?? '_fdopen'
 sub fputs(Str, FILE --> int32) is native {*}
 
 #|[ Traces an event. ]
-method trace(::?CLASS:_: Int:D :$id!, Int:D :$thread-id = $*THREAD.id, |args --> True) {
+method trace(::?CLASS:_: |args --> True) {
+    my Junction:D constant STANDARD = ($*OUT, $*ERR, $*IN).any.native-descriptor;
+
     my IO::Handle:D $tracer  = $*TRACER;
-    my ::?CLASS:D   $traced .= new: :$id, :$thread-id, |args;
-    my Int:D        $fd      = $tracer.native-descriptor;
-    if $fd == 0 | 1 | 2 {
+    my ::?CLASS:D   $traced .= new: |args;
+    my Int:D        $fd     := $tracer.native-descriptor;
+    if $fd == STANDARD {
         fputs $traced.gist ~ $?NL, fdopen $fd, 'w';
     } elsif $tracer.t {
         $tracer.say: $traced;

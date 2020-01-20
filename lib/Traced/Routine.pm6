@@ -12,12 +12,15 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw --> Mu) {
     $routine.wrap: &TRACED-ROUTINE
 }
 sub TRACED-ROUTINE(|arguments --> Mu) is raw {
-    my Instant:D $timestamp  = ENTER now;
-    my Int:D     $id         = ENTER $?CLASS.next-id();
-    my Routine:D $routine   := nextcallee;
+    my &routine := nextcallee;
     $?CLASS!protect({
-        my Mu \result = try $routine.(|arguments);
-        $?CLASS.trace: $routine, arguments, result, $!, :$id, :$timestamp;
+        my Int:D     $id        := $?CLASS.next-id;
+        my Int:D     $thread-id := $*THREAD.id;
+        my Instant:D $timestamp := now;
+        my Mu        \result    := try routine |arguments;
+        $?CLASS.trace:
+            &routine, arguments, result, $!,
+            :$id, :$thread-id, :$timestamp;
         $!.rethrow with $!;
         result
     })
@@ -55,13 +58,16 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, Bool:D :$multi! where ?* --> M
     my Routine:D $tracer := MAKE-TRACED-MULTI-ROUTINE $wrapper.code;
     nqp::bindattr($wrapper, $wrapper.WHAT, '$!code', $tracer);
 }
-sub MAKE-TRACED-MULTI-ROUTINE(Routine:D $routine is raw --> Sub:D) {
+sub MAKE-TRACED-MULTI-ROUTINE(&routine is raw --> Sub:D) {
     sub TRACED-MULTI-ROUTINE(|arguments --> Mu) is raw {
-        my Instant:D $timestamp  = ENTER now;
-        my Int:D     $id         = ENTER $?CLASS.next-id();
         $?CLASS!protect({
-            my Mu \result = try $routine.(|arguments);
-            $?CLASS.trace: $routine, arguments, result, $!, :$id, :$timestamp, :multi;
+            my Int:D     $id        := $?CLASS.next-id;
+            my Int:D     $thread-id := $*THREAD.id;
+            my Instant:D $timestamp := now;
+            my Mu        \result    := try routine |arguments;
+            $?CLASS.trace:
+                &routine, arguments, result, $!,
+                :$id, :$thread-id, :$timestamp, :multi;
             $!.rethrow with $!;
             result
         })

@@ -31,19 +31,19 @@ class Power is traced {
 # clear the bug's in the Numeric method:
 my Power:D $two-cubed .= new: 2, 3;
 quietly +$two-cubed; # OUTPUT:
-# 1 [1 @ 1579532137.922977]
+# 1 [1 @ 1579543694.983322]
 # <== [CALL] (Power) method new
 #     self:      (Power)
 #     $base:     2
 #     $exponent: 3
 #     *%_:       {}
 # ==> Power.new(base => 2, exponent => 3)
-#     3 [1 @ 1579532137.955526]
-#     <== [CALL] (Power) method Numeric
+#     3 [1 @ 1579543695.018248]
+#     <== [CALL] (Power) multi method Numeric
 #         self: Power.new(base => 2, exponent => 3)
 #         *%_:  {}
 #     ==> 9
-# 2 [1 @ 1579532137.952967]
+# 2 [1 @ 1579543695.017581]
 # <== [CALL] (Mu) proto method Numeric
 #     self: Power.new(base => 2, exponent => 3)
 #     |:    \()
