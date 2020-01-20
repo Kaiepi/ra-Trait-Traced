@@ -12,7 +12,7 @@ subtest 'mapping parameters to arguments', {
         my Mu @args = do {
             my Traced::Routine:D $traced .= new:
                 &routine, $arguments, (try routine |$arguments), $!,
-                thread-id => $*THREAD.id, timestamp => now;
+                id => 0, thread-id => $*THREAD.id, timestamp => now;
             $traced.arguments-from-parameters
         };
         sub is-arg(Int:D $idx, Mu $expected is raw, Str:D $message) {

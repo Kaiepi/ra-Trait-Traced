@@ -1,10 +1,10 @@
 use v6.d;
+use NativeCall;
 #|[ A role done by classes that handle tracing for a type of event. ]
 unit role Traced;
 
-my atomicint $id = 0;
 #|[ The ID of the trace. ]
-has Int:D     $.id        = ++⚛$id;
+has Int:D     $.id        is required;
 #|[ The ID of the thread the trace was taken in. ]
 has Int:D     $.thread-id is required;
 #|[ The instant the trace was taken at. ]
@@ -12,13 +12,6 @@ has Instant:D $.timestamp is required;
 
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
-
-#|[ Traces an event. ]
-method trace(::?CLASS:U: :$thread-id = $*THREAD.id, |args --> Bool:D) {
-    my ::?CLASS:D $trace .= new: :$thread-id, |args;
-    my Str:D      $method = $*TRACER.t ?? 'say' !! 'put';
-    $*TRACER."$method"($trace)
-}
 
 #|[ The colour to use for the key of the trace's output. ]
 method colour(::?CLASS:_: --> Int:D) { ... }
@@ -96,15 +89,37 @@ sub decrement-indent-level(%indent) {
 
 multi method Str(::?CLASS:D: --> Str:D) {
     @.lines
-==> map(&INDENT)
+==> map(&indent)
 ==> join($?NL)
 }
 multi method gist(::?CLASS:D: --> Str:D) {
     @.lines(:colour)
-==> map(&INDENT)
+==> map(&indent)
 ==> join($?NL)
 }
-sub INDENT(Str:D $line --> Str:D) {
+sub indent(Str:D $line --> Str:D) {
     my Int:D $level = (⚛$THREAD-INDENT-LEVELS){$*THREAD.id};
     ' ' x 4 * $level ~ $line
+}
+
+my atomicint $next-id = 1;
+#|[ Gets the next trace ID to use. ]
+method next-id(::?CLASS:_: --> Int:D) { $next-id⚛++ }
+
+my class FILE is repr<CPointer> { }
+sub fdopen(int32, Str --> FILE) is native is symbol($*DISTRO.is-win ?? '_fdopen' !! 'fdopen') {*}
+sub fputs(Str, FILE --> int32) is native {*}
+
+#|[ Traces an event. ]
+method trace(::?CLASS:_: Int:D :$id!, Int:D :$thread-id = $*THREAD.id, |args --> True) {
+    my IO::Handle:D $tracer  = $*TRACER;
+    my ::?CLASS:D   $traced .= new: :$id, :$thread-id, |args;
+    my Int:D        $fd      = $tracer.native-descriptor;
+    if $fd == 0 | 1 | 2 {
+        fputs $traced.gist ~ $?NL, fdopen $fd, 'w';
+    } elsif $tracer.t {
+        $tracer.say: $traced;
+    } else {
+        $tracer.put: $traced;
+    }
 }

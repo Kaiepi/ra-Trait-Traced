@@ -12,11 +12,12 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw --> Mu) {
     $routine.wrap: &TRACED-ROUTINE
 }
 sub TRACED-ROUTINE(|arguments --> Mu) is raw {
-    my Routine:D $routine := nextcallee;
+    my Instant:D $timestamp  = ENTER now;
+    my Int:D     $id         = ENTER $?CLASS.next-id();
+    my Routine:D $routine   := nextcallee;
     $?CLASS!protect({
-        my Instant:D $timestamp = ENTER now;
-        my Mu        \result    = try $routine.(|arguments);
-        LEAVE $?CLASS.trace: $routine, arguments, result, $!, :$timestamp;
+        my Mu \result = try $routine.(|arguments);
+        $?CLASS.trace: $routine, arguments, result, $!, :$id, :$timestamp;
         $!.rethrow with $!;
         result
     })
@@ -56,10 +57,11 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, Bool:D :$multi! where ?* --> M
 }
 sub MAKE-TRACED-MULTI-ROUTINE(Routine:D $routine is raw --> Sub:D) {
     sub TRACED-MULTI-ROUTINE(|arguments --> Mu) is raw {
+        my Instant:D $timestamp  = ENTER now;
+        my Int:D     $id         = ENTER $?CLASS.next-id();
         $?CLASS!protect({
-            my Instant:D $timestamp = ENTER now;
-            my Mu        \result    = try $routine.(|arguments);
-            LEAVE $?CLASS.trace: $routine, arguments, result, $!, :multi, :$timestamp;
+            my Mu \result = try $routine.(|arguments);
+            $?CLASS.trace: $routine, arguments, result, $!, :$id, :$timestamp, :multi;
             $!.rethrow with $!;
             result
         })
