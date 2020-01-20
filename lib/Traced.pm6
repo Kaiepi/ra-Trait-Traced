@@ -23,7 +23,7 @@ method success(::?CLASS:D: --> Bool:D) { ... }
 
 #|[ The title of the trace. ]
 method title(::?CLASS:D: Bool:D :$colour! --> Str:D) {
-    sprintf "%d [%d @ %f]", $!id, $!thread-id, $!timestamp.Rat
+    sprintf "\e[2m%d [%d @ %f]\e[0m", $!id, $!thread-id, $!timestamp.Rat
 }
 
 #|[ Produces the header of the trace's output. ]
