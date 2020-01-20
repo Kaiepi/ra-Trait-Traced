@@ -47,9 +47,7 @@ multi method entries(::?CLASS:D: --> Seq:D) { ().Seq }
 #|[ Produces the footer of the trace's output. ]
 proto method footer(::?CLASS:D: Bool:D :$colour! --> Str:D) {
     my Str:D $prefix = $.success ?? '==>' !! '!!!';
-    $colour
-        ?? sprintf("%s \e[1m%s\e[0m", $prefix, {*})
-        !! sprintf("%s %s", $prefix, {*})
+    sprintf '%s %s', $prefix, {*}
 }
 
 multi method lines(::?CLASS:D: Bool:D :$colour = False --> Seq:D) {
