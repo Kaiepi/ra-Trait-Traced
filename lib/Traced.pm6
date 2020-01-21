@@ -13,7 +13,7 @@ has Instant:D $.timestamp is required;
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
 
-#|[ The colour to use for the key of the trace's output. ]
+#|[ The tty to use for the key of the trace's output. ]
 method colour(::?CLASS:_: --> Int:D) { ... }
 #|[ The key of the trace's output. ]
 method key(::?CLASS:_: --> Str:D)    { ... }
@@ -22,21 +22,21 @@ method key(::?CLASS:_: --> Str:D)    { ... }
 method success(::?CLASS:D: --> Bool:D) { ... }
 
 #|[ The title of the trace. ]
-method title(::?CLASS:D: Bool:D :$colour! --> Str:D) {
+method title(::?CLASS:D: Bool:D :$tty! --> Str:D) {
     sprintf "\e[2m%d [%d @ %f]\e[0m", $!id, $!thread-id, $!timestamp.Rat
 }
 
 #|[ Produces the header of the trace's output. ]
-proto method header(::?CLASS:D: Bool:D :$colour! --> Str:D) {
-    $colour
+proto method header(::?CLASS:D: Bool:D :$tty! --> Str:D) {
+    $tty
         ?? sprintf("\e[2m<==\e[0m \e[%s;1m[%s]\e[0m \e[1m%s\e[0m", $.colour, $.key, {*})
         !! sprintf("<== [%s] %s", $.key, {*})
 }
 
 #|[ Produces the entries of the trace's output, if any. ]
-proto method entries(::?CLASS:D: Bool:D :$colour! --> Seq:D) {
+proto method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
     my Pair:D @entries = {*} ==> map({
-        state Str:D $format  = $colour ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
+        state Str:D $format  = $tty ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
         state Int:D $width   = @entries.map(*.key.chars).max;
         my    Str:D $padding = ' ' x $width - .key.chars;
         sprintf $format, .key, $padding, .value
@@ -45,19 +45,19 @@ proto method entries(::?CLASS:D: Bool:D :$colour! --> Seq:D) {
 multi method entries(::?CLASS:D: --> Seq:D) { ().Seq }
 
 #|[ Produces the footer of the trace's output. ]
-proto method footer(::?CLASS:D: Bool:D :$colour! --> Str:D) {
+proto method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
     my Str:D $prefix = $.success ?? '==>' !! '!!!';
-    $colour
+    $tty
         ?? sprintf("\e[2m%s\e[0m %s", $prefix, {*})
         !! sprintf('%s %s', $prefix, {*})
 }
 
-multi method lines(::?CLASS:D: Bool:D :$colour = False --> Seq:D) {
+multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
     gather {
-        take $.title: :$colour;
-        take $.header: :$colour;
-        take ' ' x 4 ~ $_ for @.entries: :$colour;
-        take $.footer: :$colour;
+        take $.title: :$tty;
+        take $.header: :$tty;
+        take ' ' x 4 ~ $_ for @.entries: :$tty;
+        take $.footer: :$tty;
     }
 }
 
@@ -93,7 +93,7 @@ multi method Str(::?CLASS:D: --> Str:D) {
 ==> join($?NL)
 }
 multi method gist(::?CLASS:D: --> Str:D) {
-    @.lines(:colour)
+    @.lines(:tty)
 ==> map(&indent)
 ==> join($?NL)
 }
