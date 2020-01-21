@@ -70,7 +70,7 @@ subtest 'Metamodel::MultiMethodContainer', {
             }.multi-method;
         }, 'can call traced multi methods of traced classes...';
         ok my Str:D $output = $*TRACER.path.slurp, '...which produces output...';
-        nok $output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themeselves';
+        nok $output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
     };
 
     wrap-tests {
