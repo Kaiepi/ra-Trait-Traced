@@ -15,3 +15,6 @@ v0.1.0:
       and multi of a multiple dispatch routine throwing, and redundantly traced
       methods of a traced type tracing calls to the internal TRACED-ROUTINE
       routine.
+
+v0.1.1:
+    - Fix compiler error on Rakudo v2019.11.
