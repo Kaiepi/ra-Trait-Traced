@@ -1,6 +1,17 @@
 Revision history for Trait::Traced
 
-v0.0.1
+v0.0.1:
     - Implement support for tracing routine calls
     - Implement support for tracing methods of types
     - Implement support for tracing multi methods of types
+
+v0.1.0:
+    - Make tracing thread-safe.
+    - Implement the API for custom tracers that was a skeleton prior.  This
+      abstracts most of the logic for stringifying traces out of any classes
+      that handle tracing, and formally introduces the common output format that
+      all types of traces will be expected to use.
+    - Fix some bugs in routine tracing. This includes tracing of both the proto
+      and multi of a multiple dispatch routine throwing, and redundantly traced
+      methods of a traced type tracing calls to the internal TRACED-ROUTINE
+      routine.
