@@ -61,7 +61,7 @@ multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
     }
 }
 
-BEGIN my $THREAD-INDENT-LEVELS = %();
+my $THREAD-INDENT-LEVELS = %();
 #|[ Bumps the indentation level of a trace while executing the given block. ]
 method !protect(::?CLASS:_: &block is raw --> Mu) is raw {
     cas $THREAD-INDENT-LEVELS, &increment-indent-level;
