@@ -13,7 +13,7 @@ has Instant:D $.timestamp is required;
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
 
-#|[ The tty to use for the key of the trace's output. ]
+#|[ The colour to use for the key of the trace's output. ]
 method colour(::?CLASS:_: --> Int:D) { ... }
 #|[ The key of the trace's output. ]
 method key(::?CLASS:_: --> Str:D)    { ... }
@@ -23,7 +23,8 @@ method success(::?CLASS:D: --> Bool:D) { ... }
 
 #|[ The title of the trace. ]
 method title(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    sprintf "\e[2m%d [%d @ %f]\e[0m", $!id, $!thread-id, $!timestamp.Rat
+    my Str:D $format = $tty ?? "\e[2m%d [%d @ %f]\e[0m" !! "%d [%d @ %f]";
+    sprintf $format, $!id, $!thread-id, $!timestamp.Rat
 }
 
 #|[ Produces the header of the trace's output. ]
@@ -46,10 +47,9 @@ multi method entries(::?CLASS:D: --> Seq:D) { ().Seq }
 
 #|[ Produces the footer of the trace's output. ]
 proto method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
+    my Str:D $format = $tty ?? "\e[2m%s\e[0m %s" !! "%s %s";
     my Str:D $prefix = $.success ?? '==>' !! '!!!';
-    $tty
-        ?? sprintf("\e[2m%s\e[0m %s", $prefix, {*})
-        !! sprintf('%s %s', $prefix, {*})
+    sprintf $format, $prefix, {*}
 }
 
 multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
