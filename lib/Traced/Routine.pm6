@@ -131,17 +131,20 @@ multi method header(::?CLASS:D: --> Str:D) {
     sprintf "(%s) %s %s", $.package, $.declarator, $.name
 }
 
-multi method entries(::?CLASS:D: --> Seq:D) {
+multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
+    my Str:D $method = $tty ?? 'gist' !! 'perl';
     gather for @.parameters Z=> @.arguments-from-parameters {
-        my Str:D $parameter = ~.key.gist.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
-        my Str:D $argument  = .value.gist;
+        my Str:D $parameter = ~.key."$method"().match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
+        my Str:D $argument  = .value."$method"();
         once $parameter = 'self' if .key.invocant && !.key.name.defined;
         take $parameter => $argument;
     }
 }
 
-multi method footer(::?CLASS:D: --> Str:D) {
+multi method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
     $!exception.DEFINITE
         ?? $!exception.^name
-        !! $!result.gist
+        !! $tty
+            ?? $!result.gist
+            !! $!result.perl
 }
