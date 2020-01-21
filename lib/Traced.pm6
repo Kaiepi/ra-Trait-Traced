@@ -54,10 +54,10 @@ proto method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
 
 multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
     gather {
-        take $.title: :$tty;
-        take $.header: :$tty;
-        take ' ' x 4 ~ $_ for @.entries: :$tty;
-        take $.footer: :$tty;
+        take self.title: :$tty;
+        take self.header: :$tty;
+        take ' ' x 4 ~ $_ for self.entries: :$tty;
+        take self.footer: :$tty;
     }
 }
 
