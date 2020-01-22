@@ -107,7 +107,7 @@ my atomicint $next-id = 1;
 method next-id(::?CLASS:_: --> Int:D) { $next-id⚛++ }
 
 # XXX: $*IN, $*OUT, and $*ERR aren't thread-safe as Raku handles them, and
-# IO::Handle.lock/.unlock don't help in this case! Luckily, on Windows an
+# IO::Handle.lock/.unlock don't help in this case! Luckily, on Windows and
 # POSIX platforms, using fputs instead is. This isn't entirely ideal, but
 # it's good enough for now.
 my class FILE is repr<CPointer> { }
