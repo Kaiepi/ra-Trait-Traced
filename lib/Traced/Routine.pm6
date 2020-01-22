@@ -132,12 +132,14 @@ multi method header(::?CLASS:D: --> Str:D) {
 }
 
 multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
-    my Str:D $method = $tty ?? 'gist' !! 'perl';
-    gather for @.parameters Z=> @.arguments-from-parameters {
-        my Str:D $parameter = ~.key."$method"().match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
-        my Str:D $argument  = .value."$method"();
-        once $parameter = 'self' if .key.invocant && !.key.name.defined;
-        take $parameter => $argument;
+    gather {
+        my Str:D $method = $tty ?? 'gist' !! 'perl';
+        for @.parameters Z=> @.arguments-from-parameters {
+            my Str:D $parameter = ~.key."$method"().match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
+            my Str:D $argument  = .value."$method"();
+            once $parameter = 'self' if .key.invocant && !.key.name.defined;
+            take $parameter => $argument;
+        }
     }
 }
 
