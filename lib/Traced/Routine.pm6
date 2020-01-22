@@ -128,7 +128,7 @@ method arguments-from-parameters(::?CLASS:D: --> Seq:D) {
 method success(::?CLASS:D: --> Bool:D) { ! $!exception.DEFINITE }
 
 multi method header(::?CLASS:D: --> Str:D) {
-    sprintf "(%s) %s %s", $.package, $.declarator, $.name
+    "($.package) $.declarator $.name"
 }
 
 multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
