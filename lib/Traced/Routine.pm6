@@ -70,12 +70,12 @@ method new(
     Capture:D  $arguments is raw,
     Mu         $result    is raw,
     Mu         $exception is raw,
-    Bool:D    :$multi     = False,
+    Str:D     :$multiness = '',
               *%rest
     --> ::?CLASS:D
 ) {
     self.bless:
-        :$routine, :$arguments, :$result, :$exception, :$multi,
+        :$routine, :$arguments, :$result, :$exception, :$multiness,
         |%rest
 }
 
