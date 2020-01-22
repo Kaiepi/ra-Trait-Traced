@@ -18,3 +18,7 @@ v0.1.0:
 
 v0.1.1:
     - Fix compiler error on Rakudo v2019.11.
+
+v0.1.2:
+    - Make routine call tracing more accurate when threads are involved by
+      optimizing Traced::Routine.entries.
