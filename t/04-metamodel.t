@@ -24,7 +24,7 @@ subtest 'Metamodel::MethodContainer', {
             }.method;
         }, 'can call methods of traced classes...';
         $*TRACER.flush;
-        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produces output...';
+        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
         ok $output ~~ / <after ') '> 'method method' $$ /,
           '...that claims methods have the correct declarator';
     };
@@ -34,10 +34,10 @@ subtest 'Metamodel::MethodContainer', {
             my class WithTracedMethod is traced {
                 method method(|) is traced {*}
             }.method;
-        }, 'can call multi methods of traced classes...';
+        }, 'can call traced methods of traced classes...';
         $*TRACER.flush;
-        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produces output...';
-        nok $output ~~ / 'TRACED-ROUTINE' /, '...and does not rewrap themselves';
+        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
+        nok $output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
     };
 
     wrap-tests {
@@ -64,7 +64,7 @@ subtest 'Metamodel::MultiMethodContainer', {
             }.multi-method;
         }, 'can call multi methods of traced classes...';
         $*TRACER.flush;
-        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produces output...';
+        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
         ok $output ~~ / <after ') '> 'proto method multi-method' $$ /,
           '...that claims proto methods have the correct declarator...';
         ok $output ~~ / <after ') '> 'multi method multi-method' $$ /,
@@ -79,7 +79,7 @@ subtest 'Metamodel::MultiMethodContainer', {
             }.multi-method;
         }, 'can call traced multi methods of traced classes...';
         $*TRACER.flush;
-        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produces output...';
+        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
         nok $output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
     };
 
@@ -107,7 +107,7 @@ subtest 'Metamodel::PrivateMethodContainer', {
             }.^find_private_method('private-method').(WithTracedPrivateMethod)
         }, 'can call traced private methods of traced classes...';
         $*TRACER.flush;
-        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produces output...';
+        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
         ok $output ~~ / <after ') '> 'method !private-method' $$ /,
           '...that claims private methods have the correct declarator';
     };
@@ -124,7 +124,7 @@ subtest 'Metamodel::MetaMethodContainer', {
             }.^meta-method;
         }, 'can call traced metamethods of traced classes...';
         $*TRACER.flush;
-        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produces output...';
+        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
         ok $output ~~ / <after ') '> 'method ^meta-method' $$ /,
           '...that claims metamethods have the correct declarator';
     };
