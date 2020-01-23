@@ -14,10 +14,9 @@ sub wrap-tests(&block is raw --> Mu) is raw {
     block
 }
 
-# $Bar, @Baz, and %Qux get their symbols looked up once Foo's body block gets
-# called at runtime, which gets traced to $*OUT without this.
-$GLOBAL::TRACER = ($*DISTRO.is-win ?? 'NUL' !! '/dev/null').IO.open: :w;
-LEAVE $*TRACER.close;
+# $Bar, @Baz, and %Qux get their symbols looked up outside of the tests, which
+# gets traced to $*OUT without this.
+$PROCESS::TRACER = $*OUT.clone;
 
 my module Foo is traced {
     constant Foo = 0;

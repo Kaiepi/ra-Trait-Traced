@@ -119,9 +119,9 @@ sub fputs(Str, FILE --> int32)  is native {*}
 method trace(::?CLASS:U: |args --> True) {
     state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
 
-    my IO::Handle:D $tracer := $*TRACER;
-    my ::?CLASS:D   $traced .= new: |args;
-    my Int:D        $fd     := $tracer.native-descriptor;
+    my Mu         $tracer := $*TRACER;
+    my ::?CLASS:D $traced .= new: |args;
+    my Int:D      $fd     := $tracer.native-descriptor;
     if $fd == $standard {
         fputs $traced.gist ~ $?NL, fdopen $fd, 'w';
     } else {
