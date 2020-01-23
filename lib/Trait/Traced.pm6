@@ -4,6 +4,7 @@ use Traced::Routine;
 use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
+use MetamodelX::Traced::PrivateMethodContainer;
 sub EXPORT(--> Map:D) {
     PROCESS::<$TRACER> := $*OUT;
     Map.new
@@ -66,9 +67,12 @@ multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MethodContainer], Bool:D :$
     T.HOW.^mixin: MetamodelX::Traced::MethodContainer;
     nextsame;
 }
-# TODO: private method support
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MultiMethodContainer], Bool:D :$traced! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::MultiMethodContainer;
+    nextsame;
+}
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::PrivateMethodContainer], Bool:D :$traced! where ?*) is export {
+    T.HOW.^mixin: MetamodelX::Traced::PrivateMethodContainer;
     nextsame;
 }
 # TODO: metamethod support
