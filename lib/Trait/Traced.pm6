@@ -5,6 +5,7 @@ use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
+use MetamodelX::Traced::MetaMethodContainer;
 sub EXPORT(--> Map:D) {
     PROCESS::<$TRACER> := $*OUT;
     Map.new
@@ -75,4 +76,7 @@ multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::PrivateMethodContainer], Bo
     T.HOW.^mixin: MetamodelX::Traced::PrivateMethodContainer;
     nextsame;
 }
-# TODO: metamethod support
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MetaMethodContainer], Bool:D :$traced! where ?*) is export {
+    T.HOW.^mixin: MetamodelX::Traced::MetaMethodContainer;
+    nextsame;
+}

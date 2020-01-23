@@ -11,6 +11,7 @@
   "provides" : {
 	"MetamodelX::Traced::AdHocMethod" : "lib/MetamodelX/Traced/AdHocMethod.pm6",
 	"MetamodelX::Traced::MethodContainer" : "lib/MetamodelX/Traced/MethodContainer.pm6",
+	"MetamodelX::Traced::MetaMethodContainer" : "lib/MetamodelX/Traced/MetaMethodContainer.pm6",
 	"MetamodelX::Traced::MultiMethodContainer" : "lib/MetamodelX/Traced/MultiMethodContainer.pm6",
 	"MetamodelX::Traced::PrivateMethodContainer" : "lib/MetamodelX/Traced/PrivateMethodContainer.pm6",
 	"Traced" : "lib/Traced.pm6",

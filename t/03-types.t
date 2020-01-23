@@ -2,7 +2,7 @@ use v6.d;
 use Test;
 use Trait::Traced;
 
-plan 3;
+plan 4;
 
 sub wrap-tests(&block) {
     my Str:D      $filename  = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
@@ -109,8 +109,25 @@ subtest 'Metamodel::PrivateMethodContainer', {
         $*TRACER.flush;
         ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produces output...';
         ok $output ~~ / <after ') '> 'method !private-method' $$ /,
-          '...that claims they have the correct declarator';
+          '...that claims private methods have the correct declarator';
     };
-}
+};
+
+
+subtest 'Metamodel::MetaMethodContainer', {
+    plan 3;
+
+    wrap-tests {
+        lives-ok {
+            my class WithTracedMetaMethod is traced {
+                method ^meta-method(|) { }
+            }.^meta-method;
+        }, 'can call traced metamethods of traced classes...';
+        $*TRACER.flush;
+        ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produces output...';
+        ok $output ~~ / <after ') '> 'method ^meta-method' $$ /,
+          '...that claims metamethods have the correct declarator';
+    };
+};
 
 # vim: ft=perl6 sw=4 ts=4 sts=4 et
