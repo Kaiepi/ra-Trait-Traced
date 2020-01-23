@@ -60,7 +60,7 @@ multi method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
 }
 
 my role Mixin {
-    multi method AT-KEY(::?CLASS:D: Str:D $lookup --> Mu) is raw {
+    multi method package_at_key(::?CLASS:D: str $lookup --> Mu) is raw {
         my Thread:D  $thread    := $*THREAD;
         my Int:D     $id        := Traced::Stash.next-id;
         my Int:D     $calls     := Traced::Stash.calls: $thread;
@@ -73,7 +73,20 @@ my role Mixin {
         result
     }
 
-    multi method BIND-KEY(::?CLASS:D: Str:D $lookup, Mu $new-value is raw --> Mu) is raw {
+    multi method AT-KEY(::?CLASS:D: Str() $lookup --> Mu) is raw {
+        my Thread:D  $thread    := $*THREAD;
+        my Int:D     $id        := Traced::Stash.next-id;
+        my Int:D     $calls     := Traced::Stash.calls: $thread;
+        my Instant:D $timestamp := now;
+        my Mu        \result     = try callsame;
+        Traced::Stash.trace:
+            Access::Lookup, self.gist, $lookup, result, $!,
+            :$id, :thread-id($thread.id), :$timestamp, :$calls;
+        $!.rethrow with $!;
+        result
+    }
+
+    multi method BIND-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
         my Mu        $old-value := self.Stash::AT-KEY: $lookup;
         my Thread:D  $thread    := $*THREAD;
         my Int:D     $id        := Traced::Stash.next-id;
@@ -88,7 +101,7 @@ my role Mixin {
         result
     }
 
-    multi method ASSIGN-KEY(::?CLASS:D: Str:D $lookup, Mu $new-value is raw --> Mu) is raw {
+    multi method ASSIGN-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
         my Mu        $old-value  = self.Stash::AT-KEY: $lookup; # Intentionally uses $old-value's container.
         my Thread:D  $thread    := $*THREAD;
         my Int:D     $id        := Traced::Stash.next-id;

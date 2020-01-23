@@ -2,7 +2,7 @@ use v6.d;
 use Test;
 use Trait::Traced;
 
-plan 27;
+plan 29;
 
 sub wrap-tests(&block is raw --> Mu) is raw {
     my Str:D      $filename  = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
@@ -126,7 +126,21 @@ wrap-tests {
 wrap-tests {
     lives-ok {
         Foo::<Foo> = 7;
-    }, 'stash lookup/binding/assignment handles containers ok';
+    }, 'stash lookups/binds/assignments handle containers ok';
+};
+
+# Foo::Foo gets evaluated well before this test actually runs.
+wrap-tests {
+    use MONKEY-SEE-NO-EVAL;
+
+    EVAL Q:to/TEST/;
+    quietly Foo::Foo;
+    $*TRACER.flush;
+    ok my Str:D $output = $*TRACER.path.slurp(:close),
+      'direct symbol lookups get traced...';
+    ok $output ~~ / ^^ '==> 7' $$ /,
+      '...and their output includes the correct result';
+    TEST
 };
 
 # vim: ft=perl6 sw=4 ts=4 sts=4 et
