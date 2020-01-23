@@ -47,17 +47,18 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
 }
 sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$multiness! --> Sub:D) {
     sub TRACED-ROUTINE(|arguments --> Mu) is raw {
-        $?CLASS!protect({
-            my Int:D     $id        := $?CLASS.next-id;
-            my Int:D     $thread-id := $*THREAD.id;
-            my Instant:D $timestamp := now;
-            my Mu        \result    := try routine |arguments;
-            $?CLASS.trace:
-                &routine, arguments, result, $!,
-                :$id, :$thread-id, :$timestamp, :$multiness;
-            $!.rethrow with $!;
-            result
-        })
+        my Thread:D  $thread    := $*THREAD;
+        my Int:D     $id        := $?CLASS.next-id;
+        my Int:D     $calls     := $?CLASS.increment-calls: $thread;
+        my Instant:D $timestamp := now;
+        my Mu        \result    := try routine |arguments;
+        $?CLASS.decrement-calls: $thread;
+        $?CLASS.trace:
+            &routine, arguments, result, $!,
+            :$id, :thread-id($thread.id), :$timestamp, :$calls,
+            :$multiness;
+        $!.rethrow with $!;
+        result
     }
 }
 

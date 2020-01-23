@@ -9,6 +9,8 @@ has Int:D     $.id        is required;
 has Int:D     $.thread-id is required;
 #|[ The instant the trace was taken at. ]
 has Instant:D $.timestamp is required;
+#|[ The number of calls in the traced call stack.  ]
+has Int:D     $.calls     is required;
 
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
@@ -61,45 +63,47 @@ multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
     }
 }
 
-my $THREAD-INDENT-LEVELS = %();
-#|[ Bumps the indentation level of a trace while executing the given block. ]
-method !protect(::?CLASS:_: &block is raw --> Mu) is raw {
-    cas $THREAD-INDENT-LEVELS, &increment-indent-level;
-    LEAVE cas $THREAD-INDENT-LEVELS, &decrement-indent-level;
-    block
-}
-sub increment-indent-level(%indent) {
-    my Int:D $id = $*THREAD.id;
-    if %indent{$id}:exists {
-        %indent{$id}++;
-    } else {
-        %indent{$id} = 0;
+my role CallStack {
+    has atomicint $!call-frames = 0;
+    method call-frames(::?CLASS:D: --> Int:D) {
+        ⚛$!call-frames
     }
-    %indent
-}
-sub decrement-indent-level(%indent) {
-    my Int:D $id = $*THREAD.id;
-    if %indent{$id}:exists {
-        %indent{$id}--;
-    } else {
-        %indent{$id} = 0;
+    method increment-call-frames(::?CLASS:D: --> Int:D) {
+        $!call-frames⚛++
     }
-    %indent
+    method decrement-call-frames(::?CLASS:D: --> Int:D) {
+        $!call-frames⚛--
+    }
+}
+
+#|[ Returns the number of traced call frames there currently are in the given
+    thread's call stack. ]
+method calls(::?CLASS:_: Thread:D $thread is raw --> Int:D) {
+    $thread.HOW.does($thread, CallStack)
+        ?? $thread.call-frames
+        !! 0
+}
+#|[ Increments the number of traced call frames for the given thread. ]
+method increment-calls(::?CLASS:_: Thread:D $thread is raw --> Int:D) {
+    $thread.HOW.mixin($thread, CallStack) unless $thread.HOW.does($thread, CallStack);
+    $thread.increment-call-frames
+}
+#|[ Decrements the number of traced call frames for the given thread. ]
+method decrement-calls(::?CLASS:_: Thread:D $thread is raw --> Int:D) {
+    $thread.HOW.does($thread, CallStack)
+        ?? $thread.decrement-call-frames
+        !! 0
 }
 
 multi method Str(::?CLASS:D: --> Str:D) {
     @.lines
-==> map(&indent)
+==> map({ ' ' x 4 * $!calls ~ $_ })
 ==> join($?NL)
 }
 multi method gist(::?CLASS:D: --> Str:D) {
     @.lines(:tty)
-==> map(&indent)
+==> map({ ' ' x 4 * $!calls ~ $_ })
 ==> join($?NL)
-}
-sub indent(Str:D $line --> Str:D) {
-    my Int:D $level = (⚛$THREAD-INDENT-LEVELS){$*THREAD.id};
-    ' ' x 4 * $level ~ $line
 }
 
 my atomicint $next-id = 1;
@@ -112,20 +116,21 @@ method next-id(::?CLASS:_: --> Int:D) { $next-id⚛++ }
 # it's good enough for now.
 my class FILE is repr<CPointer> { }
 sub fdopen(int32, Str --> FILE) is native is symbol($*DISTRO.is-win ?? '_fdopen' !! 'fdopen') {*}
-sub fputs(Str, FILE --> int32) is native {*}
+sub fputs(Str, FILE --> int32)  is native {*}
 
 #|[ Traces an event. ]
-method trace(::?CLASS:_: |args --> True) {
+method trace(::?CLASS:U: |args --> True) {
     state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
 
-    my IO::Handle:D $tracer  = $*TRACER;
-    my ::?CLASS:D   $traced .= new: |args;
+    my IO::Handle:D $tracer := $*TRACER;
+    my Traced:D     $traced := self.new: |args;
     my Int:D        $fd     := $tracer.native-descriptor;
     if $fd == $standard {
         fputs $traced.gist ~ $?NL, fdopen $fd, 'w';
-    } elsif $tracer.t {
-        $tracer.say: $traced;
     } else {
-        $tracer.put: $traced;
+        $tracer.lock;
+        LEAVE $tracer.unlock;
+        my Str:D $method = $tracer.t ?? 'say' !! 'put';
+        $tracer."$method"($traced)
     }
 }
