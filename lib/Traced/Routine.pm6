@@ -8,9 +8,9 @@ has Mu        $.result    is required;
 has Mu        $.exception is required;
 has Str:D     $.multiness = '';
 
-# Rakudo often expects routines to be Code instances (which is no longer the
-# case for routines after they've been wrapped) so we can't deal with them the
-# same way we have been so far. This will get a bit ugly!
+# You would think Routine.wrap would be useful here, but Rakudo often expects
+# routines to be Code instances, and this is no longer the case after wrapping
+# a routine this way. This will get a bit ugly!
 multi method wrap(::?CLASS:U: Routine:D $routine is raw, Str:D :$multiness = '' --> Mu) {
     use nqp;
     return if $routine.?is-traced;
