@@ -1,6 +1,7 @@
 use v6.d;
 use Kind;
 use Traced::Routine;
+use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 sub EXPORT(--> Map:D) {
@@ -28,11 +29,30 @@ multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :$traced! where ?*) is e
 }
 
 multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :$traced! where ?*) is export {
-    Traced::Routine.wrap: $routine, multiness => $*MULTINESS;
+    Traced::Routine.wrap:
+        $routine,
+        scope     => $*SCOPE,
+        multiness => $*MULTINESS;
+        prefix    => '';
 }
 
 multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :$traced! where ?*) is export {
-    Traced::Routine.wrap: $method, multiness => $*MULTINESS;
+    use nqp;
+    if my str $scope = $*SCOPE {
+        Traced::Routine.wrap:
+            $method,
+            scope     => $scope eq 'has' ?? '' !! $scope,
+            multiness => $*MULTINESS,
+            prefix    => '';
+    } elsif nqp::can($method.package.HOW, 'compose') {
+        # We know this is a method belonging to a class/role/etc., but we can't
+        # possibly know if it's a regular method, private method, or metamethod
+        # at this point during compilation. We can find out when the method's
+        # package gets composed though!
+        $method.package.HOW.^mixin:
+            MetamodelX::Traced::AdHocMethod.^parameterize:
+                $method;
+    }
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :$traced! where ?*) is export {

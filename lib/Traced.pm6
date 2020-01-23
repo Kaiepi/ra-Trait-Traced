@@ -123,7 +123,7 @@ method trace(::?CLASS:U: |args --> True) {
     state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
 
     my IO::Handle:D $tracer := $*TRACER;
-    my Traced:D     $traced := self.new: |args;
+    my ::?CLASS:D   $traced .= new: |args;
     my Int:D        $fd     := $tracer.native-descriptor;
     if $fd == $standard {
         fputs $traced.gist ~ $?NL, fdopen $fd, 'w';

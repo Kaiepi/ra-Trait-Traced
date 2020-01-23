@@ -6,12 +6,21 @@ has Routine:D $.routine   is required;
 has Capture:D $.arguments is required;
 has Mu        $.result    is required;
 has Mu        $.exception is required;
+has Str:D     $.scope     = '';
 has Str:D     $.multiness = '';
+has Str:D     $.prefix    = '';
 
 # You would think Routine.wrap would be useful here, but Rakudo often expects
 # routines to be Code instances, and this is no longer the case after wrapping
 # a routine this way. This will get a bit ugly!
-multi method wrap(::?CLASS:U: Routine:D $routine is raw, Str:D :$multiness = '' --> Mu) {
+multi method wrap(
+    ::?CLASS:U:
+    Routine:D $routine is raw,
+    Str:D     :$scope     = '',
+    Str:D     :$multiness = '',
+    Str:D     :$prefix    = ''
+    --> Mu
+) {
     use nqp;
     return if $routine.?is-traced;
 
@@ -29,7 +38,7 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw, Str:D :$multiness = '' 
     }
 
     # Override the routine's code with its traced version's code:
-    my Routine:D $traced := MAKE-TRACED-ROUTINE $routine.clone, :$multiness;
+    my Routine:D $traced := MAKE-TRACED-ROUTINE $routine.clone, :$scope, :$multiness, :$prefix;
     my Str:D     $name    = $routine.name;
     my Mu        $do     := nqp::getattr($traced, Code, '$!do');
     nqp::bindattr($routine, Code, '$!do', $do);
@@ -46,7 +55,7 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
     nqp::bindattr($wrapper, $wrapper.WHAT, '$!code', $tracer);
     $tracer does role { method is-traced(::?CLASS:D: --> True) { } }
 }
-sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$multiness! --> Sub:D) {
+sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Sub:D) {
     sub TRACED-ROUTINE(|arguments --> Mu) is raw {
         my Thread:D  $thread    := $*THREAD;
         my Int:D     $id        := $?CLASS.next-id;
@@ -57,7 +66,7 @@ sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$multiness! --> Sub:D) {
         $?CLASS.trace:
             &routine, arguments, result, $!,
             :$id, :thread-id($thread.id), :$timestamp, :$calls,
-            :$multiness;
+            :$scope, :$multiness, :$prefix;
         $!.rethrow with $!;
         result
     }
@@ -72,20 +81,21 @@ method new(
     Capture:D  $arguments is raw,
     Mu         $result    is raw,
     Mu         $exception is raw,
-    Str:D     :$multiness = '',
               *%rest
     --> ::?CLASS:D
 ) {
     self.bless:
-        :$routine, :$arguments, :$result, :$exception, :$multiness,
+        :$routine, :$arguments, :$result, :$exception,
         |%rest
 }
 
 method package(::?CLASS:D: --> Mu) { $!routine.package.^name }
 
 method declarator(::?CLASS:D: --> Str:D)  {
-    my Mu $base := $!routine.^is_mixin ?? $!routine.^mixin_base !! $!routine.WHAT;
-    $!multiness ?? "$!multiness " ~ $base.^name.lc !! $base.^name.lc;
+    my Str:D $declarator = $!routine.^is_mixin ?? $!routine.^mixin_base.^name.lc !! $!routine.^name.lc;
+    $declarator [R~]= "$!multiness " if $!multiness;
+    $declarator [R~]= "$!scope "     if $!scope;
+    $declarator
 }
 
 method name(::?CLASS:D: --> Str:D) { $!routine.name }
@@ -130,7 +140,7 @@ method arguments-from-parameters(::?CLASS:D: --> Seq:D) {
 method success(::?CLASS:D: --> Bool:D) { ! $!exception.DEFINITE }
 
 multi method header(::?CLASS:D: --> Str:D) {
-    "($.package) $.declarator $.name"
+    "($.package) $.declarator $!prefix$.name"
 }
 
 multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
