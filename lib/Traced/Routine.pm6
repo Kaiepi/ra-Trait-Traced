@@ -30,10 +30,11 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw, Str:D :$multiness = '' 
 
     # Override the routine's code with its traced version's code:
     my Routine:D $traced := MAKE-TRACED-ROUTINE $routine.clone, :$multiness;
+    my Str:D     $name    = $routine.name;
     my Mu        $do     := nqp::getattr($traced, Code, '$!do');
     nqp::bindattr($routine, Code, '$!do', $do);
-    nqp::setcodename($do, $routine.name);
-    $routine does role :: { method is-traced(::?CLASS:D: --> True) { } }
+    nqp::setcodename($do, $name);
+    $routine does role { method is-traced(::?CLASS:D: --> True) { } }
 }
 # Metamodel::MultiMethodContainer wraps multi routines with an internal class;
 # we need another candidate to handle these.
@@ -43,7 +44,7 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
 
     my Routine:D $tracer := MAKE-TRACED-ROUTINE $wrapper.code, :$multiness;
     nqp::bindattr($wrapper, $wrapper.WHAT, '$!code', $tracer);
-    $tracer does role :: { method is-traced(::?CLASS:D: --> True) { } }
+    $tracer does role { method is-traced(::?CLASS:D: --> True) { } }
 }
 sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$multiness! --> Sub:D) {
     sub TRACED-ROUTINE(|arguments --> Mu) is raw {

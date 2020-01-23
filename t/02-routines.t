@@ -44,7 +44,7 @@ subtest 'tracing', {
         block
     }
 
-    plan 17;
+    plan 18;
 
     wrap-tests {
         lives-ok {
@@ -114,6 +114,9 @@ subtest 'tracing', {
             }() ~= ' PABUDUBU CIBUDU PAPABU CIBUDUD PAPUBABU CIBUBU BLULULU BLULULU';
         }, 'traced routines handle containers OK';
     };
+
+    is sub foo is traced { }.name, 'foo',
+      'traced routines have the correct name';
 }
 
 # vim: ft=perl6 sw=4 ts=4 sts=4 et
