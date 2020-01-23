@@ -1,6 +1,7 @@
 use v6.d;
 use Kind;
 use Traced::Routine;
+use Traced::Stash;
 use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
@@ -78,5 +79,9 @@ multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::PrivateMethodContainer], Bo
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MetaMethodContainer], Bool:D :$traced! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::MetaMethodContainer;
+    nextsame;
+}
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::Stashing], Bool:D :$traced! where ?*) is export {
+    Traced::Stash.wrap: T.WHO;
     nextsame;
 }

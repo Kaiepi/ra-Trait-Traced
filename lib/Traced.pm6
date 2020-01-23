@@ -42,7 +42,7 @@ proto method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
         sprintf $format, .key, $padding, .value
     })
 }
-multi method entries(::?CLASS:D: --> Seq:D) { ().Seq }
+multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) { ().Seq }
 
 #|[ Produces the footer of the trace's output. ]
 proto method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
