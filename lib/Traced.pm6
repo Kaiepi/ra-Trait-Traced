@@ -12,13 +12,10 @@ has Instant:D $.timestamp is required;
 #|[ The number of calls in the traced call stack.  ]
 has Int:D     $.calls     is required;
 
-#|[ Wraps an object of this trace's event type to make it traceable somehow. ]
-proto method wrap(::?CLASS:U: | --> Mu) {*}
-
 #|[ The colour to use for the key of the trace's output. ]
-method colour(::?CLASS:_: --> Int:D) { ... }
+method colour(::?CLASS:D: --> Int:D) { ... }
 #|[ The key of the trace's output. ]
-method key(::?CLASS:_: --> Str:D)    { ... }
+method key(::?CLASS:D: --> Str:D)    { ... }
 
 #|[ Whether or not the event traced succeeded. ]
 method success(::?CLASS:D: --> Bool:D) { ... }
@@ -63,6 +60,21 @@ multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
     }
 }
 
+multi method Str(::?CLASS:D: --> Str:D) {
+    @.lines
+==> map({ ' ' x 4 * $!calls ~ $_ })
+==> join($?NL)
+}
+multi method gist(::?CLASS:D: --> Str:D) {
+    @.lines(:tty)
+==> map({ ' ' x 4 * $!calls ~ $_ })
+==> join($?NL)
+}
+
+my atomicint $next-id = 1;
+#|[ Gets the next trace ID to use. ]
+method next-id(::?CLASS:U: --> Int:D) { $next-id⚛++ }
+
 my role CallStack {
     has atomicint $!call-frames = 0;
     method call-frames(::?CLASS:D: --> Int:D) {
@@ -78,37 +90,22 @@ my role CallStack {
 
 #|[ Returns the number of traced call frames there currently are in the given
     thread's call stack. ]
-method calls(::?CLASS:_: Thread:D $thread is raw --> Int:D) {
+method calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
     $thread.HOW.does($thread, CallStack)
         ?? $thread.call-frames
         !! 0
 }
 #|[ Increments the number of traced call frames for the given thread. ]
-method increment-calls(::?CLASS:_: Thread:D $thread is raw --> Int:D) {
+method increment-calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
     $thread.HOW.mixin($thread, CallStack) unless $thread.HOW.does($thread, CallStack);
     $thread.increment-call-frames
 }
 #|[ Decrements the number of traced call frames for the given thread. ]
-method decrement-calls(::?CLASS:_: Thread:D $thread is raw --> Int:D) {
+method decrement-calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
     $thread.HOW.does($thread, CallStack)
         ?? $thread.decrement-call-frames
         !! 0
 }
-
-multi method Str(::?CLASS:D: --> Str:D) {
-    @.lines
-==> map({ ' ' x 4 * $!calls ~ $_ })
-==> join($?NL)
-}
-multi method gist(::?CLASS:D: --> Str:D) {
-    @.lines(:tty)
-==> map({ ' ' x 4 * $!calls ~ $_ })
-==> join($?NL)
-}
-
-my atomicint $next-id = 1;
-#|[ Gets the next trace ID to use. ]
-method next-id(::?CLASS:_: --> Int:D) { $next-id⚛++ }
 
 # XXX: $*IN, $*OUT, and $*ERR aren't thread-safe as Raku handles them, and
 # IO::Handle.lock/.unlock don't help in this case! Luckily, on Windows and
@@ -134,3 +131,6 @@ method trace(::?CLASS:U: |args --> True) {
         $tracer."$method"($traced)
     }
 }
+
+#|[ Wraps an object of this trace's event type to make it traceable somehow. ]
+proto method wrap(::?CLASS:U: | --> Mu) {*}
