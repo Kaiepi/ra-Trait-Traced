@@ -12,7 +12,7 @@ subtest 'mapping parameters to arguments', {
         my Mu @args = do {
             my Traced::Routine:D $traced .= new:
                 &routine, $arguments, (try routine |$arguments), $!,
-                id => 0, thread-id => $*THREAD.id, timestamp => now;
+                id => 0, thread-id => $*THREAD.id, timestamp => now, calls => $++;
             $traced.arguments-from-parameters
         };
         sub is-arg(Int:D $idx, Mu $expected is raw, Str:D $message) {
@@ -89,7 +89,6 @@ subtest 'tracing', {
             proto sub multi-sub() is traced {*}
             multi sub multi-sub() is traced { }
             multi-sub;
-            sleep 0.1; # XXX FIXME: I/O buffering might not have the chance to finish in certain cases.
         }, 'a combination of traced proto and multi routines do not throw while tracing...';
         $*TRACER.flush;
         ok (my Str:D $output = $*TRACER.path.slurp(:close)), '...and produce output...';
