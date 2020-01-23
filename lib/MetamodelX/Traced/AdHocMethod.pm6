@@ -4,7 +4,7 @@ unit role MetamodelX::Traced::AdHocMethod[Method:D $method is raw];
 
 method compose(Mu $obj is raw, |) {
     my Bool:D $multi-found = False;
-    if Metamodel::Primitives.is_type(self, Metamodel::MultiMethodContainer) {
+    if Metamodel::Primitives.is_type: self, Metamodel::MultiMethodContainer {
         for self.multi_methods_to_incorporate: $obj {
             next unless .code =:= $method;
             Traced::Routine.wrap: $_, multiness => 'multi';
