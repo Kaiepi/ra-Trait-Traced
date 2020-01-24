@@ -1,6 +1,6 @@
 use v6.d;
 use Traced;
-unit class Traced::Routine does Traced;
+unit class Traced::Routine is Traced;
 
 has Routine:D $.routine   is required;
 has Capture:D $.arguments is required;
@@ -57,16 +57,16 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
 }
 sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Sub:D) {
     sub TRACED-ROUTINE(|arguments --> Mu) is raw {
+        my Int:D     $id        := Traced::Routine.next-id;
         my Thread:D  $thread    := $*THREAD;
-        my Int:D     $id        := $?CLASS.next-id;
-        my Int:D     $calls     := $?CLASS.increment-calls: $thread;
+        my Int:D     $calls     := Traced::Routine.increment-calls: $thread;
         my Instant:D $timestamp := now;
         my Mu        \result    := try routine |arguments;
-        $?CLASS.decrement-calls: $thread;
-        $?CLASS.trace:
+        Traced::Routine.trace:
             &routine, arguments, result, $!,
             :$id, :thread-id($thread.id), :$timestamp, :$calls,
             :$scope, :$multiness, :$prefix;
+        Traced::Routine.decrement-calls: $thread;
         $!.rethrow with $!;
         result
     }

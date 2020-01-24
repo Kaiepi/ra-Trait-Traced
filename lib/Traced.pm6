@@ -1,7 +1,7 @@
 use v6.d;
 use NativeCall;
 #|[ A role done by classes that handle tracing for a type of event. ]
-unit role Traced;
+unit class Traced;
 
 #|[ The ID of the trace. ]
 has Int:D     $.id        is required;
@@ -11,6 +11,8 @@ has Int:D     $.thread-id is required;
 has Instant:D $.timestamp is required;
 #|[ The number of calls in the traced call stack.  ]
 has Int:D     $.calls     is required;
+
+method new(::?CLASS:_: | --> ::?CLASS:D) { ... }
 
 #|[ The colour to use for the key of the trace's output. ]
 method colour(::?CLASS:D: --> Int:D) { ... }
@@ -77,9 +79,6 @@ method next-id(::?CLASS:U: --> Int:D) { $next-id⚛++ }
 
 my role CallStack {
     has atomicint $!call-frames = 0;
-    method call-frames(::?CLASS:D: --> Int:D) {
-        ⚛$!call-frames
-    }
     method increment-call-frames(::?CLASS:D: --> Int:D) {
         $!call-frames⚛++
     }
@@ -88,13 +87,6 @@ my role CallStack {
     }
 }
 
-#|[ Returns the number of traced call frames there currently are in the given
-    thread's call stack. ]
-method calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
-    $thread.HOW.does($thread, CallStack)
-        ?? $thread.call-frames
-        !! 0
-}
 #|[ Increments the number of traced call frames for the given thread. ]
 method increment-calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
     $thread.HOW.mixin($thread, CallStack) unless $thread.HOW.does($thread, CallStack);
@@ -120,7 +112,7 @@ method trace(::?CLASS:U: |args --> True) {
     state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
 
     my Mu         $tracer := $*TRACER;
-    my ::?CLASS:D $traced .= new: |args;
+    my ::?CLASS:D $traced := self.new: |args;
     my Int:D      $fd     := $tracer.native-descriptor;
     if $fd == $standard {
         fputs $traced.gist ~ $?NL, fdopen $fd, 'w';
