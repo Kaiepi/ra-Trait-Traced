@@ -30,3 +30,7 @@ v0.2.0:
     - Properly make traced call frame tracking thread-safe.
     - Fix bug where traced routines would claim their name is TRACED-ROUTINE
       instead of the original routine's name.
+
+v0.2.1:
+    - Optimize trace timestamp generation. This makes it so traces take a
+      negligable amount of time to generate.
