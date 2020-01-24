@@ -22,3 +22,11 @@ v0.1.1:
 v0.1.2:
     - Make routine call tracing more accurate when threads are involved by
       optimizing Traced::Routine.entries.
+
+v0.2.0:
+    - Implement support for tracing private methods.
+    - Implement support for tracing metamethods.
+    - Implement support for tracing stash lookups, binds, and assignments.
+    - Properly make traced call frame tracking thread-safe.
+    - Fix bug where traced routines would claim their name is TRACED-ROUTINE
+      instead of the original routine's name.
