@@ -92,7 +92,7 @@ my role Mixin {
 
     method ASSIGN-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
         my Int:D     $id        := Traced::Stash.next-id;
-        my Mu        $old-value  = self.Stash::AT-KEY: $lookup; # Intentionally uses $old-value's container.
+        my Mu        $old-value  = self.Map::AT-KEY: $lookup; # Intentionally uses $old-value's container.
         my Thread:D  $thread    := $*THREAD;
         my Int:D     $calls     := Traced::Stash.increment-calls: $thread;
         my Instant:D $timestamp := now;

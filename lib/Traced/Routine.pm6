@@ -62,11 +62,11 @@ sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$scope = '', Str:D :$multiness =
         my Int:D     $calls     := Traced::Routine.increment-calls: $thread;
         my Instant:D $timestamp := now;
         my Mu        \result    := try routine |arguments;
+        Traced::Routine.decrement-calls: $thread;
         Traced::Routine.trace:
             &routine, arguments, result, $!,
             :$id, :thread-id($thread.id), :$timestamp, :$calls,
             :$scope, :$multiness, :$prefix;
-        Traced::Routine.decrement-calls: $thread;
         $!.rethrow with $!;
         result
     }
