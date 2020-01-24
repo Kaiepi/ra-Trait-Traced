@@ -100,38 +100,39 @@ method declarator(::?CLASS:D: --> Str:D)  {
 
 method name(::?CLASS:D: --> Str:D) { $!routine.name }
 
-method parameters(::?CLASS:D: --> List:D) { $!routine.signature.params }
-
-method arguments-from-parameters(::?CLASS:D: --> Seq:D) {
+method parameters-to-arguments(::?CLASS:D: --> Seq:D) {
     gather {
         my Mu               @positional  = $!arguments.list;
-        my Mu               %named       = $!arguments.hash;
         my Int:D            $idx         = 0;
+        my Int:D            $total       = +@positional;
+        my Mu               %named       = $!arguments.hash;
         my SetHash:D[Str:D] $unseen     .= new: %named.keys;
-        for @.parameters {
+        for $!routine.signature.params {
             when .capture {
                 my Str:D @remaining = $unseen.keys;
-                take \(|($idx < +@positional ?? @positional[$idx..*] !! ()),
-                       |%(%named{@remaining}:p // ()));
-                $idx = +@positional;
-                $unseen{@remaining}:delete;
-            }
-            when .slurpy & .named {
-                my Str:D @remaining = $unseen.keys;
-                take %(%named{@remaining}:p // ());
+                take $_ => \(|($idx < $total ?? @positional[$idx..$total-1] !! ()), |%(%named{@remaining}:p));
+                $idx = $total;
                 $unseen{@remaining}:delete;
             }
             when .slurpy {
-                take $idx < +@positional ?? @positional[$idx..*] !! ();
-                $idx = +@positional;
+                if .named {
+                    my Str:D @remaining = $unseen.keys;
+                    take $_ => %(%named{@remaining}:p);
+                    $unseen{@remaining}:delete;
+                } else {
+                    take $_ => $idx < $total ?? @positional[$idx..$total-1] !! ();
+                    $idx = $total;
+                }
             }
             when .named {
                 my Str:D $name = .usage-name;
-                take %named{$name};
-                %named{$name}:delete;
+                if $unseen{$name}:exists {
+                    take $_ => %named{$name};
+                    $unseen{$name}:delete;
+                }
             }
             when .positional {
-                take @positional[$idx++]
+                take $_ => @positional[$idx++] unless $idx == $total;
             }
         }
     }
@@ -146,7 +147,7 @@ multi method header(::?CLASS:D: --> Str:D) {
 multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
     gather {
         my Str:D $method = $tty ?? 'gist' !! 'perl';
-        for @.parameters Z=> @.arguments-from-parameters {
+        for @.parameters-to-arguments {
             my Str:D $parameter = ~.key."$method"().match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
             my Str:D $argument  = .value."$method"();
             once $parameter = 'self' if .key.invocant && !.key.name.defined;
