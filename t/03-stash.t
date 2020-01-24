@@ -33,7 +33,7 @@ wrap-tests {
     }, 'can look up sigilless symbols...';
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
-      '...which produces output...';
+      '...which produce output...';
     ok $result ~~ / <after '] '> 'Foo::Foo' $$ /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -44,7 +44,7 @@ wrap-tests {
     }, 'can look up $ sigilled symbols...';
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
-      '...which produces output...';
+      '...which produce output...';
     ok $result ~~ / <after '] '> '$Foo::Bar' $$ /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -55,7 +55,7 @@ wrap-tests {
     }, 'can look up @ sigilled symbols...';
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
-      '...which produces output...';
+      '...which produce output...';
     ok $result ~~ / <after '] '> '@Foo::Baz' $$ /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -66,7 +66,7 @@ wrap-tests {
     }, 'can look up % sigilled symbols...';
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
-      '...which produces output...';
+      '...which produce output...';
     ok $result ~~ / <after '] '> '%Foo::Qux' $$ /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -77,7 +77,7 @@ wrap-tests {
     }, 'can look up & sigilled symbols...';
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
-      '...which produces output...';
+      '...which produce output...';
     ok $result ~~ / <after '] '> '&Foo::Quux' $$ /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -91,7 +91,7 @@ wrap-tests {
     }, 'can bind to symbols...';
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
-      '...which produces output...';
+      '...which produce output...';
     ok $result ~~ / « 'old: 0' $$ /,
       '...that includes the old value as an entry...';
     ok $result ~~ / « 'new: 5' $$ /,
@@ -104,7 +104,7 @@ wrap-tests {
     }, 'can assign to symbols...';
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
-      '...which produces output...';
+      '...which produce output...';
     ok $result ~~ / « 'old: 1' $$ /,
       '...that includes the old value as an entry...';
     ok $result ~~ / « 'new: 6' $$ /,
@@ -117,7 +117,7 @@ wrap-tests {
     }, 'can look up symbols with twigils...';
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
-      '...which produces output...';
+      '...which produce output...';
     ok $result ~~ / '$*Foo::DYNAMIC' /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -128,7 +128,7 @@ wrap-tests {
     }, 'stash lookups/binds/assignments handle containers ok';
 };
 
-# Foo::Foo gets evaluated well before this test actually runs.
+# Foo::Foo gets evaluated well before these tests actually runs.
 wrap-tests {
     use MONKEY-SEE-NO-EVAL;
 
