@@ -34,3 +34,7 @@ v0.2.0:
 v0.2.1:
     - Optimize trace timestamp generation. This makes it so traces take a
       negligable amount of time to generate.
+
+v0.2.2:
+    - Only map routine parameters to call arguments if they were actually
+      passed.
