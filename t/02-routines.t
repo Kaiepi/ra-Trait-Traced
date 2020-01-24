@@ -1,5 +1,6 @@
 use v6.d;
 use Test;
+use Traced;
 use Traced::Routine;
 use Trait::Traced;
 
@@ -12,7 +13,7 @@ subtest 'mapping parameters to arguments', {
         my Mu @args = do {
             my Traced::Routine:D $traced .= new:
                 &routine, $arguments, (try routine |$arguments), $!,
-                id => 0, thread-id => $*THREAD.id, timestamp => now, calls => $++;
+                id => 0, thread-id => $*THREAD.id, timestamp => timestamp, calls => $++;
             $traced.arguments-from-parameters
         };
         sub is-arg(Int:D $idx, Mu $expected is raw, Str:D $message) {

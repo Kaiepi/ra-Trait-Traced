@@ -57,11 +57,11 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
 }
 sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Sub:D) {
     sub TRACED-ROUTINE(|arguments --> Mu) is raw {
-        my Int:D     $id        := Traced::Routine.next-id;
-        my Thread:D  $thread    := $*THREAD;
-        my Int:D     $calls     := Traced::Routine.increment-calls: $thread;
-        my Instant:D $timestamp := now;
-        my Mu        \result    := try routine |arguments;
+        my Int:D    $id        := Traced::Routine.next-id;
+        my Thread:D $thread    := $*THREAD;
+        my Int:D    $calls     := Traced::Routine.increment-calls: $thread;
+        my Num:D    $timestamp := timestamp;
+        my Mu       \result     = try routine |arguments;
         Traced::Routine.decrement-calls: $thread;
         Traced::Routine.trace:
             &routine, arguments, result, $!,

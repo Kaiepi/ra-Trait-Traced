@@ -61,11 +61,11 @@ multi method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
 
 my role Mixin {
     method AT-KEY(::?CLASS:D: Str() $lookup --> Mu) is raw {
-        my Int:D     $id        := Traced::Stash.next-id;
-        my Thread:D  $thread    := $*THREAD;
-        my Int:D     $calls     := Traced::Stash.increment-calls: $thread;
-        my Instant:D $timestamp := now;
-        my Mu        \result     = try callsame;
+        my Int:D    $id        := Traced::Stash.next-id;
+        my Thread:D $thread    := $*THREAD;
+        my Int:D    $calls     := Traced::Stash.increment-calls: $thread;
+        my Num:D    $timestamp := timestamp;
+        my Mu       \result     = try callsame;
         Traced::Stash.decrement-calls: $thread;
         Traced::Stash.trace:
             Access::Lookup, self.gist, $lookup, result, $!,
@@ -75,12 +75,12 @@ my role Mixin {
     }
 
     method BIND-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
-        my Int:D     $id        := Traced::Stash.next-id;
-        my Mu        $old-value := self.Map::AT-KEY: $lookup;
-        my Thread:D  $thread    := $*THREAD;
-        my Int:D     $calls     := Traced::Stash.increment-calls: $thread;
-        my Instant:D $timestamp := now;
-        my Mu        \result     = try callsame;
+        my Int:D    $id        := Traced::Stash.next-id;
+        my Mu       $old-value := self.Map::AT-KEY: $lookup;
+        my Thread:D $thread    := $*THREAD;
+        my Int:D    $calls     := Traced::Stash.increment-calls: $thread;
+        my Num:D    $timestamp := timestamp;
+        my Mu       \result     = try callsame;
         Traced::Stash.decrement-calls: $thread;
         Traced::Stash.trace:
             Access::Bind, self.gist, $lookup, result, $!,
@@ -91,12 +91,12 @@ my role Mixin {
     }
 
     method ASSIGN-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
-        my Int:D     $id        := Traced::Stash.next-id;
-        my Mu        $old-value  = self.Map::AT-KEY: $lookup; # Intentionally uses $old-value's container.
-        my Thread:D  $thread    := $*THREAD;
-        my Int:D     $calls     := Traced::Stash.increment-calls: $thread;
-        my Instant:D $timestamp := now;
-        my Mu        \result     = try callsame;
+        my Int:D    $id        := Traced::Stash.next-id;
+        my Mu       $old-value  = self.Map::AT-KEY: $lookup; # Intentionally uses $old-value's container.
+        my Thread:D $thread    := $*THREAD;
+        my Int:D    $calls     := Traced::Stash.increment-calls: $thread;
+        my Num:D    $timestamp := timestamp;
+        my Mu       \result     = try callsame;
         Traced::Stash.decrement-calls: $thread;
         Traced::Stash.trace:
             Access::Assign, self.gist, $lookup, result, $!,

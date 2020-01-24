@@ -1,16 +1,28 @@
 use v6.d;
+use experimental :macros;
 use NativeCall;
 #|[ A role done by classes that handle tracing for a type of event. ]
 unit class Traced;
 
+# If &now were to be used to generate timestamps instead of this, it would
+# become the main bottleneck when generating a trace. Since we only care about
+# what the numeric value it contains is, not the additional features Instant
+# provides on top of that, we do the work &now does to generate a time for an
+# Instant ourselves.
+#|[ Generates a timestamp. ]
+macro timestamp() is export {
+    use nqp;
+    quasi { nqp::p6box_n(Rakudo::Internals.tai-from-posix: nqp::time_n(), 0) }
+}
+
 #|[ The ID of the trace. ]
-has Int:D     $.id        is required;
+has Int:D $.id        is required;
 #|[ The ID of the thread the trace was taken in. ]
-has Int:D     $.thread-id is required;
+has Int:D $.thread-id is required;
 #|[ The instant the trace was taken at. ]
-has Instant:D $.timestamp is required;
+has Num:D $.timestamp is required;
 #|[ The number of calls in the traced call stack.  ]
-has Int:D     $.calls     is required;
+has Int:D $.calls     is required;
 
 method new(::?CLASS:_: | --> ::?CLASS:D) { ... }
 
@@ -25,7 +37,7 @@ method success(::?CLASS:D: --> Bool:D) { ... }
 #|[ The title of the trace. ]
 method title(::?CLASS:D: Bool:D :$tty! --> Str:D) {
     my Str:D $format = $tty ?? "\e[2m%d [%d @ %f]\e[0m" !! "%d [%d @ %f]";
-    sprintf $format, $!id, $!thread-id, $!timestamp.Rat
+    sprintf $format, $!id, $!thread-id, $!timestamp
 }
 
 #|[ Produces the header of the trace's output. ]
