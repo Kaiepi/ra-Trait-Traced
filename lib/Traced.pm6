@@ -69,7 +69,7 @@ multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
     gather {
         take self.title: :$tty;
         take self.header: :$tty;
-        take ' ' x 4 ~ $_ for self.entries: :$tty;
+        take "    $_" for self.entries: :$tty;
         take self.footer: :$tty;
     }
 }
