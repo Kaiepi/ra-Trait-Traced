@@ -24,8 +24,9 @@ method new(
         |%rest
 }
 
-method colour(::?CLASS:D: --> 31)  { }
-method key(::?CLASS:D: --> 'CALL') { }
+method colour(::?CLASS:D: --> 31)          { }
+method category(::?CLASS:D: --> 'ROUTINE') { }
+method type(::?CLASS:D: --> 'CALL')        { }
 
 method package(::?CLASS:D: --> Mu) { $!routine.package.^name }
 
@@ -37,6 +38,32 @@ method declarator(::?CLASS:D: --> Str:D)  {
 }
 
 method name(::?CLASS:D: --> Str:D) { $!routine.name }
+
+method success(::?CLASS:D: --> Bool:D) { ! $!exception.DEFINITE }
+
+multi method header(::?CLASS:D: --> Str:D) {
+    "$.declarator $!prefix$.name ($.package)"
+}
+
+multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
+    gather {
+        my Str:D $method = $tty ?? 'gist' !! 'perl';
+        for @.parameters-to-arguments {
+            my Str:D $parameter = ~.key."$method"().match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
+            my Str:D $argument  = .value."$method"();
+            once $parameter = 'self' if .key.invocant && !.key.name.defined;
+            take $parameter => $argument;
+        }
+    }
+}
+
+multi method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
+    $!exception.DEFINITE
+        ?? $!exception.^name
+        !! $tty
+            ?? $!result.gist
+            !! $!result.perl
+}
 
 method parameters-to-arguments(::?CLASS:D: --> Seq:D) {
     gather {
@@ -74,32 +101,6 @@ method parameters-to-arguments(::?CLASS:D: --> Seq:D) {
             }
         }
     }
-}
-
-method success(::?CLASS:D: --> Bool:D) { ! $!exception.DEFINITE }
-
-multi method header(::?CLASS:D: --> Str:D) {
-    "($.package) $.declarator $!prefix$.name"
-}
-
-multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
-    gather {
-        my Str:D $method = $tty ?? 'gist' !! 'perl';
-        for @.parameters-to-arguments {
-            my Str:D $parameter = ~.key."$method"().match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
-            my Str:D $argument  = .value."$method"();
-            once $parameter = 'self' if .key.invocant && !.key.name.defined;
-            take $parameter => $argument;
-        }
-    }
-}
-
-multi method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    $!exception.DEFINITE
-        ?? $!exception.^name
-        !! $tty
-            ?? $!result.gist
-            !! $!result.perl
 }
 
 # You would think Routine.wrap would be useful here, but Rakudo often expects

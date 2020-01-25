@@ -27,8 +27,9 @@ method new(
     self.bless: :$access, :$name, :$lookup, :$result, :$exception, :$modified, |%rest
 }
 
-method colour(::?CLASS:D: --> 32) { }
-method key(::?CLASS:D: --> Str:D) { $!access.key.uc }
+method colour(::?CLASS:D: --> 32)        { }
+method category(::?CLASS:D: --> 'STASH') { }
+method type(::?CLASS:D: --> Str:D)       { $!access.key.uc }
 
 method success(::?CLASS:D: --> Bool:D) { ! $!exception.DEFINITE }
 
@@ -60,6 +61,20 @@ multi method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
 }
 
 my role Mixin {
+    method package_at_key(::?CLASS:D: str $lookup --> Mu) is raw {
+        my Int:D    $id        := Traced::Stash.next-id;
+        my Thread:D $thread    := $*THREAD;
+        my Int:D    $calls     := Traced::Stash.increment-calls: $thread;
+        my Num:D    $timestamp := timestamp;
+        my Mu       \result     = try callsame;
+        Traced::Stash.decrement-calls: $thread;
+        Traced::Stash.trace:
+            Access::Lookup, self.gist, $lookup, result, $!,
+            :$id, :thread-id($thread.id), :$timestamp, :$calls;
+        $!.rethrow with $!;
+        result
+    }
+
     method AT-KEY(::?CLASS:D: Str() $lookup --> Mu) is raw {
         my Int:D    $id        := Traced::Stash.next-id;
         my Thread:D $thread    := $*THREAD;

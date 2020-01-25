@@ -27,24 +27,27 @@ has Int:D $.calls     is required;
 method new(::?CLASS:_: | --> ::?CLASS:D) { ... }
 
 #|[ The colour to use for the key of the trace's output. ]
-method colour(::?CLASS:D: --> Int:D) { ... }
-#|[ The key of the trace's output. ]
-method key(::?CLASS:D: --> Str:D)    { ... }
+method colour(::?CLASS:D: --> Int:D)   { ... }
+#|[ The category of trace the trace belongs to. ]
+method category(::?CLASS:D: --> Str:D) { ... }
+#|[ The type of trace the trace is. ]
+method type(::?CLASS:D: --> Str:D)     { ... }
 
 #|[ Whether or not the event traced succeeded. ]
 method success(::?CLASS:D: --> Bool:D) { ... }
 
 #|[ The title of the trace. ]
 method title(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    my Str:D $format = $tty ?? "\e[2m%d [%d @ %f]\e[0m" !! "%d [%d @ %f]";
-    sprintf $format, $!id, $!thread-id, $!timestamp
+    $tty
+        ?? sprintf("\e[2m%d \e[%d;1m%s %s\e[0m \e[2m[%d @ %f]\e[0m", $!id, $.colour, $.category, $.type, $!thread-id, $!timestamp)
+        !! sprintf("%d %s %s [%d @ %f]", $!id, $.category, $.type, $!thread-id, $!timestamp)
 }
 
 #|[ Produces the header of the trace's output. ]
 proto method header(::?CLASS:D: Bool:D :$tty! --> Str:D) {
     $tty
-        ?? sprintf("\e[2m<==\e[0m \e[%s;1m[%s]\e[0m \e[1m%s\e[0m", $.colour, $.key, {*})
-        !! sprintf("<== [%s] %s", $.key, {*})
+        ?? sprintf("\e[2m<==\e[0m \e[1m%s\e[0m", {*})
+        !! sprintf("<== %s", {*})
 }
 
 #|[ Produces the entries of the trace's output, if any. ]
