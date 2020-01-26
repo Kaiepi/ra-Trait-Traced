@@ -17,6 +17,8 @@
 	"Traced" : "lib/Traced.pm6",
 	"Traced::Routine" : "lib/Traced/Routine.pm6",
 	"Traced::Stash" : "lib/Traced/Stash.pm6",
+	"Tracer" : "lib/Tracer.pm6",
+	"Tracer::Default" : "lib/Tracer/Default.pm6",
     "Trait::Traced" : "lib/Trait/Traced.pm6"
   },
   "resources" : [ ],
