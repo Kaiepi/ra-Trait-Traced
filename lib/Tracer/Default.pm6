@@ -41,7 +41,7 @@ role TTY[$handle] {
     }
 
     method header(::?CLASS:U: Traced:D $traced --> Str:D) {
-        sprintf "\e[2m<==\e[0m \e[1m%s\e[0m", $traced.input
+        sprintf "\e[2m<==\e[0m \e[1m%s\e[0m", $traced.what
     }
 
     method entries(::?CLASS:U: Traced:D $traced --> Iterable:D) {
@@ -99,7 +99,7 @@ role File[$handle] {
     }
 
     method header(::?CLASS:U: Traced:D $traced --> Str:D) {
-        sprintf "<== %s", $traced.input
+        sprintf "<== %s", $traced.what
     }
 
     method entries(::?CLASS:U: Traced:D $traced --> Iterable:D) {

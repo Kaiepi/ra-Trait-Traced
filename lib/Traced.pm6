@@ -26,9 +26,9 @@ method category(::?CLASS:D: --> Str:D) { ... }
 #|[ The type of trace the trace is. ]
 method type(::?CLASS:D: --> Str:D)     { ... }
 
-#|[ Produces the input object for which we performed a trace. ]
-proto method input(::?CLASS:D: --> Str:D) {*}
-multi method input(::?CLASS:D: --> Str:D) { ... }
+#|[ Produces a name for the object for which we performed a trace. ]
+proto method what(::?CLASS:D: --> Str:D) {*}
+multi method what(::?CLASS:D: --> Str:D) { ... }
 
 #|[ Produces the entries of the trace, if any. ]
 proto method entries(::?CLASS:D: --> Seq:D)      {*}
