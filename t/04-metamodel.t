@@ -25,7 +25,7 @@ subtest 'Metamodel::MethodContainer', {
         }, 'can call methods of traced classes...';
         $*TRACER.flush;
         ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
-        ok $output ~~ / <after ') '> 'method method' $$ /,
+        ok $output ~~ / <after '<== '> 'method method' » /,
           '...that claims methods have the correct declarator';
     };
 
@@ -65,9 +65,9 @@ subtest 'Metamodel::MultiMethodContainer', {
         }, 'can call multi methods of traced classes...';
         $*TRACER.flush;
         ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
-        ok $output ~~ / <after ') '> 'proto method multi-method' $$ /,
+        ok $output ~~ / <after '<== '> 'proto method multi-method' » /,
           '...that claims proto methods have the correct declarator...';
-        ok $output ~~ / <after ') '> 'multi method multi-method' $$ /,
+        ok $output ~~ / <after '<== '> 'multi method multi-method' » /,
           '...and likewise for multi methods';
     };
 
@@ -108,7 +108,7 @@ subtest 'Metamodel::PrivateMethodContainer', {
         }, 'can call traced private methods of traced classes...';
         $*TRACER.flush;
         ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
-        ok $output ~~ / <after ') '> 'method !private-method' $$ /,
+        ok $output ~~ / <after '<== '> 'method !private-method' » /,
           '...that claims private methods have the correct declarator';
     };
 };
@@ -125,7 +125,7 @@ subtest 'Metamodel::MetaMethodContainer', {
         }, 'can call traced metamethods of traced classes...';
         $*TRACER.flush;
         ok my Str:D $output = $*TRACER.path.slurp(:close), '...which produce output...';
-        ok $output ~~ / <after ') '> 'method ^meta-method' $$ /,
+        ok $output ~~ / <after '<== '> 'method ^meta-method' » /,
           '...that claims metamethods have the correct declarator';
     };
 };

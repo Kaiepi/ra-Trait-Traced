@@ -34,7 +34,7 @@ wrap-tests {
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
       '...which produce output...';
-    ok $result ~~ / <after '] '> 'Foo::Foo' $$ /,
+    ok $result ~~ / <after '<== '> 'Foo::Foo' »  /,
       '...that claims the lookup is for the correct symbol';
 };
 
@@ -45,7 +45,7 @@ wrap-tests {
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
       '...which produce output...';
-    ok $result ~~ / <after '] '> '$Foo::Bar' $$ /,
+    ok $result ~~ / <after '<== '> '$Foo::Bar' »  /,
       '...that claims the lookup is for the correct symbol';
 };
 
@@ -56,7 +56,7 @@ wrap-tests {
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
       '...which produce output...';
-    ok $result ~~ / <after '] '> '@Foo::Baz' $$ /,
+    ok $result ~~ / <after '<== '> '@Foo::Baz' »  /,
       '...that claims the lookup is for the correct symbol';
 };
 
@@ -67,7 +67,7 @@ wrap-tests {
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
       '...which produce output...';
-    ok $result ~~ / <after '] '> '%Foo::Qux' $$ /,
+    ok $result ~~ / <after '<== '> '%Foo::Qux' »  /,
       '...that claims the lookup is for the correct symbol';
 };
 
@@ -78,7 +78,7 @@ wrap-tests {
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
       '...which produce output...';
-    ok $result ~~ / <after '] '> '&Foo::Quux' $$ /,
+    ok $result ~~ / <after '<== '> '&Foo::Quux' »  /,
       '...that claims the lookup is for the correct symbol';
 };
 
@@ -118,7 +118,7 @@ wrap-tests {
     $*TRACER.flush;
     ok my Str:D $result = $*TRACER.path.slurp(:close),
       '...which produce output...';
-    ok $result ~~ / '$*Foo::DYNAMIC' /,
+    ok $result ~~ / <after '<== '> '$*Foo::DYNAMIC' »  /,
       '...that claims the lookup is for the correct symbol';
 };
 

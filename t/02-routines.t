@@ -122,14 +122,14 @@ subtest 'tracing', {
     wrap-tests {
         sub foo is traced { }();
         $*TRACER.flush;
-        ok $*TRACER.path.slurp(:close) ~~ / <after ') '> 'sub foo' $$ /,
+        ok $*TRACER.path.slurp(:close) ~~ / <after '<== '> 'sub foo' » /,
           'unscoped routines have the correct declarator';
     };
 
     wrap-tests {
         my sub foo is traced { }();
         $*TRACER.flush;
-        ok $*TRACER.path.slurp(:close) ~~ / <after ') '> 'my sub foo' $$ /,
+        ok $*TRACER.path.slurp(:close) ~~ / <after '<== '> 'my sub foo' » /,
           'scoped routines have the correct declarator';
     };
 
@@ -146,15 +146,15 @@ subtest 'tracing', {
         $*TRACER.flush;
 
         my Str:D $result = $*TRACER.IO.slurp: :close;
-        ok $result ~~ / <after ') '> 'proto method foo' $$ /,
+        ok $result ~~ / <after '<== '> 'proto method foo' » /,
           '...and trace output includes regular methods...';
-        ok $result ~~ / <after ') '> 'multi method foo' $$ /,
+        ok $result ~~ / <after '<== '> 'multi method foo' » /,
           '...multi methods...';
-        ok $result ~~ / <after ') '> 'method !foo' $$ /,
+        ok $result ~~ / <after '<== '> 'method !foo' » /,
           '...private methods...';
-        ok $result ~~ / <after ') '> 'method ^foo' $$ /,
+        ok $result ~~ / <after '<== '> 'method ^foo' » /,
           '...metamethods...';
-        ok $result ~~ / <after ') '> 'my method foo' $$ /,
+        ok $result ~~ / <after '<== '> 'my method foo' » /,
           '...and scoped methods';
     };
 }
