@@ -118,6 +118,9 @@ method decrement-calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
         !! 0
 }
 
+#|[ Wraps an object of this trace's event type to make it traceable somehow. ]
+proto method wrap(::?CLASS:U: | --> Mu) {*}
+
 # XXX: $*IN, $*OUT, and $*ERR aren't thread-safe as Raku handles them, and
 # IO::Handle.lock/.unlock don't help in this case! Luckily, on Windows and
 # POSIX platforms, using fputs instead is. This isn't entirely ideal, but
@@ -127,13 +130,20 @@ sub fdopen(int32, Str --> FILE) is native is symbol($*DISTRO.is-win ?? '_fdopen'
 sub fputs(Str, FILE --> int32)  is native {*}
 
 #|[ Traces an event. ]
-method trace(::?CLASS:U: |args --> True) {
-    state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
+proto method trace(::?CLASS:U: :$thread = $*THREAD, :$tracer = $*TRACER, |rest --> Mu) is raw {
+    my Int:D      $id        := self.next-id;
+    my Int:D      $calls     := self.increment-calls: $thread;
+    my Num:D      $timestamp := timestamp;
+    my Mu         $result    := try {{*}};
+    self.decrement-calls: $thread;
+    my ::?CLASS:D $traced    := self.new:
+        :$id, :thread-id($thread.id), :$calls, :$timestamp,
+        :$result, :exception($!),
+        |rest;
 
-    my Mu         $tracer := $*TRACER;
-    my ::?CLASS:D $traced := self.new: |args;
-    my Int:D      $fd     := $tracer.native-descriptor;
-    if $fd == $standard {
+    state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
+    my Int:D $fd := $tracer.native-descriptor;
+    if $fd ~~ $standard {
         fputs $traced.gist ~ $?NL, fdopen $fd, 'w';
     } else {
         $tracer.lock;
@@ -141,7 +151,7 @@ method trace(::?CLASS:U: |args --> True) {
         my Str:D $method = $tracer.t ?? 'say' !! 'put';
         $tracer."$method"($traced)
     }
-}
 
-#|[ Wraps an object of this trace's event type to make it traceable somehow. ]
-proto method wrap(::?CLASS:U: | --> Mu) {*}
+    $!.rethrow with $!;
+    $result
+}

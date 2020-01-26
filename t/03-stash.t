@@ -83,6 +83,10 @@ wrap-tests {
 };
 
 wrap-tests {
+    my Int:D $foo = 5;
+    Foo::<Foo> := Proxy.new:
+        FETCH => sub FETCH($)             { $foo },
+        STORE => sub STORE($, Int:D $bar) { $foo = $bar };
     lives-ok {
         my Int:D $foo = 5;
         Foo::<Foo> := Proxy.new:

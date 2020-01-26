@@ -11,7 +11,8 @@ has Bool:D   $.modified  is required;
 has Mu       $.old-value = Nil;
 has Mu       $.new-value = Nil;
 
-method new(::?CLASS:_: Access:D $access, Str:D $name, Str:D $lookup, *%rest --> ::?CLASS:D) {
+method new(::?CLASS:_: Access:D $access, Stash:D $stash, Str:D $lookup, *%rest --> ::?CLASS:D) {
+    my Str:D  $name     = $stash.gist;
     my Bool:D $modified = %rest{<old-value new-value>}:exists.all.so;
     self.bless: :$access, :$name, :$lookup, :$modified, |%rest
 }
@@ -40,56 +41,31 @@ multi method entries(::?CLASS:D $ where { .modified }: Bool:D :$tty! --> Seq:D) 
 }
 
 my role Mixin {
-    method AT-KEY(::?CLASS:D: Str() $lookup --> Mu) is raw {
-        my Int:D    $id        := Traced::Stash.next-id;
-        my Thread:D $thread    := $*THREAD;
-        my Int:D    $calls     := Traced::Stash.increment-calls: $thread;
-        my Num:D    $timestamp := timestamp;
-        my Mu       $result    := try callsame;
-        Traced::Stash.decrement-calls: $thread;
-        Traced::Stash.trace:
-            Access::Lookup, self.gist, $lookup,
-            :$id, :thread-id($thread.id), :$timestamp, :$calls,
-            :$result, :exception($!);
-        $!.rethrow with $!;
-        $result
+    multi method AT-KEY(::?CLASS:D: Str() $lookup --> Mu) is raw {
+        Traced::Stash.trace: Access::Lookup, self, $lookup
     }
 
-    method BIND-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
-        my Int:D    $id        := Traced::Stash.next-id;
-        my Mu       $old-value := self.Map::AT-KEY: $lookup;
-        my Thread:D $thread    := $*THREAD;
-        my Int:D    $calls     := Traced::Stash.increment-calls: $thread;
-        my Num:D    $timestamp := timestamp;
-        my Mu       $result    := try callsame;
-        Traced::Stash.decrement-calls: $thread;
-        Traced::Stash.trace:
-            Access::Bind, self.gist, $lookup,
-            :$id, :thread-id($thread.id), :$timestamp, :$calls,
-            :$result, :exception($!),
-            :$old-value, :$new-value;
-        $!.rethrow with $!;
-        $result
+    multi method BIND-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
+        my Mu $old-value := self.Map::AT-KEY: $lookup;
+        Traced::Stash.trace: Access::Bind, self, $lookup, :$old-value, :$new-value;
     }
 
-    method ASSIGN-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
-        my Int:D    $id        := Traced::Stash.next-id;
-        my Mu       $old-value  = self.Map::AT-KEY: $lookup; # Intentionally uses $old-value's container.
-        my Thread:D $thread    := $*THREAD;
-        my Int:D    $calls     := Traced::Stash.increment-calls: $thread;
-        my Num:D    $timestamp := timestamp;
-        my Mu       $result    := try callsame;
-        Traced::Stash.decrement-calls: $thread;
-        Traced::Stash.trace:
-            Access::Assign, self.gist, $lookup,
-            :$id, :thread-id($thread.id), :$timestamp, :$calls,
-            :$result, :exception($!),
-            :$old-value, :$new-value;
-        $!.rethrow with $!;
-        $result
+    multi method ASSIGN-KEY(::?CLASS:D: Str() $lookup, Mu $new-value is raw --> Mu) is raw {
+        my Mu $old-value = self.Map::AT-KEY: $lookup; # Intentionally uses $old-value's container.
+        Traced::Stash.trace: Access::Assign, self, $lookup, :$old-value, :$new-value;
     }
 }
 
 multi method wrap(::?CLASS:U: Stash:D $stash is raw --> Mu) {
     $stash.^mixin: Mixin;
+}
+
+multi method trace(::?CLASS:U: Access::Lookup, Stash:D $stash, Str:D $lookup --> Mu) is raw {
+    $stash.Stash::AT-KEY: $lookup
+}
+multi method trace(::?CLASS:U: Access::Bind, Stash:D $stash, Str:D $lookup, Mu :$old-value is raw, Mu :$new-value is raw --> Mu) is raw {
+    $stash.Stash::BIND-KEY: $lookup, $new-value
+}
+multi method trace(::?CLASS:U: Access::Assign, Stash:D $stash, Str:D $lookup, Mu :$old-value is raw, Mu :$new-value is raw --> Mu) is raw {
+    $stash.Stash::ASSIGN-KEY: $lookup, $new-value
 }
