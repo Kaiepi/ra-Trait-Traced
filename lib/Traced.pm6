@@ -44,24 +44,27 @@ proto method wrap(::?CLASS:U: | --> Mu) {*}
 #|[ Traces an event. ]
 proto method trace(::?CLASS:U: :$thread = $*THREAD, :$tracer = $*TRACER, |rest --> Mu) is raw {
     use nqp;
-
-    # Do not trace events during precomp.
-    nqp::if(nqp::isconcrete(my Mu $W := nqp::getlexdyn('$*W')) && $W.is_precompilation_mode, return {*});
-
-    # Get metadata for the trace and run the traced event, grabbing the result
-    # and any exception thrown.
+    # Never trace events during precomp. We can find out if we're in precomp
+    # mode through $*W, but doing a dynamic lookup for it the normal way has
+    # too much overhead.
+    nqp::if(nqp::isconcrete(my Mu $W := nqp::getlexdyn('$*W')) && $W.is_precompilation_mode,
+            return {*});
+    # Grab the metadata for the trace before running the traced event, catching
+    # any exceptions thrown so we can clean up afterwards. We grab the
+    # numeric value for the trace's timestamp directly since &now has more
+    # overhead and Instant's features aren't useful in our case.
     my Int:D $id        := self!next-id;
     my Int:D $calls     := self!increment-calls: $thread;
     my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n(), 0;
     my Mu    $result    := try {{*}};
     self!decrement-calls: $thread;
-
-    # Output a trace.
+    # Output a trace for the event.
     $tracer.say: self.new:
         :$id, :thread-id($thread.id), :$calls, :$timestamp,
-        :$result, :exception($!), |rest;
-
-    # Rethrow any caught exception and return the original result.
+        :$result, :exception($!),
+        |rest;
+    # Rethrow any exception thrown by the traced event and return its original
+    # result if we managed to survive.
     $!.rethrow with $!;
     $result
 }
