@@ -14,7 +14,7 @@ subtest 'mapping parameters to arguments', {
         my Mu @params-to-args = do {
             my Traced::Routine:D $traced .= new:
                 &routine, $arguments,
-                id => 0, thread-id => $*THREAD.id, timestamp => timestamp, calls => $++,
+                id => 0, thread-id => $*THREAD.id, timestamp => now.Num, calls => $++,
                 result => (try routine |$arguments), exception => $!;
             $traced.parameters-to-arguments
         };

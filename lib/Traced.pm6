@@ -41,27 +41,27 @@ method failed(::?CLASS:D: --> Bool:D) { $!result.isa(Failure) && $!result.DEFINI
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
 
-# If &now were to be used to generate timestamps instead of this, it would
-# become the main bottleneck when generating a trace. Since we only care about
-# what the numeric value it contains is, not the additional features Instant
-# provides on top of that, we do the work &now does to generate a time for an
-# Instant ourselves.
-#|[ Generates a timestamp. ]
-macro timestamp() is export {
-    use nqp;
-    quasi { nqp::p6box_n(Rakudo::Internals.tai-from-posix: nqp::time_n(), 0) }
-}
-
 #|[ Traces an event. ]
 proto method trace(::?CLASS:U: :$thread = $*THREAD, :$tracer = $*TRACER, |rest --> Mu) is raw {
+    use nqp;
+
+    # Do not trace events during precomp.
+    nqp::if(nqp::isconcrete(my Mu $W := nqp::getlexdyn('$*W')) && $W.is_precompilation_mode, return {*});
+
+    # Get metadata for the trace and run the traced event, grabbing the result
+    # and any exception thrown.
     my Int:D $id        := self!next-id;
     my Int:D $calls     := self!increment-calls: $thread;
-    my Num:D $timestamp := timestamp;
+    my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n(), 0;
     my Mu    $result    := try {{*}};
     self!decrement-calls: $thread;
+
+    # Output a trace.
     $tracer.say: self.new:
         :$id, :thread-id($thread.id), :$calls, :$timestamp,
         :$result, :exception($!), |rest;
+
+    # Rethrow any caught exception and return the original result.
     $!.rethrow with $!;
     $result
 }

@@ -8,11 +8,11 @@ use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
 use MetamodelX::Traced::MetaMethodContainer;
-sub EXPORT(--> Map:D) {
-    PROCESS::<$TRACER> := Tracer::Default[$*OUT];
-    Map.new
-}
 unit module Trait::Traced:ver<0.2.2>:auth<github:Kaiepi>:api<0>;
+
+INIT {
+    PROCESS::<$TRACER> := Tracer::Default[$*OUT] unless PROCESS::<$TRACER>:exists;
+}
 
 #|[ Exception thrown by the "is traced" trait when a feature is not yet implemented. ]
 my class X::Trait::Traced::NYI is Exception is export {
