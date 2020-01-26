@@ -37,59 +37,109 @@ method category(::?CLASS:D: --> Str:D) { ... }
 #|[ The type of trace the trace is. ]
 method type(::?CLASS:D: --> Str:D)     { ... }
 
-#|[ The title of the trace. ]
-method title(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    $tty
-        ?? sprintf("\e[2m%d \e[%d;1m%s %s\e[0m \e[2m[%d @ %f]\e[0m", $!id, $.colour, $.category, $.type, $!thread-id, $!timestamp)
-        !! sprintf("%d %s %s [%d @ %f]", $!id, $.category, $.type, $!thread-id, $!timestamp)
+proto method title(::?CLASS:D: --> Str:D) {
+    sprintf {*}, $!id, $.category, $.type, $!thread-id, $!timestamp
 }
 
-#|[ Produces the header of the trace's output. ]
-proto method header(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    $tty
-        ?? sprintf("\e[2m<==\e[0m \e[1m%s\e[0m", {*})
-        !! sprintf("<== %s", {*})
-}
+proto method header(::?CLASS:D: --> Str:D)  {*}
 
-#|[ Produces the entries of the trace's output, if any. ]
-proto method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
-    my Pair:D @entries = {*} ==> map({
-        state Str:D $format  = $tty ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
-        state Int:D $width   = @entries.map(*.key.chars).max;
-        my    Str:D $padding = ' ' x $width - .key.chars;
-        sprintf $format, .key, $padding, .value
-    })
-}
-multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) { ().Seq }
+proto method entries(::?CLASS:D: --> Seq:D) {*}
 
-#|[ Produces the footer of the trace's output. ]
-method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    my Str:D $format = $tty ?? "\e[2m%s\e[0m %s" !! "%s %s";
-    with $!exception {
-        sprintf $format, '!!!', $!exception.^name;
-    } else {
-        sprintf $format, '==>', $tty ?? $!result.gist !! $!result.perl;
-    }
-}
+method footer(::?CLASS:D: --> Str:D) { ... }
 
-multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
+multi method lines(::?CLASS:D: --> Seq:D) {
     gather {
-        take self.title: :$tty;
-        take self.header: :$tty;
-        take "    $_" for self.entries: :$tty;
-        take self.footer: :$tty;
+        take $.title;
+        take $.header;
+        take $_ for @.entries;
+        take $.footer;
+    } ==> map({ ' ' x 4 * $!calls ~ $_ })
+}
+
+multi method gist(::?CLASS:D: --> Str:D) { ... }
+multi method say(::?CLASS:D: --> Str:D)  { ... }
+
+# XXX TODO: The logic handled by these roles belongs elsewhere.
+my role StandardStream[Int:D $fd] {
+    # XXX: $*IN, $*OUT, and $*ERR aren't thread-safe as Raku handles them, and
+    # IO::Handle.lock/.unlock don't help in this case! Luckily, on Windows and
+    # POSIX platforms, using fputs instead is. This isn't entirely ideal, but
+    # it's good enough for now.
+    my class FILE is repr<CPointer> { }
+    sub fdopen(int32, Str --> FILE) is native is symbol($*DISTRO.is-win ?? '_fdopen' !! 'fdopen') {*}
+    sub fputs(Str, FILE --> int32)  is native {*}
+    my FILE:D $handle = fdopen $fd, 'w';
+
+    #|[ The title of the trace. ]
+    multi method title(::?CLASS:D: --> Str:D)  {
+        "\e[2m%s \e[$.colour;1m%s %s\e[0m \e[2m[%d @ %f]\e[0m"
+    }
+
+    #|[ Produces the header of the trace's output. ]
+    multi method header(::?CLASS:D: --> Str:D) {
+        sprintf "\e[2m<==\e[0m \e[1m%s\e[0m", callsame
+    }
+
+    #|[ Produces the entries of the trace's output, if any. ]
+    multi method entries(::?CLASS:D: --> Seq:D) {
+        my Pair:D @entries = callsame() ==> map({
+            state Int:D $width = @entries.map(*.key.chars).max;
+            my Str:D $padding = ' ' x $width - .key.chars;
+            sprintf "    \e[1m%s\e[0m:%s %s", .key, $padding, .value
+        })
+    }
+
+    #|[ Produces the footer of the trace's output. ]
+    method footer(::?CLASS:D: --> Str:D) {
+        with $.exception {
+            sprintf "\e[2m!!!\e[0m %s", $.exception.^name;
+        } else {
+            sprintf "\e[2m==>\e[0m %s", $.result.gist;
+        }
+    }
+
+    multi method gist(::?CLASS:D: --> Str:D) { @.lines.join: $?NL }
+    multi method say(::?CLASS:D: --> True)   { fputs self.gist ~ $?NL, $handle }
+}
+
+my role Handle[$handle] {
+    #|[ The title of the trace. ]
+    multi method title(::?CLASS:D: --> '%d %s %s [%d @ %f]') { }
+
+    #|[ Produces the header of the trace's output. ]
+    multi method header(::?CLASS:D: --> Str:D) { '<== ' ~ callsame }
+
+    #|[ Produces the entries of the trace's output, if any. ]
+    multi method entries(::?CLASS:D: --> Seq:D) {
+        my Pair:D @entries = callsame() ==> map({
+            state Int:D $width = @entries.map(*.key.chars).max;
+            my Str:D $padding = ' ' x $width - .key.chars;
+            sprintf "    %s:%s %s", .key, $padding, .value
+        })
+    }
+
+    #|[ Produces the footer of the trace's output. ]
+    method footer(::?CLASS:D: --> Str:D) {
+        # XXX: Handle this from Traced instead.
+        with $.exception {
+            sprintf '!!! %s', $.exception.^name;
+        } else {
+            sprintf '==> %s', $.result.perl;
+        }
+    }
+
+    multi method gist(::?CLASS:D: --> Str:D) { @.lines.join: $handle.nl-out }
+    multi method say(::?CLASS:D: --> Bool:D) {
+        $handle.lock;
+        LEAVE $handle.unlock;
+        $handle.say: self
     }
 }
 
-multi method Str(::?CLASS:D: --> Str:D) {
-    @.lines
-==> map({ ' ' x 4 * $!calls ~ $_ })
-==> join($?NL)
-}
-multi method gist(::?CLASS:D: --> Str:D) {
-    @.lines(:tty)
-==> map({ ' ' x 4 * $!calls ~ $_ })
-==> join($?NL)
+method ^parameterize(::?CLASS:U $this is raw, $handle --> Mu) {
+    state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
+    my Int:D $fd = $handle.native-descriptor;
+    $this but ($fd ~~ $standard ?? StandardStream[$fd] !! Handle[$handle])
 }
 
 my atomicint $next-id = 1;
@@ -98,6 +148,9 @@ method next-id(::?CLASS:U: --> Int:D) { $next-id⚛++ }
 
 my role CallStack {
     has atomicint $!call-frames = 0;
+    method call-frames(::?CLASS:D: --> Int:D) {
+        ⚛$!call-frames
+    }
     method increment-call-frames(::?CLASS:D: --> Int:D) {
         $!call-frames⚛++
     }
@@ -106,6 +159,12 @@ my role CallStack {
     }
 }
 
+#|[ Gets the number of traced call frames for the given thread. ]
+method calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
+    $thread.HOW.does($thread, CallStack)
+        ?? $thread.call-frames
+        !! 0
+}
 #|[ Increments the number of traced call frames for the given thread. ]
 method increment-calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
     $thread.HOW.mixin($thread, CallStack) unless $thread.HOW.does($thread, CallStack);
@@ -115,42 +174,28 @@ method increment-calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
 method decrement-calls(::?CLASS:U: Thread:D $thread is raw --> Int:D) {
     $thread.HOW.does($thread, CallStack)
         ?? $thread.decrement-call-frames
-        !! 0
+        !! -1
 }
 
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
 
-# XXX: $*IN, $*OUT, and $*ERR aren't thread-safe as Raku handles them, and
-# IO::Handle.lock/.unlock don't help in this case! Luckily, on Windows and
-# POSIX platforms, using fputs instead is. This isn't entirely ideal, but
-# it's good enough for now.
-my class FILE is repr<CPointer> { }
-sub fdopen(int32, Str --> FILE) is native is symbol($*DISTRO.is-win ?? '_fdopen' !! 'fdopen') {*}
-sub fputs(Str, FILE --> int32)  is native {*}
-
+my Supplier:D $traces .= new;
+# XXX FIXME: This won't be thread-safe until traced events only keep strings
+# instead of objects.
+$traces.Supply.act({ .say });
 #|[ Traces an event. ]
 proto method trace(::?CLASS:U: :$thread = $*THREAD, :$tracer = $*TRACER, |rest --> Mu) is raw {
-    my Int:D      $id        := self.next-id;
-    my Int:D      $calls     := self.increment-calls: $thread;
-    my Num:D      $timestamp := timestamp;
-    my Mu         $result    := try {{*}};
+    my Int:D $id        := self.next-id;
+    my Int:D $calls     := self.increment-calls: $thread;
+    my Num:D $timestamp := timestamp;
+    my Mu    $result    := try {{*}};
     self.decrement-calls: $thread;
-    my ::?CLASS:D $traced    := self.new:
+
+    $traces.emit: self.^parameterize($tracer).new:
         :$id, :thread-id($thread.id), :$calls, :$timestamp,
         :$result, :exception($!),
         |rest;
-
-    state Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
-    my Int:D $fd := $tracer.native-descriptor;
-    if $fd ~~ $standard {
-        fputs $traced.gist ~ $?NL, fdopen $fd, 'w';
-    } else {
-        $tracer.lock;
-        LEAVE $tracer.unlock;
-        my Str:D $method = $tracer.t ?? 'say' !! 'put';
-        $tracer."$method"($traced)
-    }
 
     $!.rethrow with $!;
     $result

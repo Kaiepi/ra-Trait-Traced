@@ -31,12 +31,11 @@ multi method header(::?CLASS:D: --> Str:D) {
     "$.declarator $!prefix$.name ($.package)"
 }
 
-multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
+multi method entries(::?CLASS:D: --> Seq:D) {
     gather {
-        my Str:D $method = $tty ?? 'gist' !! 'perl';
         for @.parameters-to-arguments {
-            my Str:D $parameter = ~.key."$method"().match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
-            my Str:D $argument  = .value."$method"();
+            my Str:D $parameter = ~.key.perl.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
+            my Str:D $argument  = .value.gist;
             once $parameter = 'self' if .key.invocant && !.key.name.defined;
             take $parameter => $argument;
         }
