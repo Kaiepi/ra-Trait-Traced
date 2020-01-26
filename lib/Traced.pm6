@@ -54,11 +54,11 @@ proto method trace(::?CLASS:U: :$thread = $*THREAD, :$tracer = $*TRACER, |rest -
     my Int:D      $calls     := self!increment-calls: $thread;
     my Num:D      $timestamp := timestamp;
     my Mu         $result    := try {{*}};
+    self!decrement-calls: $thread;
     $tracer.say: self.new:
         :$id, :thread-id($thread.id), :$calls, :$timestamp,
         :$result, :exception($!),
         |rest;
-    self!decrement-calls: $thread;
     $!.rethrow with $!;
     $result
 }
