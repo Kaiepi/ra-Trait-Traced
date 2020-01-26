@@ -1,12 +1,13 @@
 use v6.d;
 use Test;
+use Tracer::Default;
 use Trait::Traced;
 
 plan 4;
 
 sub wrap-tests(&block) {
-    my Str:D      $filename  = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
-    my IO::Pipe:D $*TRACER  := $*TMPDIR.child($filename).IO.open: :w;
+    my Str:D $filename = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
+    my $*TRACER := Tracer::Default[$*TMPDIR.child($filename).IO.open: :w];
     LEAVE {
         $*TRACER.close;
         $*TRACER.path.unlink;

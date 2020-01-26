@@ -27,9 +27,7 @@ method declarator(::?CLASS:D: --> Str:D)  {
 
 method name(::?CLASS:D: --> Str:D) { $!routine.name }
 
-multi method header(::?CLASS:D: --> Str:D) {
-    "$.declarator $!prefix$.name ($.package)"
-}
+multi method input(::?CLASS:D: --> Str:D) { "$.declarator $!prefix$.name ($.package)" }
 
 multi method entries(::?CLASS:D: --> Iterable:D) {
     gather for @.parameters-to-arguments -> Pair:D (Parameter:D :key($parameter), Mu :value($argument) is raw) {

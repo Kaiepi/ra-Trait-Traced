@@ -2,6 +2,7 @@ use v6.d;
 use Test;
 use Traced;
 use Traced::Routine;
+use Tracer::Default;
 use Trait::Traced;
 
 plan 2;
@@ -41,8 +42,12 @@ subtest 'mapping parameters to arguments', {
 
 subtest 'tracing', {
     sub wrap-tests(&block) {
-        my Str:D      $filename  = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
-        my IO::Pipe:D $*TRACER  := $*TMPDIR.child($filename).open(:mode<rw>, :create, :append);
+        my Str:D $filename = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
+        my $*TRACER := Tracer::Default[$*TMPDIR.child($filename).open: :w];
+        LEAVE {
+            $*TRACER.close;
+            $*TRACER.path.unlink;
+        }
         block
     }
 

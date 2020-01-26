@@ -1,12 +1,13 @@
 use v6.d;
 use Test;
+use Tracer::Default;
 use Trait::Traced;
 
 plan 29;
 
 sub wrap-tests(&block is raw --> Mu) is raw {
     my Str:D      $filename  = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
-    my IO::Pipe:D $*TRACER  := $*TMPDIR.child($filename).IO.open: :w;
+    my IO::Pipe:D $*TRACER  := Tracer::Default[$*TMPDIR.child($filename).IO.open: :w];
     LEAVE {
         $*TRACER.close;
         $*TRACER.path.unlink;
@@ -16,7 +17,7 @@ sub wrap-tests(&block is raw --> Mu) is raw {
 
 # $Bar, @Baz, and %Qux get their symbols looked up outside of the tests, which
 # gets traced to $*OUT without this.
-$PROCESS::TRACER = $*OUT.clone;
+BEGIN PROCESS::<$TRACER> := Tracer::Default[$*OUT but role { method t(--> True) { }; method WRITE(|) { 0 } }];
 
 my module Foo is traced {
     constant Foo = 0;
@@ -84,9 +85,6 @@ wrap-tests {
 
 wrap-tests {
     my Int:D $foo = 5;
-    Foo::<Foo> := Proxy.new:
-        FETCH => sub FETCH($)             { $foo },
-        STORE => sub STORE($, Int:D $bar) { $foo = $bar };
     lives-ok {
         my Int:D $foo = 5;
         Foo::<Foo> := Proxy.new:

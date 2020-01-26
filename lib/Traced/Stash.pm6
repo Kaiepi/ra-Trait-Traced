@@ -21,7 +21,7 @@ method colour(::?CLASS:D: --> 32)        { }
 method category(::?CLASS:D: --> 'STASH') { }
 method type(::?CLASS:D: --> Str:D)       { $!access.key.uc }
 
-multi method header(::?CLASS:D: --> Str:D) {
+multi method input(::?CLASS:D: --> Str:D) {
     my Int:D $idx = $!lookup.substr(0, 1) eq <$ @ % &>.any
                  ?? $!lookup.substr(1, 1) eq <* . ! ^ : ? = ~>.any
                     ?? 2

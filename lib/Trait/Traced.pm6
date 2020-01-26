@@ -2,13 +2,14 @@ use v6.d;
 use Kind;
 use Traced::Routine;
 use Traced::Stash;
+use Tracer::Default;
 use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
 use MetamodelX::Traced::MetaMethodContainer;
 sub EXPORT(--> Map:D) {
-    PROCESS::<$TRACER> := $*OUT;
+    PROCESS::<$TRACER> := Tracer::Default[$*OUT];
     Map.new
 }
 unit module Trait::Traced:ver<0.2.2>:auth<github:Kaiepi>:api<0>;
