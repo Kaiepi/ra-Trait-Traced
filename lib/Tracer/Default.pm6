@@ -126,7 +126,7 @@ role File[$handle] {
 }
 
 method ^parameterize(::?CLASS:U $this is raw, $handle --> Mu) {
-    my Mu $mixin := $this.^mixin: $handle.does(IO) && $handle.t ?? TTY[$handle] !! File[$handle];
+    my Mu $mixin := $this.^mixin: $handle.isa(IO::Handle) && $handle.t ?? TTY[$handle] !! File[$handle];
     $mixin.^set_name: $this.^name ~ qq/["$handle"]/;
     $mixin
 }
