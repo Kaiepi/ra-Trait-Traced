@@ -32,11 +32,10 @@ multi method header(::?CLASS:D: --> Str:D) {
         !! sprintf('%s::%s', $!name, $!lookup)
 }
 
-multi method entries(::?CLASS:D $ where { .modified }: Bool:D :$tty! --> Seq:D) {
-    gather {
-        my Str:D $method = $tty ?? 'gist' !! 'perl';
-        take 'old' => $!old-value."$method"();
-        take 'new' => $!new-value."$method"();
+multi method entries(::?CLASS:D: --> Iterable:D) {
+    gather if $!modified {
+        take 'old' => $!old-value;
+        take 'new' => $!new-value;
     }
 }
 

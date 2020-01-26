@@ -28,6 +28,20 @@ has Mu    $.result    is required;
 #|[ The exception thrown when running the traced event, if any. ]
 has Mu    $.exception is required;
 
+proto method stringify(::?CLASS:_: Mu, Bool:D :$tty! --> Str:D) {*}
+multi method stringify(::?CLASS:_: Failure:D $failure, Bool:D :$tty! where ?* --> Str:D) {
+    sprintf "\e[33m%s\e[0m", $failure.exception.^name
+}
+multi method stringify(::?CLASS:_: Exception:D $exception, Bool:D :$tty! where ?* --> Str:D) {
+    sprintf "\e[31m%s\e[0m", $exception.^name
+}
+multi method stringify(::?CLASS:_: Mu $value is raw, Bool:D :$tty! where ?* --> Str:D) {
+    $value.gist
+}
+multi method stringify(::?CLASS:_: Mu $value is raw, Bool:D :$tty! where !* --> Str:D) {
+    $value.perl
+}
+
 method new(::?CLASS:_: | --> ::?CLASS:D) { ... }
 
 #|[ The colour to use for the key of the trace's output. ]
@@ -39,36 +53,34 @@ method type(::?CLASS:D: --> Str:D)     { ... }
 
 #|[ The title of the trace. ]
 method title(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    $tty
-        ?? sprintf("\e[2m%d \e[%d;1m%s %s\e[0m \e[2m[%d @ %f]\e[0m", $!id, $.colour, $.category, $.type, $!thread-id, $!timestamp)
-        !! sprintf("%d %s %s [%d @ %f]", $!id, $.category, $.type, $!thread-id, $!timestamp)
+    my Str:D $format = $tty ?? "\e[2m%s \e[$.colour;1m%s %s\e[0m \e[2m[%d @ %f]\e[0m" !! "%d %s %s [%d @ %d]";
+    sprintf $format, $!id, $.category, $.type, $!thread-id, $!timestamp
 }
 
 #|[ Produces the header of the trace's output. ]
 proto method header(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    $tty
-        ?? sprintf("\e[2m<==\e[0m \e[1m%s\e[0m", {*})
-        !! sprintf("<== %s", {*})
+    my Str:D $format = $tty ?? "\e[2m<==\e[0m \e[1m%s\e[0m" !! "<== %s";
+    sprintf $format, {*}
 }
 
 #|[ Produces the entries of the trace's output, if any. ]
 proto method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
     my Pair:D @entries = {*} ==> map({
-        state Str:D $format  = $tty ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
-        state Int:D $width   = @entries.map(*.key.chars).max;
-        my    Str:D $padding = ' ' x $width - .key.chars;
-        sprintf $format, .key, $padding, .value
+        state Str:D $format = $tty ?? "\e[1m%s\e[0m:%s %s" !! "%s:%s %s";
+        state Int:D $width  = @entries.map(*.key.chars).max;
+        my Str:D $padding = ' ' x $width - .key.chars;
+        sprintf $format, .key, $padding, self.stringify(.value, :$tty);
     })
 }
-multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) { ().Seq }
+multi method entries(::?CLASS:D: Bool:D :$tty! --> Iterable:D) { () }
 
 #|[ Produces the footer of the trace's output. ]
 method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
     my Str:D $format = $tty ?? "\e[2m%s\e[0m %s" !! "%s %s";
     with $!exception {
-        sprintf $format, '!!!', $!exception.^name;
+        sprintf $format, '!!!', self.stringify: $!exception, :$tty;
     } else {
-        sprintf $format, '==>', $tty ?? $!result.gist !! $!result.perl;
+        sprintf $format, '==>', self.stringify: $!result, :$tty;
     }
 }
 
@@ -82,12 +94,12 @@ multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {
 }
 
 multi method Str(::?CLASS:D: --> Str:D) {
-    @.lines
+    self.lines
 ==> map({ ' ' x 4 * $!calls ~ $_ })
 ==> join($?NL)
 }
 multi method gist(::?CLASS:D: --> Str:D) {
-    @.lines(:tty)
+    self.lines(:tty)
 ==> map({ ' ' x 4 * $!calls ~ $_ })
 ==> join($?NL)
 }
