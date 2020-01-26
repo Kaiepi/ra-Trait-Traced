@@ -26,11 +26,11 @@ role TTY[$handle] {
     multi method stringify(::?CLASS:U: Mu $value is raw --> Str:D) {
         $value.gist
     }
-    multi method stringify(::?CLASS:U: Failure:D $failure --> Str:D) {
-        sprintf "\e[33m%s\e[0m", $failure.exception.^name
-    }
     multi method stringify(::?CLASS:U: Exception:D $exception --> Str:D) {
-        sprintf "\e[31m%s\e[0m", $exception.^name
+        sprintf "%s (%s)", $exception.^name, $exception.message
+    }
+    multi method stringify(::?CLASS:U: Failure:D $failure --> Str:D) {
+        sprintf "%s (%s)", $failure.exception.^name, $failure.exception.message
     }
 
     method title(::?CLASS:U: Traced:D $traced --> Str:D) {
@@ -57,11 +57,11 @@ role TTY[$handle] {
     }
 
     method footer(::?CLASS:U: Traced:D $traced --> Str:D) {
-        with $traced.exception {
-            sprintf "\e[2m!!!\e[0m %s", self.stringify: $traced.exception;
-        } else {
-            sprintf "\e[2m==>\e[0m %s", self.stringify: $traced.result;
-        }
+        $traced.died
+            ?? sprintf("\e[31;2m!!!\e[0m %s", self.stringify: $traced.exception)
+            !! $traced.failed
+                ?? sprintf("\e[33;2m???\e[0m %s", self.stringify: $traced.result)
+                !! sprintf("\e[2m==>\e[0m %s", self.stringify: $traced.result)
     }
 
     my class FILE is repr<CPointer> { }
@@ -115,11 +115,11 @@ role File[$handle] {
     }
 
     method footer(::?CLASS:U: Traced:D $traced --> Str:D) {
-        with $traced.exception {
-            sprintf "!!! %s", self.stringify: $traced.exception;
-        } else {
-            sprintf "==> %s", self.stringify: $traced.result;
-        }
+        $traced.died
+            ?? sprintf("!!! %s", self.stringify: $traced.exception)
+            !! $traced.failed
+                ?? sprintf("??? %s", self.stringify: $traced.result)
+                !! sprintf("==> %s", self.stringify: $traced.result)
     }
 
     multi method say(::?CLASS:U: Traced:D $traced --> Bool:D) {
