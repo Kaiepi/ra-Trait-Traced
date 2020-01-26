@@ -23,6 +23,10 @@ has Int:D $.thread-id is required;
 has Num:D $.timestamp is required;
 #|[ The number of calls in the traced call stack.  ]
 has Int:D $.calls     is required;
+#|[ The result of the traced event. ]
+has Mu    $.result    is required;
+#|[ The exception thrown when running the traced event, if any. ]
+has Mu    $.exception is required;
 
 method new(::?CLASS:_: | --> ::?CLASS:D) { ... }
 
@@ -32,9 +36,6 @@ method colour(::?CLASS:D: --> Int:D)   { ... }
 method category(::?CLASS:D: --> Str:D) { ... }
 #|[ The type of trace the trace is. ]
 method type(::?CLASS:D: --> Str:D)     { ... }
-
-#|[ Whether or not the event traced succeeded. ]
-method success(::?CLASS:D: --> Bool:D) { ... }
 
 #|[ The title of the trace. ]
 method title(::?CLASS:D: Bool:D :$tty! --> Str:D) {
@@ -62,10 +63,13 @@ proto method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
 multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) { ().Seq }
 
 #|[ Produces the footer of the trace's output. ]
-proto method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
+method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
     my Str:D $format = $tty ?? "\e[2m%s\e[0m %s" !! "%s %s";
-    my Str:D $prefix = $.success ?? '==>' !! '!!!';
-    sprintf $format, $prefix, {*}
+    with $!exception {
+        sprintf $format, '!!!', $!exception.^name;
+    } else {
+        sprintf $format, '==>', $tty ?? $!result.gist !! $!result.perl;
+    }
 }
 
 multi method lines(::?CLASS:D: Bool:D :$tty = False --> Seq:D) {

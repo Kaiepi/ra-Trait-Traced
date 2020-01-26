@@ -4,24 +4,12 @@ unit class Traced::Routine is Traced;
 
 has Routine:D $.routine   is required;
 has Capture:D $.arguments is required;
-has Mu        $.result    is required;
-has Mu        $.exception is required;
 has Str:D     $.scope     = '';
 has Str:D     $.multiness = '';
 has Str:D     $.prefix    = '';
 
-method new(
-    ::?CLASS:_:
-    Routine:D  $routine   is raw,
-    Capture:D  $arguments is raw,
-    Mu         $result    is raw,
-    Mu         $exception is raw,
-              *%rest
-    --> ::?CLASS:D
-) {
-    self.bless:
-        :$routine, :$arguments, :$result, :$exception,
-        |%rest
+method new(::?CLASS:_: Routine:D  $routine is raw, Capture:D $arguments is raw, *%rest --> ::?CLASS:D) {
+    self.bless: :$routine, :$arguments, |%rest
 }
 
 method colour(::?CLASS:D: --> 31)          { }
@@ -39,8 +27,6 @@ method declarator(::?CLASS:D: --> Str:D)  {
 
 method name(::?CLASS:D: --> Str:D) { $!routine.name }
 
-method success(::?CLASS:D: --> Bool:D) { ! $!exception.DEFINITE }
-
 multi method header(::?CLASS:D: --> Str:D) {
     "$.declarator $!prefix$.name ($.package)"
 }
@@ -55,14 +41,6 @@ multi method entries(::?CLASS:D: Bool:D :$tty! --> Seq:D) {
             take $parameter => $argument;
         }
     }
-}
-
-multi method footer(::?CLASS:D: Bool:D :$tty! --> Str:D) {
-    $!exception.DEFINITE
-        ?? $!exception.^name
-        !! $tty
-            ?? $!result.gist
-            !! $!result.perl
 }
 
 method parameters-to-arguments(::?CLASS:D: --> Seq:D) {
@@ -154,13 +132,14 @@ sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$scope = '', Str:D :$multiness =
         my Thread:D $thread    := $*THREAD;
         my Int:D    $calls     := Traced::Routine.increment-calls: $thread;
         my Num:D    $timestamp := timestamp;
-        my Mu       \result     = try routine |arguments;
+        my Mu       $result    := try routine |arguments;
         Traced::Routine.decrement-calls: $thread;
         Traced::Routine.trace:
-            &routine, arguments, result, $!,
+            &routine, arguments,
             :$id, :thread-id($thread.id), :$timestamp, :$calls,
+            :$result, :exception($!),
             :$scope, :$multiness, :$prefix;
         $!.rethrow with $!;
-        result
+        $result
     }
 }
