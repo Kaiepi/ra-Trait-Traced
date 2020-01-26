@@ -1,6 +1,5 @@
 use v6.d;
 use experimental :macros;
-use NativeCall;
 #|[ A role done by classes that handle tracing for a type of event. ]
 unit class Traced;
 
@@ -50,15 +49,14 @@ macro timestamp() is export {
 
 #|[ Traces an event. ]
 proto method trace(::?CLASS:U: :$thread = $*THREAD, :$tracer = $*TRACER, |rest --> Mu) is raw {
-    my Int:D      $id        := self!next-id;
-    my Int:D      $calls     := self!increment-calls: $thread;
-    my Num:D      $timestamp := timestamp;
-    my Mu         $result    := try {{*}};
+    my Int:D $id        := self!next-id;
+    my Int:D $calls     := self!increment-calls: $thread;
+    my Num:D $timestamp := timestamp;
+    my Mu    $result    := try {{*}};
     self!decrement-calls: $thread;
     $tracer.say: self.new:
         :$id, :thread-id($thread.id), :$calls, :$timestamp,
-        :$result, :exception($!),
-        |rest;
+        :$result, :exception($!), |rest;
     $!.rethrow with $!;
     $result
 }
