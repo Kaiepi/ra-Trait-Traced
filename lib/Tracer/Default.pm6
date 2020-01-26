@@ -77,6 +77,8 @@ role TTY[$handle] {
             fail strerror $errno if $errno != 0;
             True
         } else {
+            $handle.lock;
+            LEAVE $handle.unlock;
             $handle.print: $output;
         }
     }
@@ -121,6 +123,8 @@ role File[$handle] {
     }
 
     multi method say(::?CLASS:U: Traced:D $traced --> Bool:D) {
+        $handle.lock;
+        LEAVE $handle.unlock;
         $handle.say: self.lines($traced).join($handle.nl-out)
     }
 }

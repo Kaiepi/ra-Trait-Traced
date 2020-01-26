@@ -17,7 +17,11 @@ sub wrap-tests(&block is raw --> Mu) is raw {
 
 # $Bar, @Baz, and %Qux get their symbols looked up outside of the tests, which
 # gets traced to $*OUT without this.
-PROCESS::<$TRACER> := Tracer::Default[$*OUT but role { method WRITE(|) { 0 } }];
+PROCESS::<$TRACER> := Tracer::Default[$*OUT but role {
+    method lock(|)   { }
+    method unlock(|) { }
+    method WRITE(|)  { 0 }
+}];
 
 my module Foo is traced {
     constant Foo = 0;
