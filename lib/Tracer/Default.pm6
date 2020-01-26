@@ -20,7 +20,7 @@ multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) {
 
 multi method say(::?CLASS:U: Traced:D --> Bool:D) { ... }
 
-role TTY[$handle] {
+role TTY[IO::Handle:D $handle] {
     method handle(::?CLASS:U:) { $handle }
 
     multi method stringify(::?CLASS:U: Mu $value is raw --> Str:D) {
@@ -84,7 +84,7 @@ role TTY[$handle] {
     }
 }
 
-role File[$handle] {
+role File[IO::Handle:D $handle] {
     method handle(::?CLASS:U:) { $handle }
 
     method stringify(::?CLASS:U: Mu $value is raw --> Str:D) {
@@ -129,8 +129,8 @@ role File[$handle] {
     }
 }
 
-method ^parameterize(::?CLASS:U $this is raw, $handle --> Mu) {
-    my Mu $mixin := $this.^mixin: $handle.isa(IO::Handle) && $handle.t ?? TTY[$handle] !! File[$handle];
+method ^parameterize(::?CLASS:U $this is raw, IO::Handle:D $handle --> Mu) {
+    my Mu $mixin := $this.^mixin: $handle.t ?? TTY[$handle] !! File[$handle];
     $mixin.^set_name: $this.^name ~ qq/["$handle"]/;
     $mixin
 }
