@@ -21,7 +21,7 @@ multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) {
 multi method say(::?CLASS:U: Traced:D --> Bool:D) { ... }
 
 role TTY[IO::Handle:D $handle] {
-    method handle(::?CLASS:U:) { $handle }
+    method handle(::?CLASS:U: --> IO::Handle:D) { $handle }
 
     multi method stringify(::?CLASS:U: Mu $value is raw --> Str:D) {
         $value.gist
@@ -85,7 +85,7 @@ role TTY[IO::Handle:D $handle] {
 }
 
 role File[IO::Handle:D $handle] {
-    method handle(::?CLASS:U:) { $handle }
+    method handle(::?CLASS:U: --> IO::Handle:D) { $handle }
 
     method stringify(::?CLASS:U: Mu $value is raw --> Str:D) {
         $value.perl
