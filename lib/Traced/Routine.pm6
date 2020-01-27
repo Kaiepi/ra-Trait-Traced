@@ -92,19 +92,19 @@ multi method wrap(
     # The same logic that's used for NativeCall's "is native" trait is used
     # here. There's some extra work we need to do if this is being called
     # at compile-time:
-    with $*W {
+    if nqp::isconcrete(my Mu $W := nqp::getlexdyn('$*W')) {
         # Finish compiling the routine...
         my Mu $compstuff := nqp::getattr($routine, Code, '@!compstuff');
         $compstuff[1]() with $compstuff;
         # ...and prevent the compiler from undoing the changes we're about to
         # make:
         my str $cuid = nqp::getcodecuid(nqp::getattr($routine, Code, '$!do'));
-        nqp::deletekey($*W.context.sub_id_to_code_object, $cuid);
+        nqp::deletekey($W.context.sub_id_to_code_object, $cuid);
     }
 
     # Override the routine's code with its traced version's code:
     my Routine:D $traced := MAKE-TRACED-ROUTINE $routine.clone, :$scope, :$multiness, :$prefix;
-    my Str:D     $name    = $routine.name;
+    my str       $name    = $routine.name;
     my Mu        $do     := nqp::getattr($traced, Code, '$!do');
     nqp::bindattr($routine, Code, '$!do', $do);
     nqp::setcodename($do, $name);
@@ -116,9 +116,9 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
     use nqp;
     return if $wrapper.code.?is-traced;
 
-    my Routine:D $tracer := MAKE-TRACED-ROUTINE $wrapper.code, :$multiness;
-    nqp::bindattr($wrapper, $wrapper.WHAT, '$!code', $tracer);
-    $tracer does role { method is-traced(::?CLASS:D: --> True) { } }
+    my Routine:D $traced := MAKE-TRACED-ROUTINE $wrapper.code, :$multiness;
+    nqp::bindattr($wrapper, $wrapper.WHAT, '$!code', $traced);
+    $traced does role { method is-traced(::?CLASS:D: --> True) { } }
 }
 sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Sub:D) {
     sub TRACED-ROUTINE(|arguments --> Mu) is raw {
