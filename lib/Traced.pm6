@@ -35,8 +35,6 @@ multi method entries(::?CLASS:D: --> Iterable:D) { () }
 
 #|[ Whether or not the traced event died. ]
 method died(::?CLASS:D: --> Bool:D)   { $!exception.DEFINITE }
-#|[ Whether or not the traced event failed. ]
-method failed(::?CLASS:D: --> Bool:D) { $!result.isa(Failure) && $!result.DEFINITE }
 
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}

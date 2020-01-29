@@ -27,10 +27,10 @@ role TTY[IO::Handle:D $handle] {
         $value.gist
     }
     multi method stringify(::?CLASS:U: Exception:D $exception --> Str:D) {
-        sprintf "%s (%s)", $exception.^name, $exception.message
+        sprintf "\e[31m%s\e[0m", $exception.^name
     }
     multi method stringify(::?CLASS:U: Failure:D $failure --> Str:D) {
-        sprintf "%s (%s)", $failure.exception.^name, $failure.exception.message
+        sprintf "\e[33m%s\e[0m", $failure.exception.^name
     }
 
     method title(::?CLASS:U: Traced:D $traced --> Str:D) {
@@ -47,8 +47,8 @@ role TTY[IO::Handle:D $handle] {
     method entries(::?CLASS:U: Traced:D $traced --> Iterable:D) {
         gather {
             my Pair:D @entries = $traced.entries;
+            my Int:D  $width   = @entries ?? @entries.map(*.key.chars).max !! 0;
             for @entries -> Pair:D (Str:D :$key, Mu :value($entry) is raw) {
-                state Int:D $width = @entries.map(*.key.chars).max;
                 my Str:D $value   = self.stringify: $entry;
                 my Str:D $padding = ' ' x $key.chars - $width;
                 take "    \e[1m$key\e[0m:$padding $value";
@@ -58,10 +58,8 @@ role TTY[IO::Handle:D $handle] {
 
     method footer(::?CLASS:U: Traced:D $traced --> Str:D) {
         $traced.died
-            ?? sprintf("\e[31;2m!!!\e[0m %s", self.stringify: $traced.exception)
-            !! $traced.failed
-                ?? sprintf("\e[33;2m???\e[0m %s", self.stringify: $traced.result)
-                !! sprintf("\e[2m==>\e[0m %s", self.stringify: $traced.result)
+            ?? sprintf("\e[2m!!!\e[0m %s", self.stringify: $traced.exception)
+            !! sprintf("\e[2m==>\e[0m %s", self.stringify: $traced.result)
     }
 
     my class FILE is repr<CPointer> { }
@@ -117,9 +115,7 @@ role File[IO::Handle:D $handle] {
     method footer(::?CLASS:U: Traced:D $traced --> Str:D) {
         $traced.died
             ?? sprintf("!!! %s", self.stringify: $traced.exception)
-            !! $traced.failed
-                ?? sprintf("??? %s", self.stringify: $traced.result)
-                !! sprintf("==> %s", self.stringify: $traced.result)
+            !! sprintf("==> %s", self.stringify: $traced.result)
     }
 
     multi method say(::?CLASS:U: Traced:D $traced --> Bool:D) {
