@@ -4,19 +4,7 @@ use Traced;
 use Tracer;
 unit class Tracer::Default is Tracer;
 
-method title(::?CLASS:U: Traced:D --> Str:D)        { ... }
-method header(::?CLASS:U: Traced:D --> Str:D)       { ... }
-method entries(::?CLASS:U: Traced:D --> Iterable:D) { ... }
-method footer(::?CLASS:U: Traced:D --> Str:D)       { ... }
-
-multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) {
-    gather {
-        take self.title: $traced;
-        take self.header: $traced;
-        take $_ for self.entries: $traced;
-        take self.footer: $traced;
-    } ==> map({ ' ' x 4 * $traced.calls ~ $_ })
-}
+multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) { ... }
 
 multi method say(::?CLASS:U: Traced:D --> Bool:D) { ... }
 
@@ -33,33 +21,39 @@ role TTY[IO::Handle:D $handle] {
         sprintf "\e[33m%s\e[0m", $failure.exception.^name
     }
 
-    method title(::?CLASS:U: Traced:D $traced --> Str:D) {
-        sprintf "\e[2m%s\e[0m \e[%d;1;2m%s %s\e[0m \e[2m[%d @ %f]\e[0m",
-                 $traced.id,
-                 $traced.colour, $traced.category, $traced.type,
-                 $traced.thread-id, $traced.timestamp
-    }
-
-    method header(::?CLASS:U: Traced:D $traced --> Str:D) {
-        sprintf "\e[2m<==\e[0m \e[1m%s\e[0m", $traced.what
-    }
-
-    method entries(::?CLASS:U: Traced:D $traced --> Iterable:D) {
+    multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) {
         gather {
-            my Pair:D @entries = $traced.entries;
-            my Int:D  $width   = @entries ?? @entries.map(*.key.chars).max !! 0;
-            for @entries -> Pair:D (Str:D :$key, Mu :value($entry) is raw) {
-                my Str:D $value   = self.stringify: $entry;
-                my Str:D $padding = ' ' x $key.chars - $width;
-                take "    \e[1m$key\e[0m:$padding $value";
+            my Str:D $margin = ' ' x 4 * $traced.calls;
+            my Str:D $nl-out = $handle.nl-out;
+
+            # Title
+            take sprintf "$margin\e[2m%d\e[0m \e[%d;1;2m%s %s\e[0m \e[2m[%d @ %f]\e[0m",
+                         $traced.id,
+                         $traced.colour, $traced.category, $traced.type,
+                         $traced.thread-id, $traced.timestamp;
+
+            # Header
+            take sprintf "$margin\e[2m<==\e[0m \e[1m%s\e[0m", $traced.what;
+
+            # Body
+            for my Pair:D @entries = $traced.entries {
+                state Int:D $width = @entries.map(*.key.chars).max;
+                state Str:D $extra = ' ' x $width + 6;
+                my Str:D $key     = .key;
+                my Str:D $padding = ' ' x $width - .key.chars;
+                my Str:D $value   = self.stringify(.value).subst($nl-out, $nl-out ~ $margin ~ $extra, :g);
+                take "$margin    \e[1m$key\e[0m:$padding $value";
+            }
+
+            # Footer
+            if $traced.died {
+                my Str:D $exception = self.stringify($traced.exception).subst($nl-out, $nl-out ~ $margin ~ ' ' x 4);
+                take "$margin\e[2m!!!\e[0m $exception";
+            } else {
+                my Str:D $result = self.stringify($traced.result).subst($nl-out, $nl-out ~ $margin ~ ' ' x 4);
+                take "$margin\e[2m==>\e[0m $result";
             }
         }
-    }
-
-    method footer(::?CLASS:U: Traced:D $traced --> Str:D) {
-        $traced.died
-            ?? sprintf("\e[2m!!!\e[0m %s", self.stringify: $traced.exception)
-            !! sprintf("\e[2m==>\e[0m %s", self.stringify: $traced.result)
     }
 
     my class FILE is repr<CPointer> { }
@@ -69,7 +63,8 @@ role TTY[IO::Handle:D $handle] {
 
     my Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
     multi method say(::?CLASS:U: Traced:D $traced --> Bool:D) {
-        my Str:D $output = self.lines($traced).join($handle.nl-out) ~ $handle.nl-out;
+        my Str:D $nl-out = $handle.nl-out;
+        my Str:D $output = self.lines($traced).join($nl-out) ~ $nl-out;
         if (my Int:D $fd = $handle.native-descriptor) ~~ $standard {
             my Int:D $errno = fputs $output, fdopen $fd, 'w';
             fail strerror $errno if $errno != 0;
@@ -89,33 +84,37 @@ role File[IO::Handle:D $handle] {
         $value.perl
     }
 
-    method title(::?CLASS:U: Traced:D $traced --> Str:D) {
-        sprintf "%d %s %s [%d @ %f]",
-                 $traced.id,
-                 $traced.category, $traced.type,
-                 $traced.thread-id, $traced.timestamp
-    }
-
-    method header(::?CLASS:U: Traced:D $traced --> Str:D) {
-        sprintf "<== %s", $traced.what
-    }
-
-    method entries(::?CLASS:U: Traced:D $traced --> Iterable:D) {
+    multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) {
         gather {
-            my Pair:D @entries = $traced.entries;
-            my Int:D  $width   = @entries ?? @entries.map(*.key.chars).max !! 0;
-            for @entries -> Pair:D (Str:D :$key, Mu :value($entry) is raw) {
-                my Str:D $value   = self.stringify: $entry;
-                my Str:D $padding = ' ' x $key.chars - $width;
-                take "    $key:$padding $value";
+            my Str:D $margin = ' ' x 4 * $traced.calls;
+
+            # Title
+            take sprintf "$margin%d %s %s [%d @ %f]",
+                         $traced.id, $traced.category, $traced.type,
+                         $traced.thread-id, $traced.timestamp;
+
+            # Header
+            my Str:D $what = $traced.what;
+            take "$margin\<== $what";
+
+            # Body
+            for my Pair:D @entries = $traced.entries {
+                state Int:D $width = @entries.map(*.key.chars).max;
+                my Str:D $key     = .key;
+                my Str:D $padding = ' ' x $width - .key.chars;
+                my Str:D $value   = self.stringify: .value;
+                take "$margin    $key:$padding $value";
+            }
+
+            # Footer
+            if $traced.died {
+                my Str:D $exception = self.stringify: $traced.exception;
+                take "$margin!!! $exception";
+            } else {
+                my Str:D $result = self.stringify: $traced.result;
+                take "$margin==> $result";
             }
         }
-    }
-
-    method footer(::?CLASS:U: Traced:D $traced --> Str:D) {
-        $traced.died
-            ?? sprintf("!!! %s", self.stringify: $traced.exception)
-            !! sprintf("==> %s", self.stringify: $traced.result)
     }
 
     multi method say(::?CLASS:U: Traced:D $traced --> Bool:D) {
