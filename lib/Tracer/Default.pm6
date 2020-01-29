@@ -47,8 +47,8 @@ role TTY[IO::Handle:D $handle] {
     method entries(::?CLASS:U: Traced:D $traced --> Iterable:D) {
         gather {
             my Pair:D @entries = $traced.entries;
-            my Int:D  $width   = @entries ?? @entries.map(*.key.chars).max !! 0;
             for @entries -> Pair:D (Str:D :$key, Mu :value($entry) is raw) {
+                state Int:D $width = @entries.map(*.key.chars).max;
                 my Str:D $value   = self.stringify: $entry;
                 my Str:D $padding = ' ' x $key.chars - $width;
                 take "    \e[1m$key\e[0m:$padding $value";
