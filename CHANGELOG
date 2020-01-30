@@ -38,3 +38,13 @@ v0.2.1:
 v0.2.2:
     - Only map routine parameters to call arguments if they were actually
       passed.
+
+v0.3.0:
+    - Introduce Tracer, a class providing an API for formatting trace output.
+    - The default way of formatting traces included with this library is now
+      handled by Tracer::Default.
+    - Introduce Traced categories in addition to their existing types.
+    - Make the default tracer's output easier to read and parse by moving
+      trace categories and types from traces' headers to their titles and
+      indenting value output when they include newlines.
+    - Don't throw failures or exceptions returned by traced events.
