@@ -48,3 +48,6 @@ v0.3.0:
       trace categories and types from traces' headers to their titles and
       indenting value output when they include newlines.
     - Don't throw failures or exceptions returned by traced events.
+
+v0.3.1:
+    - Update README to include v0.3.0's style of trace output

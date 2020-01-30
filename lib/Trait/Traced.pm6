@@ -8,7 +8,7 @@ use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
 use MetamodelX::Traced::MetaMethodContainer;
-unit module Trait::Traced:ver<0.3.0>:auth<github:Kaiepi>:api<1>;
+unit module Trait::Traced:ver<0.3.1>:auth<github:Kaiepi>:api<1>;
 
 INIT {
     PROCESS::<$TRACER> := Tracer::Default[$*OUT] unless PROCESS::<$TRACER>:exists;

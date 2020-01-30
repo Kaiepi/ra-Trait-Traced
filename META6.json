@@ -25,7 +25,7 @@
   "source-url" : "https://github.com/Kaiepi/p6-Trait-Traced.git",
   "tags" : [ "trace", "traced", "metamodel" ],
   "test-depends" : [ ],
-  "version" : "0.3.0",
+  "version" : "0.3.1",
   "auth" : "github:Kaiepi",
   "api" : "1"
 }
