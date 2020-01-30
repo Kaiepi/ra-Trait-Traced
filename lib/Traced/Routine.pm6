@@ -25,7 +25,7 @@ method declarator(::?CLASS:D: --> Str:D)  {
     $declarator
 }
 
-method name(::?CLASS:D: --> Str:D) { $!routine.name }
+method name(::?CLASS:D: --> Str:D) { $!routine.name || '::' }
 
 multi method what(::?CLASS:D: --> Str:D) { "$.declarator $!prefix$.name ($.package)" }
 
