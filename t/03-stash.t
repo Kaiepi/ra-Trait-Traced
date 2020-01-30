@@ -9,8 +9,8 @@ sub wrap-tests(&block is raw --> Mu) is raw {
     my Str:D      $filename  = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
     my IO::Pipe:D $*TRACER  := Tracer::Default[$*TMPDIR.child($filename).IO.open: :w];
     LEAVE {
-        $*TRACER.close;
-        $*TRACER.path.unlink;
+        $*TRACER.handle.close;
+        $*TRACER.handle.path.unlink;
     }
     block
 }
@@ -36,8 +36,8 @@ wrap-tests {
     lives-ok {
         Foo::<Foo>
     }, 'can look up sigilless symbols...';
-    $*TRACER.flush;
-    ok my Str:D $result = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $result = $*TRACER.handle.path.slurp(:close),
       '...which produce output...';
     ok $result ~~ / <after '<== '> 'Foo::Foo' »  /,
       '...that claims the lookup is for the correct symbol';
@@ -47,8 +47,8 @@ wrap-tests {
     lives-ok {
         $Foo::Bar
     }, 'can look up $ sigilled symbols...';
-    $*TRACER.flush;
-    ok my Str:D $result = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $result = $*TRACER.handle.path.slurp(:close),
       '...which produce output...';
     ok $result ~~ / <after '<== '> '$Foo::Bar' »  /,
       '...that claims the lookup is for the correct symbol';
@@ -58,8 +58,8 @@ wrap-tests {
     lives-ok {
         @Foo::Baz
     }, 'can look up @ sigilled symbols...';
-    $*TRACER.flush;
-    ok my Str:D $result = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $result = $*TRACER.handle.path.slurp(:close),
       '...which produce output...';
     ok $result ~~ / <after '<== '> '@Foo::Baz' »  /,
       '...that claims the lookup is for the correct symbol';
@@ -69,8 +69,8 @@ wrap-tests {
     lives-ok {
         %Foo::Qux
     }, 'can look up % sigilled symbols...';
-    $*TRACER.flush;
-    ok my Str:D $result = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $result = $*TRACER.handle.path.slurp(:close),
       '...which produce output...';
     ok $result ~~ / <after '<== '> '%Foo::Qux' »  /,
       '...that claims the lookup is for the correct symbol';
@@ -80,8 +80,8 @@ wrap-tests {
     lives-ok {
         &Foo::Quux
     }, 'can look up & sigilled symbols...';
-    $*TRACER.flush;
-    ok my Str:D $result = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $result = $*TRACER.handle.path.slurp(:close),
       '...which produce output...';
     ok $result ~~ / <after '<== '> '&Foo::Quux' »  /,
       '...that claims the lookup is for the correct symbol';
@@ -95,8 +95,8 @@ wrap-tests {
             FETCH => sub FETCH($)             { $foo },
             STORE => sub STORE($, Int:D $bar) { $foo = $bar };
     }, 'can bind to symbols...';
-    $*TRACER.flush;
-    ok my Str:D $result = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $result = $*TRACER.handle.path.slurp(:close),
       '...which produce output...';
     ok $result ~~ / « 'old: 0' $$ /,
       '...that includes the old value as an entry...';
@@ -108,8 +108,8 @@ wrap-tests {
     lives-ok {
         Foo::<$Bar> = 6;
     }, 'can assign to symbols...';
-    $*TRACER.flush;
-    ok my Str:D $result = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $result = $*TRACER.handle.path.slurp(:close),
       '...which produce output...';
     ok $result ~~ / « 'old: 1' $$ /,
       '...that includes the old value as an entry...';
@@ -121,8 +121,8 @@ wrap-tests {
     lives-ok {
         Foo::<$*DYNAMIC>;
     }, 'can look up symbols with twigils...';
-    $*TRACER.flush;
-    ok my Str:D $result = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $result = $*TRACER.handle.path.slurp(:close),
       '...which produce output...';
     ok $result ~~ / <after '<== '> '$*Foo::DYNAMIC' »  /,
       '...that claims the lookup is for the correct symbol';
@@ -140,8 +140,8 @@ wrap-tests {
 
     EVAL Q:to/TEST/;
     quietly Foo::Foo;
-    $*TRACER.flush;
-    ok my Str:D $output = $*TRACER.path.slurp(:close),
+    $*TRACER.handle.flush;
+    ok my Str:D $output = $*TRACER.handle.path.slurp(:close),
       'direct symbol lookups get traced...';
     ok $output ~~ / ^^ '==> 7' $$ /,
       '...and their output includes the correct result';

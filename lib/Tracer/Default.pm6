@@ -4,6 +4,9 @@ use Traced;
 use Tracer;
 unit class Tracer::Default is Tracer;
 
+#|[ Returns the handle the tracer was parameterized with. ]
+method handle(::?CLASS:_: --> IO::Handle:D) { ... }
+
 multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) { ... }
 
 multi method say(::?CLASS:U: Traced:D --> Bool:D) { ... }
