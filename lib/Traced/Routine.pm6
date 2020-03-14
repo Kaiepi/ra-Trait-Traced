@@ -86,44 +86,22 @@ multi method wrap(
     Str:D     :$prefix    = ''
     --> Mu
 ) {
-    use nqp;
     return if $routine.?is-traced;
-
-    # The same logic that's used for NativeCall's "is native" trait is used
-    # here. There's some extra work we need to do if this is being called
-    # at compile-time:
-    if nqp::isconcrete(my Mu $W := nqp::getlexdyn('$*W')) {
-        # Finish compiling the routine...
-        my Mu $compstuff := nqp::getattr($routine, Code, '@!compstuff');
-        $compstuff[1]() with $compstuff;
-        # ...and prevent the compiler from undoing the changes we're about to
-        # make:
-        my str $cuid = nqp::getcodecuid(nqp::getattr($routine, Code, '$!do'));
-        nqp::deletekey($W.context.sub_id_to_code_object, $cuid);
-    }
-
-    # Override the routine's code with its traced version's code:
-    my Routine:D $traced := MAKE-TRACED-ROUTINE $routine.clone, :$scope, :$multiness, :$prefix;
-    my str       $name    = $routine.name;
-    my Mu        $do     := nqp::getattr($traced, Code, '$!do');
-    nqp::bindattr($routine, Code, '$!do', $do);
-    nqp::setcodename($do, $name);
-    $routine does role { method is-traced(::?CLASS:D: --> True) { } }
+    $routine.wrap: sub TRACED-ROUTINE(|arguments --> Mu) is raw {
+        Traced::Routine.trace: nextcallee, arguments, :$scope, :$multiness, :$prefix
+    };
+    $routine does role { method is-traced(--> True) { } };
+    Nil
 }
 # Metamodel::MultiMethodContainer wraps multi routines with an internal class;
 # we need another candidate to handle these.
 multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
-    use nqp;
     return if $wrapper.code.?is-traced;
-
-    my Routine:D $traced := MAKE-TRACED-ROUTINE $wrapper.code, :$multiness;
-    nqp::bindattr($wrapper, $wrapper.WHAT, '$!code', $traced);
-    $traced does role { method is-traced(::?CLASS:D: --> True) { } }
-}
-sub MAKE-TRACED-ROUTINE(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Sub:D) {
-    sub TRACED-ROUTINE(|arguments --> Mu) is raw {
-        Traced::Routine.trace: &routine, arguments, :$scope, :$multiness, :$prefix
-    }
+    $wrapper.code.wrap: sub TRACED-ROUTINE(|arguments --> Mu) is raw {
+        Traced::Routine.trace: nextcallee, arguments, :$multiness
+    };
+    $wrapper.code does role { method is-traced(--> True) { } };
+    Nil
 }
 
 multi method trace(::?CLASS:U: &routine, Capture:D \arguments --> Mu) is raw {
