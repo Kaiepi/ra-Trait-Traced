@@ -57,6 +57,8 @@ Trait::Traced is a library that provides the `is traced` trait, which allows any
 
 Documentation for its various features may be found at its [wiki](https://github.com/Kaiepi/p6-Trait-Traced/wiki).
 
+**This requires a compiler release of v2020.03 or later.**
+
 AUTHOR
 ======
 
