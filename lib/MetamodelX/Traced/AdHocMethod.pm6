@@ -17,12 +17,15 @@ method compose(Mu $obj is raw, |) {
     if Metamodel::Primitives.is_type(self, Metamodel::MethodContainer)
     && self.method_table($obj).{$method.name} =:= $method {
         Traced::Routine.wrap: $method, multiness => $method.is_dispatcher ?? 'proto' !! '';
+        callsame
     } elsif Metamodel::Primitives.is_type(self, Metamodel::PrivateMethodContainer)
          && self.private_method_table($obj).{$method.name} =:= $method {
         Traced::Routine.wrap: $method, prefix => '!';
+        callsame
     } elsif Metamodel::Primitives.is_type(self, Metamodel::MetaMethodContainer)
          && self.meta_method_table($obj).{$method.name} =:= $method {
-        Traced::Routine.wrap: $method, prefix => '^';
+        my Mu $type := callsame;
+        Traced::Routine.wrap: self.^find_method($method.name), prefix => '^';
+        $type
     }
-    callsame
 }
