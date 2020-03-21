@@ -51,7 +51,7 @@ subtest 'tracing', {
         block
     }
 
-    plan 26;
+    plan 25;
 
     wrap-tests {
         lives-ok {
@@ -122,9 +122,6 @@ subtest 'tracing', {
         }, 'traced routines handle containers OK';
     };
 
-    is sub foo is traced { }.name, 'foo',
-      'traced routines have the correct name';
-
     wrap-tests {
         sub foo is traced { }();
         $*TRACER.handle.flush;
@@ -142,12 +139,12 @@ subtest 'tracing', {
     wrap-tests {
         lives-ok {
             my class Foo {
+                method ^foo(\this) is traced { this.foo }
                 proto method foo is traced {*}
                 multi method foo is traced { self!foo }
-                method !foo is traced { self.^foo }
-                method ^foo(\this) is traced { foo this }
+                method !foo is traced { foo self }
                 my method foo is traced { 1 }
-            }.foo
+            }.^foo
         }, 'can trace the various types of methods a class can contain...';
         $*TRACER.handle.flush;
 
