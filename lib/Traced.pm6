@@ -1,5 +1,4 @@
 use v6.d;
-use experimental :macros;
 #|[ A role done by classes that handle tracing for a type of event. ]
 unit class Traced;
 
