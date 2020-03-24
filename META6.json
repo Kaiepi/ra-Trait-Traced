@@ -22,7 +22,7 @@
     "Trait::Traced" : "lib/Trait/Traced.pm6"
   },
   "resources" : [ ],
-  "source-url" : "https://github.com/Kaiepi/p6-Trait-Traced.git",
+  "source-url" : "https://github.com/Kaiepi/ra-Trait-Traced.git",
   "tags" : [ "trace", "traced", "metamodel" ],
   "test-depends" : [ ],
   "version" : "0.3.1",
