@@ -64,12 +64,14 @@ role TTY[IO::Handle:D $handle] {
     sub fputs(Str, FILE --> int32)  is native {*}
     sub strerror(int32 --> Str)     is native {*}
 
+    my Int:D      $fd       = $handle.native-descriptor;
     my Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
     multi method say(::?CLASS:U: Traced:D $traced --> Bool:D) {
         my Str:D $nl-out = $handle.nl-out;
         my Str:D $output = self.lines($traced).join($nl-out) ~ $nl-out;
-        if (my Int:D $fd = $handle.native-descriptor) ~~ $standard {
-            my Int:D $errno = fputs $output, fdopen $fd, 'w';
+        if $fd ~~ $standard {
+            state FILE:_ $file = fdopen $fd, 'w';
+            my Int:D $errno = fputs $output, $file;
             fail strerror $errno if $errno != 0;
             True
         } else {
