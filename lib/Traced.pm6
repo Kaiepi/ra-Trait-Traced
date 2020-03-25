@@ -11,9 +11,9 @@ has Num:D $.timestamp is required;
 #|[ The number of calls in the traced call stack.  ]
 has Int:D $.calls     is required;
 #|[ The result of the traced event. ]
-has Mu    $.result    is required;
+has Mu    $.result    is required is built(:bind);
 #|[ The exception thrown when running the traced event, if any. ]
-has Mu    $.exception is required;
+has Mu    $.exception is required is built(:bind);
 
 method new(::?CLASS:_: | --> ::?CLASS:D) { ... }
 

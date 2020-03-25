@@ -4,12 +4,12 @@ unit class Traced::Stash is Traced;
 
 enum Access <Lookup Assign Bind>;
 
-has Access:D $.access     is required;
-has Stash:D  $.stash      is required;
-has Str:D    $.key        is required;
-has Bool:D   $.modified   is required;
-has Mu       $.old-value;
-has Mu       $.new-value;
+has Access:D $.access    is required;
+has Stash:D  $.stash     is required;
+has Str:D    $.key       is required;
+has Bool:D   $.modified  is required;
+has Mu       $.old-value is built(:bind);
+has Mu       $.new-value is built(:bind);
 
 proto method new(::?CLASS:_: | --> ::?CLASS:D) {*}
 multi method new(::?CLASS:_: Access::Lookup $access, Stash:D $stash, Str:D $key, *%rest --> ::?CLASS:D) {
