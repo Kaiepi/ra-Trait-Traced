@@ -10,6 +10,7 @@ use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
 use MetamodelX::Traced::MetaMethodContainer;
+use MetamodelX::Traced::AttributeContainer;
 unit module Trait::Traced:ver<0.3.1>:auth<github:Kaiepi>:api<1>;
 
 INIT {
@@ -82,6 +83,10 @@ multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::PrivateMethodContainer], Bo
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MetaMethodContainer], Bool:D :$traced! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::MetaMethodContainer;
+    nextsame;
+}
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::AttributeContainer], Bool:D :$traced! where ?*) is export {
+    T.HOW.^mixin: MetamodelX::Traced::AttributeContainer;
     nextsame;
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::Stashing], Bool:D :$traced! where ?*) is export {

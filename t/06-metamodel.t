@@ -3,7 +3,7 @@ use Test;
 use Tracer::Default;
 use Trait::Traced;
 
-plan 4;
+plan 5;
 
 sub trace(&trace, &parse?) {
     my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
@@ -40,7 +40,8 @@ subtest 'Metamodel::MethodContainer', {
         }, 'can call traced methods of traced classes...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
-        nok $output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
+        nok $output ~~ / 'TRACED-ROUTINE' /,
+          '...and do not rewrap themselves';
     };
 
     trace {
@@ -131,6 +132,23 @@ subtest 'Metamodel::MetaMethodContainer', {
         ok $output, '...which produce output...';
         ok $output ~~ / <after '<== '> 'method ^meta-method' » /,
           '...that claims metamethods have the correct declarator';
+    };
+};
+
+subtest 'Metamodel::AttributeContainer', {
+    plan 3;
+
+    wrap-tests {
+        lives-ok {
+            my class WithTracedAttribute is traced {
+                has $.attribute is rw;
+            }.new.attribute = 'ok';
+        }, 'can assign to traced attributes of traced classes...';
+        $*TRACER.handle.flush;
+        ok my Str:D $output = $*TRACER.handle.path.slurp(:close),
+          '...which produce output...';
+        ok $output ~~ / <after '<== '> '$!attribute' /,
+          '...that claims attributes have the correct symbol';
     };
 };
 
