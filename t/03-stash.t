@@ -3,14 +3,14 @@ use Test;
 use Tracer::Default;
 use Trait::Traced;
 
-sub trace(&trace, &parse?) {
+sub trace(&run, &parse?) {
     my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
     my $*TRACER := Tracer::Default[$*TMPDIR.child($filename).open: :w];
     LEAVE {
         $*TRACER.handle.close;
         $*TRACER.handle.path.unlink;
     }
-    trace;
+    run;
     $*TRACER.handle.flush;
     parse $*TRACER.handle.path.slurp(:close) with &parse;
 }
