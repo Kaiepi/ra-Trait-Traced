@@ -1,5 +1,6 @@
 use v6.d;
 use Kind;
+use Traced::Variable;
 use Traced::Routine;
 use Traced::Stash;
 use Tracer::Default;
@@ -25,7 +26,7 @@ my class X::Trait::Traced::NYI is Exception is export {
 }
 
 multi sub trait_mod:<is>(Variable:D $variable, Bool:D :$traced! where ?*) is export {
-    X::Trait::Traced::NYI.new(:what<variables>).throw
+    Traced::Variable.wrap: $variable
 }
 
 multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :$traced! where ?*) is export {
