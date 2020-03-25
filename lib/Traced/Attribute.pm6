@@ -2,18 +2,18 @@ use v6.d;
 use Traced;
 unit class Traced::Attribute is Traced;
 
-enum Type <Assign Store>;
+enum Access <Assign Store>;
 
-has Type:D      $.type      is required;
+has Access:D    $.access    is required;
 has Attribute:D $.attribute is required;
 
-method new(::?CLASS:_: Type:D $type, Attribute:D $attribute, *%rest --> ::?CLASS:D) {
-    self.bless: :$type, :$attribute, |%rest
+method new(::?CLASS:_: Access:D $access, Attribute:D $attribute, *%rest --> ::?CLASS:D) {
+    self.bless: :$access, :$attribute, |%rest
 }
 
 method colour(::?CLASS:D: --> 34)            { }
 method category(::?CLASS:D: --> 'ATTRIBUTE') { }
-method type(::?CLASS:D: --> Str:D)           { $!type.key.uc }
+method type(::?CLASS:D: --> Str:D)           { $!access.key.uc }
 
 multi method what(::?CLASS:D: --> Str:D) {
     my Str:D $name    = $!attribute.name;
@@ -50,7 +50,7 @@ my class TracedAttributeContainerDescriptor {
     }
 
     method assigned(::?CLASS:D: Mu $value is raw --> Mu) is raw {
-        Traced::Attribute.trace: Type::Assign, $!attribute, :$value
+        Traced::Attribute.trace: Access::Assign, $!attribute, :$value
     }
 }
 
@@ -58,7 +58,7 @@ my class TracedAttributeContainerDescriptor {
 my role TracedAttributeContainer[Attribute:D $attribute] {
     method STORE(|args) {
         Traced::Attribute.trace:
-            Type::Store, $attribute,
+            Access::Store, $attribute,
             callback  => self.^mixin_base.^find_method('STORE'), # XXX: nextcallee doesn't work here as of v2020.03
             arguments => \(self, |args)
     }
@@ -78,9 +78,9 @@ multi method wrap(::?CLASS:_: Attribute:D $attribute --> Mu) {
     }
 }
 
-multi method trace(::?CLASS:U: Type::Assign, Attribute:D, Mu :$value is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Assign, Attribute:D, Mu :$value is raw --> Mu) is raw {
     $value
 }
-multi method trace(::?CLASS:U: Type::Store, Attribute:D, :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Store, Attribute:D, :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
     callback |$arguments
 }

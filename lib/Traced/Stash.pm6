@@ -2,7 +2,7 @@ use v6.d;
 use Traced;
 unit class Traced::Stash is Traced;
 
-my enum Access <Lookup Assign Bind>;
+enum Access <Lookup Assign Bind>;
 
 has Access:D $.access     is required;
 has Stash:D  $.stash      is required;
