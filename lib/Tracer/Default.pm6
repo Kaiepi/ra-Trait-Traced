@@ -84,7 +84,7 @@ role File[IO::Handle:D $handle] {
     method handle(::?CLASS:U: --> IO::Handle:D) { $handle }
 
     method stringify(::?CLASS:U: Mu $value is raw --> Str:D) {
-        $value.perl
+        $value.raku
     }
 
     multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) {

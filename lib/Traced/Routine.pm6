@@ -31,7 +31,7 @@ multi method what(::?CLASS:D: --> Str:D) { "$.declarator $!prefix$.name ($.packa
 
 multi method entries(::?CLASS:D: --> Iterable:D) {
     gather for @.parameters-to-arguments -> Pair:D (Parameter:D :key($parameter), Mu :value($argument) is raw) {
-        my Str:D $name = ~$parameter.perl.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
+        my Str:D $name = ~$parameter.raku.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
         once $name = 'self' if $parameter.invocant && !$parameter.name.defined;
         take $name => $argument;
     }
