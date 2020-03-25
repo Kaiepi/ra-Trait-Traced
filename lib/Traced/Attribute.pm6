@@ -4,12 +4,11 @@ unit class Traced::Attribute is Traced;
 
 enum Type <Assign Store>;
 
-has Type:D $.type      is required;
-has Mu     $.package   is required;
-has Str:D  $.name      is required;
+has Type:D      $.type      is required;
+has Attribute:D $.attribute is required;
 
-method new(::?CLASS:_: Type:D $type, Mu $package is raw, Str:D $name, *%rest --> ::?CLASS:D) {
-    self.bless: :$type, :$package, :$name, |%rest
+method new(::?CLASS:_: Type:D $type, Attribute:D $attribute, *%rest --> ::?CLASS:D) {
+    self.bless: :$type, :$attribute, |%rest
 }
 
 method colour(::?CLASS:D: --> 34)            { }
@@ -17,7 +16,10 @@ method category(::?CLASS:D: --> 'ATTRIBUTE') { }
 method type(::?CLASS:D: --> Str:D)           { $!type.key.uc }
 
 multi method what(::?CLASS:D: --> Str:D) {
-    "$!name ($!package.^name())"
+    my Str:D $name    = $!attribute.name;
+    my Str:D $package = $!attribute.package.^name;
+    $name .= trans: '!' => '.' if $!attribute.has_accessor;
+    "$name ($package)"
 }
 
 multi method entries(::?CLASS:D: --> Iterable:D) {
@@ -27,17 +29,15 @@ multi method entries(::?CLASS:D: --> Iterable:D) {
 # Handles tracing for scalar (and callable) attributes. This is done instead of
 # using Proxy because Scalar supports atomic ops, while Proxy doesn't.
 my class TracedAttributeContainerDescriptor {
-    has Mu    $!descriptor is required;
-    has Mu    $!package    is required;
-    has Str:D $!name       is required;
+    has Mu          $!descriptor is required;
+    has Attribute:D $!attribute  is required;
 
-    submethod BUILD(::?CLASS:D: Mu :$descriptor is raw, Mu :$package is raw, Str:D :$!name --> Nil) {
+    submethod BUILD(::?CLASS:D: Mu :$descriptor! is raw, Attribute:D :$!attribute! --> Nil) {
         $!descriptor := $descriptor;
-        $!package    := $package;
     }
 
-    method new(::THIS ::?CLASS:_: Mu $descriptor is raw, Mu $package is raw, Str:D $name --> ::?CLASS:D) {
-        self.bless: :$descriptor, :$package, :$name
+    method new(::THIS ::?CLASS:_: Mu $descriptor is raw, Attribute:D $attribute --> ::?CLASS:D) {
+        self.bless: :$descriptor, :$attribute
     }
 
     method of(::?CLASS:D: --> Mu)      { $!descriptor.of }
@@ -46,13 +46,11 @@ my class TracedAttributeContainerDescriptor {
     method next(::?CLASS:D: --> Mu)    { self }
 
     method name(::?CLASS:D: --> Str:D) {
-        "traced attribute $!name"
+        "traced attribute $!attribute.name()"
     }
 
     method assigned(::?CLASS:D: Mu $value is raw --> Mu) is raw {
-        Traced::Attribute.trace:
-            Type::Assign, $!package, $!name,
-            value => $value
+        Traced::Attribute.trace: Type::Assign, $!attribute, :$value
     }
 }
 
@@ -60,7 +58,7 @@ my class TracedAttributeContainerDescriptor {
 my role TracedAttributeContainer[Attribute:D $attribute] {
     method STORE(|args) {
         Traced::Attribute.trace:
-            Type::Store, $attribute.package, $attribute.name,
+            Type::Store, $attribute,
             callback  => self.^mixin_base.^find_method('STORE'), # XXX: nextcallee doesn't work here as of v2020.03
             arguments => \(self, |args)
     }
@@ -70,9 +68,8 @@ multi method wrap(::?CLASS:_: Attribute:D $attribute --> Mu) {
     use nqp;
     my Str:D $sigil = $attribute.name.substr: 0, 1;
     if $sigil eq any '$', '&' {
-        my Mu $descriptor := TracedAttributeContainerDescriptor.new:
-            nqp::getattr($attribute<>, Attribute, '$!container_descriptor'),
-            $attribute.package, $attribute.name;
+        my Mu $descriptor := nqp::getattr($attribute<>, Attribute, '$!container_descriptor');
+        $descriptor := TracedAttributeContainerDescriptor.new: $descriptor, $attribute;
         my Mu $container := nqp::p6scalarfromdesc($descriptor);
         nqp::bindattr($container, Scalar, '$!value', $attribute.container);
         nqp::bindattr($attribute<>, Attribute, '$!auto_viv_container', $container);
@@ -81,9 +78,9 @@ multi method wrap(::?CLASS:_: Attribute:D $attribute --> Mu) {
     }
 }
 
-multi method trace(::?CLASS:U: Type::Assign, Mu, Str:D, Mu :$value is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Type::Assign, Attribute:D, Mu :$value is raw --> Mu) is raw {
     $value
 }
-multi method trace(::?CLASS:U: Type::Store, Mu, Str:D, :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Type::Store, Attribute:D, :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
     callback |$arguments
 }

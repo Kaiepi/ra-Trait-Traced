@@ -146,7 +146,7 @@ subtest 'Metamodel::AttributeContainer', {
         }, 'can assign to traced attributes of traced classes...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> '$!attribute' /,
+        ok $output ~~ / <after '<== '> '$.attribute' /,
           '...that claims attributes have the correct symbol';
     };
 };
