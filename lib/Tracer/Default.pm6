@@ -71,9 +71,7 @@ role TTY[IO::Handle:D $handle] {
         my Str:D $output = self.lines($traced).join($nl-out) ~ $nl-out;
         if $fd ~~ $standard {
             state FILE:_ $file = fdopen $fd, 'w';
-            my Int:D $errno = fputs $output, $file;
-            fail strerror $errno if $errno != 0;
-            True
+            fputs($output, $file) != -1
         } else {
             $handle.lock;
             LEAVE $handle.unlock;
