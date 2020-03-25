@@ -11,15 +11,8 @@ has Bool:D   $.modified   is required;
 has Mu       $.old-value;
 has Mu       $.new-value;
 
-proto method new(::?CLASS:_: Access:D, Stash:D, Str:D, Mu $? is raw, Mu $? is raw, *% --> ::?CLASS:D) {*}
-multi method new(
-    ::?CLASS:_:
-    Access:D  $access,
-    Stash:D   $stash,
-    Str:D     $key,
-             *%rest
-    --> ::?CLASS:D
-) {
+proto method new(::?CLASS:_: | --> ::?CLASS:D) {*}
+multi method new(::?CLASS:_: Access::Lookup $access, Stash:D $stash, Str:D $key, *%rest --> ::?CLASS:D) {
     self.bless: :$access, :$stash, :$key, :!modified, |%rest
 }
 multi method new(
