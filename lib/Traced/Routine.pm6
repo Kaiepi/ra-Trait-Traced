@@ -75,9 +75,6 @@ method parameters-to-arguments(::?CLASS:D: --> Seq:D) {
     }
 }
 
-# You would think Routine.wrap would be useful here, but Rakudo often expects
-# routines to be Code instances, and this is no longer the case after wrapping
-# a routine this way. This will get a bit ugly!
 multi method wrap(
     ::?CLASS:U:
     Routine:D $routine is raw,
