@@ -41,77 +41,79 @@ subtest 'mapping parameters to arguments', {
 };
 
 subtest 'tracing', {
-    sub wrap-tests(&block) {
-        my Str:D $filename = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
+    sub trace(&trace, &parse?) {
+        my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
         my $*TRACER := Tracer::Default[$*TMPDIR.child($filename).open: :w];
         LEAVE {
             $*TRACER.handle.close;
             $*TRACER.handle.path.unlink;
         }
-        block
+        trace;
+        $*TRACER.handle.flush;
+        parse $*TRACER.handle.path.slurp(:close) with &parse;
     }
 
     plan 25;
 
-    wrap-tests {
+    trace {
         lives-ok {
             sub traced($foo) is traced { $foo }(1)
         }, 'traced subroutines do not throw while tracing...';
-        $*TRACER.handle.flush;
-        ok $*TRACER.handle.path.slurp(:close), '...and produce output';
+    }, -> Str:D $output {
+        ok $output, '...and produce output';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             my method traced() is traced { self }(1)
         }, 'traced methods do not throw while tracing...';
-        $*TRACER.handle.flush;
-        ok $*TRACER.handle.path.slurp(:close), '...and produce output';
+    }, -> Str:D $output {
+        ok $output, '...and produce output';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             proto sub multi-sub() is traced {*}
             multi sub multi-sub()           { }
             multi-sub
         }, 'traced proto routines do not throw while tracing...';
-        $*TRACER.handle.flush;
-        ok (my Str:D $output = $*TRACER.handle.path.slurp(:close)), '...and produce output...';
+    }, -> Str:D $output {
+        ok $output, '...and produce output...';
         cmp-ok $output, '~~', / proto /, '...which contains "proto"';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             proto sub multi-sub()           {*}
             multi sub multi-sub() is traced { }
             multi-sub
         }, 'traced multi routines do not throw while tracing...';
-        $*TRACER.handle.flush;
-        ok (my Str:D $output = $*TRACER.handle.path.slurp(:close)), '...and produce output...';
+    }, -> Str:D $output {
+        ok $output, '...and produce output...';
         cmp-ok $output, '~~', / multi /, '...which contains "multi"';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             proto sub multi-sub() is traced {*}
             multi sub multi-sub() is traced { }
             multi-sub;
         }, 'a combination of traced proto and multi routines do not throw while tracing...';
-        $*TRACER.handle.flush;
-        ok (my Str:D $output = $*TRACER.handle.path.slurp(:close)), '...and produce output...';
+    }, -> Str:D $output {
+        ok $output, '...and produce output...';
         cmp-ok $output, '~~', / proto /, '...which contains "proto"...';
         cmp-ok $output, '~~', / multi /, '...as well as "multi"';
     };
 
-    wrap-tests {
+    trace {
         dies-ok {
             sub throws() is traced { die }()
         }, 'traced routines rethrow exceptions...';
-        $*TRACER.handle.flush;
-        ok $*TRACER.handle.path.slurp(:close), '...but still produce output';
+    }, -> Str:D $output {
+        ok $output, '...but still produce output';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             sub classified(--> Str:D) is raw is traced {
                 state Str:D $info = 'DIBU DUBU DABA LUBA DABA DU DA BI JI KI CBLABLALABLALAB ITS A SECRET';
@@ -122,21 +124,21 @@ subtest 'tracing', {
         }, 'traced routines handle containers OK';
     };
 
-    wrap-tests {
+    trace {
         sub foo is traced { }();
-        $*TRACER.handle.flush;
-        ok $*TRACER.handle.path.slurp(:close) ~~ / <after '<== '> 'sub foo' » /,
+    }, -> Str:D $output {
+        ok $output ~~ / <after '<== '> 'sub foo' » /,
           'unscoped routines have the correct declarator';
     };
 
-    wrap-tests {
+    trace {
         my sub foo is traced { }();
-        $*TRACER.handle.flush;
-        ok $*TRACER.handle.path.slurp(:close) ~~ / <after '<== '> 'my sub foo' » /,
+    }, -> Str:D $output {
+        ok $output ~~ / <after '<== '> 'my sub foo' » /,
           'scoped routines have the correct declarator';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class Foo {
                 method ^foo(\this) is traced { this.foo }
@@ -146,18 +148,16 @@ subtest 'tracing', {
                 my method foo is traced { 1 }
             }.^foo
         }, 'can trace the various types of methods a class can contain...';
-        $*TRACER.handle.flush;
-
-        my Str:D $result = $*TRACER.handle.IO.slurp: :close;
-        ok $result ~~ / <after '<== '> 'proto method foo' » /,
+    }, -> Str:D $output {
+        ok $output ~~ / <after '<== '> 'proto method foo' » /,
           '...and trace output includes regular methods...';
-        ok $result ~~ / <after '<== '> 'multi method foo' » /,
+        ok $output ~~ / <after '<== '> 'multi method foo' » /,
           '...multi methods...';
-        ok $result ~~ / <after '<== '> 'method !foo' » /,
+        ok $output ~~ / <after '<== '> 'method !foo' » /,
           '...private methods...';
-        ok $result ~~ / <after '<== '> 'method ^foo' » /,
+        ok $output ~~ / <after '<== '> 'method ^foo' » /,
           '...metamethods...';
-        ok $result ~~ / <after '<== '> 'my method foo' » /,
+        ok $output ~~ / <after '<== '> 'my method foo' » /,
           '...and scoped methods';
     };
 }

@@ -5,43 +5,45 @@ use Trait::Traced;
 
 plan 4;
 
-sub wrap-tests(&block) {
-    my Str:D $filename = 'Trait-Traced-testing-' ~ 1000000.rand.floor ~ '.txt';
-    my $*TRACER := Tracer::Default[$*TMPDIR.child($filename).IO.open: :w];
+sub trace(&trace, &parse?) {
+    my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
+    my $*TRACER := Tracer::Default[$*TMPDIR.child($filename).open: :w];
     LEAVE {
         $*TRACER.handle.close;
         $*TRACER.handle.path.unlink;
     }
-    block
+    trace;
+    $*TRACER.handle.flush;
+    parse $*TRACER.handle.path.slurp(:close) with &parse;
 }
 
 subtest 'Metamodel::MethodContainer', {
     plan 7;
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class WithMethod is traced {
                 method method(::?CLASS:U: --> 1) { }
             }.method;
         }, 'can call methods of traced classes...';
-        $*TRACER.handle.flush;
-        ok my Str:D $output = $*TRACER.handle.path.slurp(:close), '...which produce output...';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
         ok $output ~~ / <after '<== '> 'method method' » /,
           '...that claims methods have the correct declarator';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class WithTracedMethod is traced {
                 method method(|) is traced {*}
             }.method;
         }, 'can call traced methods of traced classes...';
-        $*TRACER.handle.flush;
-        ok my Str:D $output = $*TRACER.handle.path.slurp(:close), '...which produce output...';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
         nok $output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class WithProxyMethod is traced {
                 method proxy(::?CLASS:U: --> Int:D) is raw {
@@ -57,34 +59,35 @@ subtest 'Metamodel::MethodContainer', {
 subtest 'Metamodel::MultiMethodContainer', {
     plan 8;
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class WithMultiMethod is traced {
                 proto method multi-method(|)     {*}
                 multi method multi-method(--> 1) { }
             }.multi-method;
         }, 'can call multi methods of traced classes...';
-        $*TRACER.handle.flush;
-        ok my Str:D $output = $*TRACER.handle.path.slurp(:close), '...which produce output...';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
         ok $output ~~ / <after '<== '> 'proto method multi-method' » /,
           '...that claims proto methods have the correct declarator...';
         ok $output ~~ / <after '<== '> 'multi method multi-method' » /,
           '...and likewise for multi methods';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class WithTracedMultiMethod is traced {
                 proto method multi-method(|)     is traced {*}
                 multi method multi-method(--> 1) is traced { }
             }.multi-method;
         }, 'can call traced multi methods of traced classes...';
-        $*TRACER.handle.flush;
-        ok my Str:D $output = $*TRACER.handle.path.slurp(:close), '...which produce output...';
-        nok $output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
+        nok $output ~~ / 'TRACED-ROUTINE' /,
+          '...and do not rewrap themselves';
     };
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class WithProxyMultiMethod is traced {
                 proto method proxy(|)                     is raw {*}
@@ -101,14 +104,14 @@ subtest 'Metamodel::MultiMethodContainer', {
 subtest 'Metamodel::PrivateMethodContainer', {
     plan 3;
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class WithTracedPrivateMethod is traced {
                 method !private-method(|) is traced { }
             }.^find_private_method('private-method').(WithTracedPrivateMethod)
         }, 'can call traced private methods of traced classes...';
-        $*TRACER.handle.flush;
-        ok my Str:D $output = $*TRACER.handle.path.slurp(:close), '...which produce output...';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
         ok $output ~~ / <after '<== '> 'method !private-method' » /,
           '...that claims private methods have the correct declarator';
     };
@@ -118,14 +121,14 @@ subtest 'Metamodel::PrivateMethodContainer', {
 subtest 'Metamodel::MetaMethodContainer', {
     plan 3;
 
-    wrap-tests {
+    trace {
         lives-ok {
             my class WithTracedMetaMethod is traced {
                 method ^meta-method(|) { }
             }.^meta-method;
         }, 'can call traced metamethods of traced classes...';
-        $*TRACER.handle.flush;
-        ok my Str:D $output = $*TRACER.handle.path.slurp(:close), '...which produce output...';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
         ok $output ~~ / <after '<== '> 'method ^meta-method' » /,
           '...that claims metamethods have the correct declarator';
     };
