@@ -2,6 +2,7 @@ use v6.d;
 use Kind;
 use Traced::Variable;
 use Traced::Routine;
+use Traced::Attribute;
 use Traced::Stash;
 use Tracer::Default;
 use MetamodelX::Traced::AdHocMethod;
@@ -61,7 +62,7 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :$traced! where ?*) is 
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :$traced! where ?*) is export {
-    X::Trait::Traced::NYI.new(:what<attributes>).throw
+    Traced::Attribute.wrap: $attribute
 }
 
 multi sub trait_mod:<is>(Mu \T, Bool:D :$traced! where ?*) is export {
