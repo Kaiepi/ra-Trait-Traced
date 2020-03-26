@@ -6,9 +6,10 @@ enum Access <Assign Store>;
 
 has Access:D    $.access    is required;
 has Attribute:D $.attribute is required;
+has Mu          $.package   is required is built(:bind);
 
-method new(::?CLASS:_: Access:D $access, Attribute:D $attribute, *%rest --> ::?CLASS:D) {
-    self.bless: :$access, :$attribute, |%rest
+method new(::?CLASS:_: Access:D $access, Attribute:D $attribute, Mu $package is raw, *%rest --> ::?CLASS:D) {
+    self.bless: :$access, :$attribute, :$package, |%rest
 }
 
 method colour(::?CLASS:D: --> 34)            { }
@@ -17,7 +18,7 @@ method type(::?CLASS:D: --> Str:D)           { $!access.key.uc }
 
 multi method what(::?CLASS:D: --> Str:D) {
     my Str:D $name    = $!attribute.name;
-    my Str:D $package = $!attribute.package.^name;
+    my Str:D $package = $!package.^name;
     $name .= trans: '!' => '.' if $!attribute.has_accessor;
     "$name ($package)"
 }
@@ -31,13 +32,15 @@ multi method entries(::?CLASS:D: --> Iterable:D) {
 my class TracedAttributeContainerDescriptor {
     has Mu          $!descriptor is required;
     has Attribute:D $!attribute  is required;
+    has Mu          $!package    is required;
 
-    submethod BUILD(::?CLASS:D: Mu :$descriptor! is raw, Attribute:D :$!attribute! --> Nil) {
+    submethod BUILD(::?CLASS:D: Mu :$descriptor! is raw, Attribute:D :$!attribute!, Mu :$package! is raw --> Nil) {
         $!descriptor := $descriptor;
+        $!package    := $package;
     }
 
-    method new(::THIS ::?CLASS:_: Mu $descriptor is raw, Attribute:D $attribute --> ::?CLASS:D) {
-        self.bless: :$descriptor, :$attribute
+    method new(::THIS ::?CLASS:_: Mu $descriptor is raw, Attribute:D $attribute, Mu $package is raw --> ::?CLASS:D) {
+        self.bless: :$descriptor, :$attribute, :$package
     }
 
     method of(::?CLASS:D: --> Mu)      { $!descriptor.of }
@@ -50,15 +53,15 @@ my class TracedAttributeContainerDescriptor {
     }
 
     method assigned(::?CLASS:D: Mu $value is raw --> Mu) is raw {
-        Traced::Attribute.trace: Access::Assign, $!attribute, :$value
+        Traced::Attribute.trace: Access::Assign, $!attribute, $!package, :$value
     }
 }
 
 # Handles tracing for positional and associative variables.
-my role TracedAttributeContainer[Attribute:D $attribute] {
+my role TracedAttributeContainer[Attribute:D $attribute, Mu $package is raw] {
     method STORE(|args) {
         Traced::Attribute.trace:
-            Access::Store, $attribute,
+            Access::Store, $attribute, $package,
             callback  => self.^mixin_base.^find_method('STORE'), # XXX: nextcallee doesn't work here as of v2020.03
             arguments => \(self, |args)
     }
@@ -68,27 +71,27 @@ my role TracedAttribute {
     method is-traced(--> True) { }
 }
 
-multi method wrap(::?CLASS:_: Attribute:D $attribute --> Nil) {
+multi method wrap(::?CLASS:_: Attribute:D $attribute, Mu :$package is raw --> Nil) {
     use nqp;
     return if $attribute.?is-traced;
 
     my Str:D $sigil = $attribute.name.substr: 0, 1;
     if $sigil eq any '$', '&' {
         my Mu $descriptor := nqp::getattr($attribute<>, Attribute, '$!container_descriptor');
-        $descriptor := TracedAttributeContainerDescriptor.new: $descriptor, $attribute;
+        $descriptor := TracedAttributeContainerDescriptor.new: $descriptor, $attribute, $package;
         my Mu $container := nqp::p6scalarfromdesc($descriptor);
         nqp::bindattr($container, Scalar, '$!value', $attribute.container);
         nqp::bindattr($attribute<>, Attribute, '$!auto_viv_container', $container);
     } elsif $sigil eq any '@', '%' {
-        $attribute.container.^mixin: TracedAttributeContainer.^parameterize: $attribute;
+        $attribute.container.^mixin: TracedAttributeContainer.^parameterize: $attribute, $package;
     }
 
     $attribute does TracedAttribute;
 }
 
-multi method trace(::?CLASS:U: Access::Assign, Attribute:D, Mu :$value is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Assign, Attribute:D, Mu, Mu :$value is raw --> Mu) is raw {
     $value
 }
-multi method trace(::?CLASS:U: Access::Store, Attribute:D, :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Store, Attribute:D, Mu, :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
     callback |$arguments
 }

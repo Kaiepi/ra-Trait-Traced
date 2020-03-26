@@ -136,18 +136,30 @@ subtest 'Metamodel::MetaMethodContainer', {
 };
 
 subtest 'Metamodel::AttributeContainer', {
-    plan 3;
+    plan 6;
 
     trace {
         lives-ok {
             my class WithTracedAttribute is traced {
-                has $.attribute is rw;
-            }.new.attribute = 'ok';
-        }, 'can assign to traced attributes of traced classes...';
+                has $.attribute;
+            }.new: attribute => 'ok';
+        }, 'can assign to attributes of traced classes...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
         ok $output ~~ / <after '<== '> '$.attribute' /,
           '...that claims attributes have the correct symbol';
+    };
+
+    trace {
+        lives-ok {
+            my role WithTracedAttribute is traced {
+                has $.attribute;
+            }.new: attribute => 'ok';
+        }, 'can assign to traced attributes of traced roles...';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
+        ok $output ~~ / <after '<== '> '$.attribute (WithTracedAttribute)' $$ /,
+          '...that claims attributes belong to the role, not $?CLASS';
     };
 };
 

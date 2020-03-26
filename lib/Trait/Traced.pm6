@@ -63,7 +63,7 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :$traced! where ?*) is 
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :$traced! where ?*) is export {
-    Traced::Attribute.wrap: $attribute
+    Traced::Attribute.wrap: $attribute, package => $?PACKAGE
 }
 
 multi sub trait_mod:<is>(Mu \T, Bool:D :$traced! where ?*) is export {
