@@ -75,30 +75,32 @@ method parameters-to-arguments(::?CLASS:D: --> Seq:D) {
     }
 }
 
+my role TracedRoutine {
+    method is-traced(--> True) { }
+}
+
 multi method wrap(
     ::?CLASS:U:
     Routine:D $routine is raw,
     Str:D     :$scope     = '',
     Str:D     :$multiness = '',
     Str:D     :$prefix    = ''
-    --> Mu
+    --> Nil
 ) {
     return if $routine.?is-traced;
     $routine.wrap: sub TRACED-ROUTINE(|arguments --> Mu) is raw {
         Traced::Routine.trace: nextcallee, arguments, :$scope, :$multiness, :$prefix
     };
-    $routine does role { method is-traced(--> True) { } };
-    Nil
+    $routine does TracedRoutine;
 }
 # Metamodel::MultiMethodContainer wraps multi routines with an internal class;
 # we need another candidate to handle these.
-multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Mu) {
+multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Nil) {
     return if $wrapper.code.?is-traced;
     $wrapper.code.wrap: sub TRACED-ROUTINE(|arguments --> Mu) is raw {
         Traced::Routine.trace: nextcallee, arguments, :$multiness
     };
-    $wrapper.code does role { method is-traced(--> True) { } };
-    Nil
+    $wrapper.code does TracedRoutine;
 }
 
 multi method trace(::?CLASS:U: &routine, Capture:D \arguments --> Mu) is raw {

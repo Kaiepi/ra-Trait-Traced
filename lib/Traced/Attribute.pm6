@@ -64,8 +64,14 @@ my role TracedAttributeContainer[Attribute:D $attribute] {
     }
 }
 
-multi method wrap(::?CLASS:_: Attribute:D $attribute --> Mu) {
+my role TracedAttribute {
+    method is-traced(--> True) { }
+}
+
+multi method wrap(::?CLASS:_: Attribute:D $attribute --> Nil) {
     use nqp;
+    return if $attribute.?is-traced;
+
     my Str:D $sigil = $attribute.name.substr: 0, 1;
     if $sigil eq any '$', '&' {
         my Mu $descriptor := nqp::getattr($attribute<>, Attribute, '$!container_descriptor');
@@ -76,6 +82,8 @@ multi method wrap(::?CLASS:_: Attribute:D $attribute --> Mu) {
     } elsif $sigil eq any '@', '%' {
         $attribute.container.^mixin: TracedAttributeContainer.^parameterize: $attribute;
     }
+
+    $attribute does TracedAttribute;
 }
 
 multi method trace(::?CLASS:U: Access::Assign, Attribute:D, Mu :$value is raw --> Mu) is raw {
