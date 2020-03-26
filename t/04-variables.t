@@ -1,6 +1,4 @@
 use v6.d;
-use Traced;
-use Traced::Variable;
 use Tracer::Default;
 use Trait::Traced;
 use Test;

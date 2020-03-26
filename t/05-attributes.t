@@ -1,6 +1,6 @@
 use v6.d;
-use Trait::Traced;
 use Tracer::Default;
+use Trait::Traced;
 use Test;
 
 sub trace(&run, &parse?) {

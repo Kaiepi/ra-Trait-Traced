@@ -1,9 +1,8 @@
 use v6.d;
-use Test;
-use Traced;
 use Traced::Routine;
 use Tracer::Default;
 use Trait::Traced;
+use Test;
 
 plan 2;
 

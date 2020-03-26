@@ -1,6 +1,6 @@
 use v6.d;
-use Test;
 use Trait::Traced;
+use Test;
 
 plan 2;
 

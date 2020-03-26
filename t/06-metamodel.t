@@ -1,7 +1,7 @@
 use v6.d;
-use Test;
 use Tracer::Default;
 use Trait::Traced;
+use Test;
 
 sub trace(&run, &parse?) {
     my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
