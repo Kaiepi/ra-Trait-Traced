@@ -12,12 +12,12 @@ has Mu       $.old-value is built(:bind);
 has Mu       $.new-value is built(:bind);
 
 proto method new(::?CLASS:_: | --> ::?CLASS:D) {*}
-multi method new(::?CLASS:_: Access::Lookup $access, Stash:D $stash, Str:D $key, *%rest --> ::?CLASS:D) {
+multi method new(::?CLASS:_: Access::Lookup $access;; Stash:D $stash, Str:D $key, *%rest --> ::?CLASS:D) {
     self.bless: :$access, :$stash, :$key, :!modified, |%rest
 }
 multi method new(
     ::?CLASS:_:
-    Access:D  $access,
+    Access:D  $access;;
     Stash:D   $stash,
     Str:D     $key,
     Mu        $old-value is raw,
@@ -70,12 +70,12 @@ multi method wrap(::?CLASS:U: Stash:D $stash is raw --> Mu) {
     $stash.^mixin: Mixin;
 }
 
-multi method trace(::?CLASS:U: Access::Lookup, Stash:D $stash, Str:D $key --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Lookup;; Stash:D $stash, Str:D $key --> Mu) is raw {
     $stash.Stash::AT-KEY: $key
 }
 multi method trace(
     ::?CLASS:U:
-    Access::Bind,
+    Access::Bind;;
     Stash:D $stash,
     Str:D   $key,
     Mu      $old-value is raw,
@@ -86,7 +86,7 @@ multi method trace(
 }
 multi method trace(
     ::?CLASS:U:
-    Access::Assign,
+    Access::Assign;;
     Stash:D $stash,
     Str:D   $key,
     Mu      $old-value is raw,

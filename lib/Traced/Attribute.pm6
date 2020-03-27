@@ -89,9 +89,9 @@ multi method wrap(::?CLASS:_: Attribute:D $attribute, Mu :$package is raw --> Ni
     $attribute does TracedAttribute;
 }
 
-multi method trace(::?CLASS:U: Access::Assign, Attribute:D, Mu, Mu :$value is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Assign;; Attribute:D, Mu, Mu :$value is raw --> Mu) is raw {
     $value
 }
-multi method trace(::?CLASS:U: Access::Store, Attribute:D, Mu, :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Store;; Attribute:D, Mu, :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
     callback |$arguments
 }

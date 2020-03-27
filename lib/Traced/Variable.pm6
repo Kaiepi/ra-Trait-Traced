@@ -72,9 +72,9 @@ multi method wrap(::?CLASS:_: Variable:D $variable --> Mu) {
     }
 }
 
-multi method trace(::?CLASS:U: Access::Assign, Variable:D, Mu :$value is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Assign;; Variable:D, Mu :$value is raw --> Mu) is raw {
     $value
 }
-multi method trace(::?CLASS:U: Access::Store, Variable:D, :&callback, Capture:D :$arguments is raw --> Mu) is raw {
+multi method trace(::?CLASS:U: Access::Store;; Variable:D, :&callback, Capture:D :$arguments is raw --> Mu) is raw {
     callback |$arguments
 }
