@@ -1,10 +1,10 @@
 use v6.d;
 use Kind;
+use Tracer::Default;
 use Traced::Variable;
 use Traced::Routine;
 use Traced::Attribute;
 use Traced::Stash;
-use Tracer::Default;
 use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
@@ -27,15 +27,15 @@ my class X::Trait::Traced::NYI is Exception is export {
     }
 }
 
-multi sub trait_mod:<is>(Variable:D $variable, Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {
     Traced::Variable.wrap: $variable
 }
 
-multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is export {
     X::Trait::Traced::NYI.new(:what<parameters>).throw
 }
 
-multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :traced($)! where ?*) is export {
     Traced::Routine.wrap:
         $routine,
         scope     => $*SCOPE,
@@ -43,7 +43,7 @@ multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :$traced! where ?*) i
         prefix    => '';
 }
 
-multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) is export {
     use nqp;
     if my str $scope = $*SCOPE {
         Traced::Routine.wrap:
@@ -62,34 +62,34 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :$traced! where ?*) is 
     }
 }
 
-multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
     Traced::Attribute.wrap: $attribute, package => $?PACKAGE
 }
 
-multi sub trait_mod:<is>(Mu \T, Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Mu \T, Bool:D :traced($)! where ?*) is export {
     # Do nothing. This candidate exists so tracing for types can be composable.
 }
-multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MethodContainer], Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MethodContainer], Bool:D :traced($)! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::MethodContainer;
     nextsame;
 }
-multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MultiMethodContainer], Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MultiMethodContainer], Bool:D :traced($)! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::MultiMethodContainer;
     nextsame;
 }
-multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::PrivateMethodContainer], Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::PrivateMethodContainer], Bool:D :traced($)! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::PrivateMethodContainer;
     nextsame;
 }
-multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MetaMethodContainer], Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MetaMethodContainer], Bool:D :traced($)! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::MetaMethodContainer;
     nextsame;
 }
-multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::AttributeContainer], Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::AttributeContainer], Bool:D :traced($)! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::AttributeContainer;
     nextsame;
 }
-multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::Stashing], Bool:D :$traced! where ?*) is export {
+multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::Stashing], Bool:D :traced($)! where ?*) is export {
     Traced::Stash.wrap: T.WHO;
     nextsame;
 }
