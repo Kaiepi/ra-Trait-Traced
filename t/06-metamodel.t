@@ -136,18 +136,44 @@ subtest 'Metamodel::MetaMethodContainer', {
 };
 
 subtest 'Metamodel::AttributeContainer', {
-    plan 6;
+    plan 12;
 
     trace {
         lives-ok {
-            my class WithTracedAttribute is traced {
+            my class WithTracedPublicAttribute is traced {
                 has $.attribute;
             }.new: attribute => 'ok';
-        }, 'can assign to attributes of traced classes...';
+        }, 'can assign to public attributes of traced classes...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
         ok $output ~~ / <after '<== '> '$.attribute' /,
-          '...that claims attributes have the correct symbol';
+          '...that claims theys have the correct symbol';
+    };
+
+    trace {
+        lives-ok {
+            my class WithTracedPrivateAttribute is traced {
+                has $!attribute;
+                method set-attribute($!attribute) { }
+            }.new.set-attribute: 1;
+        }, 'can assign to private attributes of traced classes...';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
+        ok $output ~~ / <after '<== '> '$!attribute' /,
+          '...that claims they have the correct symbol';
+    };
+
+    trace {
+        lives-ok {
+            my class WithTracedLexicalAttribute is traced {
+                has $attribute;
+                method set-attribute($!attribute) { }
+            }.new.set-attribute: 1;
+        }, 'can assign to lexical attributes of traced classes...';
+    }, -> Str:D $output {
+        ok $output, '...which produce output...';
+        ok $output ~~ / <after '<== '> '$attribute' /,
+          '...that claims they have the correct symbol';
     };
 
     trace {
@@ -155,7 +181,7 @@ subtest 'Metamodel::AttributeContainer', {
             my role WithTracedAttribute is traced {
                 has $.attribute;
             }.new: attribute => 'ok';
-        }, 'can assign to traced attributes of traced roles...';
+        }, 'can assign to attributes of traced roles...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
         ok $output ~~ / <after '<== '> '$.attribute (WithTracedAttribute)' $$ /,

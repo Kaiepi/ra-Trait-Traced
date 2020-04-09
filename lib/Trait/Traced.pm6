@@ -63,7 +63,14 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
-    Traced::Attribute.wrap: $attribute, package => $?PACKAGE
+    my Mu    $package := $?PACKAGE;
+    my Str:D $name     = $attribute.name;
+    if $*W.?cur_lexpad.symbol: my Str:D $symbol = $name.subst: '!', '' {
+        $name = $symbol;
+    } elsif $attribute.has_accessor {
+        $name .= subst: '!', '.';
+    }
+    Traced::Attribute.wrap: $attribute, :$name, :$package
 }
 
 multi sub trait_mod:<is>(Mu \T, Bool:D :traced($)! where ?*) is export {
@@ -86,7 +93,8 @@ multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MetaMethodContainer], Bool:
     nextsame;
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::AttributeContainer], Bool:D :traced($)! where ?*) is export {
-    T.HOW.^mixin: MetamodelX::Traced::AttributeContainer;
+    my %symbols := $*W.cur_lexpad.symtable;
+    T.HOW.^mixin: MetamodelX::Traced::AttributeContainer.^parameterize: :%symbols;
     nextsame;
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::Stashing], Bool:D :traced($)! where ?*) is export {

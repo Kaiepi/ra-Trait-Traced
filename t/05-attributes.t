@@ -15,7 +15,7 @@ sub trace(&run, &parse?) {
     parse $*TRACER.handle.path.slurp(:close) with &parse;
 }
 
-plan 14;
+plan 19;
 
 trace {
     lives-ok {
@@ -40,8 +40,10 @@ trace {
     }, 'can assign to traced rw attributes...';
 }, -> Str:D $output {
     ok $output, '...which produces output...';
+    ok $output ~~ / <after '<== '> '$.traced' /,
+      '...that claims the attribute has the correct symbol...';
     ok $output ~~ / <after '==> '> '"ok"' /,
-      '...that has the correct result';
+      '...and has the correct result';
 };
 
 trace {
@@ -67,8 +69,23 @@ trace {
     }, 'can STORE in traced rw attributes...';
 }, -> Str:D $output {
     ok $output, '...which produces output...';
+    ok $output ~~ / <after '<== '> '@.traced' /,
+      '...that claims the attribute has the correct symbol...';
     ok $output ~~ / <after '==> '> '[1, 2, 3]' /,
-      '...that has the correct result';
+      '...and has the correct result';
+};
+
+trace {
+    lives-ok {
+        my class WithTracedLexical {
+            has $traced is traced;
+            method set-traced($!traced) { }
+        }.new.set-traced: 1;
+    }, 'can trace attributes with lexical symbols...';
+}, -> Str:D $output {
+    ok $output, '...which produces output...';
+    ok $output ~~ / <after '<== '> '$traced' /,
+      '...that claims the attribute has the correct symbol';
 };
 
 # vim: ft=perl6 sw=4 ts=4 sts=4 et
