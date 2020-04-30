@@ -5,6 +5,7 @@ unit class Traced::Variable is Traced;
 enum Access <Assign Store>;
 
 has Access:D   $.access   is required;
+has Str:D      $.scope    is required;
 has Variable:D $.variable is required;
 
 method new(::?CLASS:_: Access:D $access, Variable:D $variable, *%rest --> ::?CLASS:D) {
@@ -15,7 +16,9 @@ method colour(::?CLASS:D: --> 33)           { }
 method category(::?CLASS:D: --> 'VARIABLE') { }
 method type(::?CLASS:D: --> Str:D)          { $!access.key.uc }
 
-multi method what(::?CLASS:D: --> Str:D) { $!variable.name }
+multi method what(::?CLASS:D: --> Str:D) {
+    "$!scope $!variable.name()"
+}
 
 multi method entries(::?CLASS:D: --> Iterable:D) {
     gather { }
@@ -26,13 +29,14 @@ multi method entries(::?CLASS:D: --> Iterable:D) {
 my class TracedVariableContainerDescriptor {
     has Mu         $!descriptor is required;
     has Variable:D $!variable   is required;
+    has Str:D      $!scope      is required;
 
-    submethod BUILD(::?CLASS:D: Mu :$descriptor! is raw, Variable:D :$!variable! --> Nil) {
+    submethod BUILD(::?CLASS:D: Mu :$descriptor! is raw, Variable:D :$!variable!, Str:D :$!scope! --> Nil) {
         $!descriptor := $descriptor;
     }
 
-    method new(::?CLASS:_: Mu $descriptor is raw, Variable:D $variable --> ::?CLASS:D) {
-        self.bless: :$descriptor, :$variable
+    method new(::?CLASS:_: Mu $descriptor is raw, Variable:D $variable, Str:D $scope --> ::?CLASS:D) {
+        self.bless: :$descriptor, :$variable, :$scope
     }
 
     method of(::?CLASS:D: --> Mu)      { $!descriptor.of }
@@ -45,30 +49,30 @@ my class TracedVariableContainerDescriptor {
     }
 
     method assigned(::?CLASS:D: Mu $value is raw --> Mu) is raw {
-        Traced::Variable.trace: Access::Assign, $!variable, :$value
+        Traced::Variable.trace: Access::Assign, $!variable, :$!scope, :$value
     }
 }
 
 # Handles tracing for positional and associative variables.
-my role TracedVariableContainer[Variable:D $variable] {
+my role TracedVariableContainer[Variable:D $variable, Str:D $scope] {
     method STORE(|args) {
         Traced::Variable.trace:
-            Access::Store, $variable,
+            Access::Store, $variable, :$scope,
             callback  => self.^mixin_base.^find_method('STORE'), # XXX: nextcallee doesn't work here as of v2020.03
             arguments => \(self, |args)
     }
 }
 
-multi method wrap(::?CLASS:_: Variable:D $variable --> Mu) {
+multi method wrap(::?CLASS:_: Variable:D $variable, Str:D :$scope! --> Mu) {
     use nqp;
     my Mu $var       := $variable.var;
     my Mu $container := $var.VAR.WHAT;
     if $container ~~ Scalar { # $ and &
         my Mu $descriptor := nqp::getattr($var, $container, '$!descriptor');
-        $descriptor := TracedVariableContainerDescriptor.new: $descriptor, $variable;
+        $descriptor := TracedVariableContainerDescriptor.new: $descriptor, $variable, $scope;
         nqp::bindattr($var, $container, '$!descriptor', $descriptor);
     } elsif $container ~~ Positional | Associative { # @ and %
-        $var.VAR.^mixin: TracedVariableContainer.^parameterize: $variable;
+        $var.VAR.^mixin: TracedVariableContainer.^parameterize: $variable, $scope;
     }
 }
 

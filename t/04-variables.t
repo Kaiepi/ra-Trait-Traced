@@ -15,7 +15,7 @@ sub trace(&run, &parse?) {
     parse $*TRACER.handle.path.slurp(:close) with &parse;
 }
 
-plan 17;
+plan 20;
 
 trace {
     lives-ok {
@@ -23,9 +23,9 @@ trace {
     }, 'can trace $ variables...';
 }, -> Str:D $output {
     ok $output, '...producing output on assignment';
-    ok $output ~~ / <after '<== '> '$foo' /,
+    ok $output ~~ / <after '<== '> 'my $foo' » /,
       '...that claims the assignment is for the correct symbol...';
-    ok $output ~~ / <after '==> '> 0 /,
+    ok $output ~~ / <after '==> '> 0 » /,
       '...and has the correct result';
 };
 
@@ -35,7 +35,7 @@ trace {
     }, 'can trace @ variables...';
 }, -> Str:D $output {
     ok $output, '...producing output on assignment...';
-    ok $output ~~ / <after '<== '> '@foo' /,
+    ok $output ~~ / <after '<== '> 'my @foo' » /,
       '...that claims the assignment is for the correct symbol...';
     ok $output ~~ / <after '==> '> { (my @ = 1, 2, 3).raku } /,
       '...and has the correct output';
@@ -47,7 +47,7 @@ trace {
     }, 'can trace % variables...';
 }, -> Str:D $output {
     ok $output, '...producing output on assignment...';
-    ok $output ~~ / <after '<== '> '%foo' /,
+    ok $output ~~ / <after '<== '> 'my %foo' » /,
       '...that claims the assignment is for the correct symbol';
     # @ tests handle whether or not STORE works OK
 };
@@ -58,9 +58,19 @@ trace {
     }, 'can trace & variables...';
 }, -> Str:D $output {
     ok $output, '...producing output on assignment...';
-    ok $output ~~ / <after '<== '> '&foo' /,
+    ok $output ~~ / <after '<== '> 'my &foo' » /,
       '...that claims the assignment is for the correct symbol';
     # $ tests handle whether or not assignment works OK
+};
+
+trace {
+    lives-ok {
+        module { our $foo is traced = 1 }
+    }, 'can trace our-scoped variables...';
+}, -> Str:D $output {
+    ok $output, '...producing output on assignment...';
+    ok $output ~~ / <after '<== '> 'our $foo' » /,
+      '...that claims the variable has the correct scope';
 };
 
 trace {
@@ -82,7 +92,7 @@ trace {
     }, 'traced scalars can be bound and assigned to elsewhere...';
 }, -> Str:D $output {
     ok $output, '...producing output...';
-    ok $output ~~ / <after '<== '> '$wew' /,
+    ok $output ~~ / <after '<== '> 'my $wew' /,
       '...that claims the assignment is for the original variable';
 };
 
