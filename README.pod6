@@ -68,8 +68,6 @@ without needing to modify the library itself.
 Documentation for its various features may be found at its
 L<wiki|https://github.com/Kaiepi/p6-Trait-Traced/wiki>.
 
-B<This requires a compiler release of v2020.03 or later.>
-
 =head1 AUTHOR
 
 Ben Davies (Kaiepi)
