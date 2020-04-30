@@ -52,7 +52,7 @@ subtest 'tracing', {
         parse $*TRACER.handle.path.slurp(:close) with &parse;
     }
 
-    plan 25;
+    plan 26;
 
     trace {
         lives-ok {
@@ -159,6 +159,14 @@ subtest 'tracing', {
         ok $output ~~ / <after '<== '> 'my method foo' » /,
           '...and scoped methods';
     };
+
+    trace {
+        my Int:D $lexical = 1;
+        sub with-outer-lexical() is traced { $lexical }();
+    }, -> Str:D $output {
+        ok $output ~~ / <after '==> '> 1 /,
+          'tracing routines handles their outer lexical variables alright';
+    }
 }
 
 # vim: ft=perl6 sw=4 ts=4 sts=4 et
