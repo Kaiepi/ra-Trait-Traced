@@ -63,7 +63,7 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
-    my Mu    $package := $?PACKAGE;
+    my Mu    $package := $*PACKAGE;
     my Str:D $name     = $attribute.name;
     if $*W.?cur_lexpad.symbol: my Str:D $symbol = $name.subst: '!', '' {
         $name = $symbol;
