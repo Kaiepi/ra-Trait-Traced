@@ -58,3 +58,7 @@ v0.4.0:
       used properly anyways.
     - Fix a longstanding issue with how traced routines were handled in modules
       and with how they handled outer lexical variables.
+
+v0.4.1:
+    - Fix a bug where attributes would always claim to have Trait::Traced as
+      their package.
