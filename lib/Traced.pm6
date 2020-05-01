@@ -33,33 +33,31 @@ proto method entries(::?CLASS:D: --> Seq:D)      {*}
 multi method entries(::?CLASS:D: --> Iterable:D) { () }
 
 #|[ Whether or not the traced event died. ]
-method died(::?CLASS:D: --> Bool:D)   { $!exception.DEFINITE }
+method died(::?CLASS:D: --> Bool:D) { $!exception.DEFINITE }
 
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 proto method wrap(::?CLASS:U: | --> Mu) {*}
 
 #|[ Traces an event. ]
-proto method trace(::?CLASS:U: :$thread = $*THREAD, :$tracer = $*TRACER, |rest --> Mu) is raw {
+proto method trace(::?CLASS:U: |rest --> Mu) is raw {
     use nqp;
-    # Never trace events during precomp. We can find out if we're in precomp
-    # mode through $*W, but doing a dynamic lookup for it the normal way has
-    # too much overhead.
-    nqp::if(nqp::isconcrete(my Mu $W := nqp::getlexdyn('$*W')) && $W.is_precompilation_mode,
-            return {*});
+
     # Grab the metadata for the trace before running the traced event, catching
     # any exceptions thrown so we can clean up afterwards. We grab the
     # numeric value for the trace's timestamp directly since &now has more
     # overhead and Instant's features aren't useful in our case.
-    my Int:D $id        := self!next-id;
-    my Int:D $calls     := self!increment-calls: $thread;
-    my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n(), 0;
-    my Mu    $result    := try {{*}};
+    my Thread:D $thread    := $*THREAD;
+    my Int:D    $id        := self!next-id;
+    my Int:D    $calls     := self!increment-calls: $thread;
+    my Num:D    $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n(), 0;
+    my Mu       $result    := try {{*}};
     self!decrement-calls: $thread;
+
     # Output a trace for the event.
-    $tracer.say: self.new:
+    $*TRACER.say: self.new:
         :$id, :thread-id($thread.id), :$calls, :$timestamp,
-        :$result, :exception($!),
-        |rest;
+        :$result, :exception($!), |rest;
+
     # Rethrow any exception thrown by the traced event and return its original
     # result if we managed to survive.
     $!.rethrow with $!;
@@ -70,6 +68,8 @@ my atomicint $next-id = 1;
 #|[ Gets the next trace ID to use. ]
 method !next-id(::?CLASS:U: --> Int:D) { $next-id⚛++ }
 
+#|[ Keeps track of how many call frames are currently on the call stack for a
+    thread. ]
 my role CallStack {
     has atomicint $!call-frames = 0;
     method increment-call-frames(::?CLASS:D: --> Int:D) {
