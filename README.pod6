@@ -1,6 +1,6 @@
 =begin pod
 
-[![Build Status](https://travis-ci.com/Kaiepi/p6-Trait-Traced.svg?branch=master)](https://travis-ci.com/Kaiepi/p6-Trait-Traced)
+[![Build Status](https://travis-ci.com/Kaiepi/ra-Trait-Traced.svg?branch=master)](https://travis-ci.com/Kaiepi/ra-Trait-Traced)
 
 =head1 NAME
 
@@ -66,7 +66,7 @@ as to allow anyone to add custom tracing support of their own to this trait
 without needing to modify the library itself.
 
 Documentation for its various features may be found at its
-L<wiki|https://github.com/Kaiepi/p6-Trait-Traced/wiki>.
+L<wiki|https://github.com/Kaiepi/ra-Trait-Traced/wiki>.
 
 =head1 AUTHOR
 

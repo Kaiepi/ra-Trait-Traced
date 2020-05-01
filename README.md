@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/Kaiepi/p6-Trait-Traced.svg?branch=master)](https://travis-ci.com/Kaiepi/p6-Trait-Traced)
+[![Build Status](https://travis-ci.com/Kaiepi/ra-Trait-Traced.svg?branch=master)](https://travis-ci.com/Kaiepi/ra-Trait-Traced)
 
 NAME
 ====
@@ -61,7 +61,7 @@ DESCRIPTION
 
 Trait::Traced is a library that provides the `is traced` trait, which allows anything a trait can be applied to to be traced. This is designed in such a way as to allow anyone to add custom tracing support of their own to this trait without needing to modify the library itself.
 
-Documentation for its various features may be found at its [wiki](https://github.com/Kaiepi/p6-Trait-Traced/wiki).
+Documentation for its various features may be found at its [wiki](https://github.com/Kaiepi/ra-Trait-Traced/wiki).
 
 AUTHOR
 ======
