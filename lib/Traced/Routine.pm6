@@ -122,7 +122,7 @@ sub DO-WRAP(&routine is raw, Str:D :$scope!, Str:D :$multiness!, Str:D :$prefix!
     }
 
     sub TRACED-ROUTINE(|arguments --> Mu) is raw is hidden-from-backtrace {
-        my $/ := nqp::getlexcaller('$/');
+        $/ := nqp::getlexcaller('$/');
         Traced::Routine.trace: &cloned, arguments, :$scope, :$multiness, :$prefix
     }
 }
