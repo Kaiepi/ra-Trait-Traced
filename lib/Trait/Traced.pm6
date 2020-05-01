@@ -11,7 +11,7 @@ use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
 use MetamodelX::Traced::MetaMethodContainer;
 use MetamodelX::Traced::AttributeContainer;
-unit module Trait::Traced:ver<0.3.1>:auth<github:Kaiepi>:api<1>;
+unit module Trait::Traced:ver<0.4.0>:auth<github:Kaiepi>:api<1>;
 
 INIT {
     PROCESS::<$TRACER> := Tracer::Default[$*OUT] unless PROCESS::<$TRACER>:exists;

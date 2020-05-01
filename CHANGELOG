@@ -51,3 +51,10 @@ v0.3.0:
 
 v0.3.1:
     - Update README to include v0.3.0's style of trace output
+
+v0.4.0:
+    - Add support for tracing variable and attribute assignments.
+    - Fix usage of fputs on platforms other than OpenBSD, where it wasn't being
+      used properly anyways.
+    - Fix a longstanding issue with how traced routines were handled in modules
+      and with how they handled outer lexical variables.
