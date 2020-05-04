@@ -66,16 +66,17 @@ role TTY[IO::Handle:D $handle] {
 
     my Int:D      $fd       = $handle.native-descriptor;
     my Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
-    multi method say(::?CLASS:U: Traced:D $traced --> Bool:D) {
+    multi method say(::?CLASS:U: Traced:D $traced --> Bool:_) {
         my Str:D $nl-out = $handle.nl-out;
         my Str:D $output = self.lines($traced).join($nl-out) ~ $nl-out;
         if $fd ~~ $standard {
             state FILE:_ $file = fdopen $fd, 'w';
             fputs($output, $file) != -1
         } else {
-            $handle.lock;
-            LEAVE $handle.unlock;
-            $handle.print: $output;
+            my $locked = $handle.lock;
+            my $result = $handle.print: $output;
+            $handle.unlock with $locked;
+            $result
         }
     }
 }
@@ -120,10 +121,11 @@ role File[IO::Handle:D $handle] {
         }
     }
 
-    multi method say(::?CLASS:U: Traced:D $traced --> Bool:D) {
-        $handle.lock;
-        LEAVE $handle.unlock;
-        $handle.say: self.lines($traced).join($handle.nl-out)
+    multi method say(::?CLASS:U: Traced:D $traced --> Bool:_) {
+        my $locked = $handle.lock;
+        my $result = $handle.say: self.lines($traced).join($handle.nl-out);
+        $handle.unlock with $locked;
+        $result
     }
 }
 
