@@ -62,3 +62,7 @@ v0.4.0:
 v0.4.1:
     - Fix a bug where attributes would always claim to have Trait::Traced as
       their package.
+
+v0.4.2:
+    - Fix a bug where Tracer::Default would throw when attempting to unlock
+      file handles when locking them fails.
