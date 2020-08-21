@@ -66,3 +66,9 @@ v0.4.1:
 v0.4.2:
     - Fix a bug where Tracer::Default would throw when attempting to unlock
       file handles when locking them fails.
+
+v0.4.3:
+    - Optimize routine tracing by around 12.5%.
+    - Fix a bug in Traced::Routine's parameter to argument mapping where
+      arguments corresponding to aliases of named parameters would never get
+      mapped.
