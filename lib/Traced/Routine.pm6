@@ -90,8 +90,6 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Nil) 
 }
 
 sub WRAP(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Nil) {
-    my role TracedRoutine { method is-traced(--> True) { } }
-
     return if &routine ~~ TracedRoutine;
     if $*W {
         my &fixup := { DO-WRAP &routine, :$scope, :$multiness, :$prefix };
