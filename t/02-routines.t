@@ -7,36 +7,31 @@ use Test;
 plan 2;
 
 subtest 'mapping parameters to arguments', {
-    plan 5;
+    plan 6;
 
     sub make-is-arg(&routine, Capture:D $arguments is raw --> Sub:D) {
-        my Mu @params-to-args = do {
-            my Traced::Routine:D $traced .= new:
-                &routine, $arguments,
-                id => 0, thread-id => $*THREAD.id, timestamp => now.Num, calls => $++,
-                result => (try routine |$arguments), exception => $!;
-            $traced.parameters-to-arguments
-        };
+        my Traced::Routine:D $traced .= new: &routine, $arguments,
+            id => 0, thread-id => $*THREAD.id, timestamp => now.Num, calls => $++,
+            result => (try routine |$arguments), exception => $!;
+        my @params-to-args := @$traced;
         sub is-arg(Int:D $idx, Mu $expected is raw, Str:D $message) {
             my Mu $got := @params-to-args[$idx].value;
-            my    &cmp  = $expected ~~ Positional | Associative | Capture ?? &[eqv] !! &[===];
-            cmp-ok $got, &cmp, $expected, $message;
+            cmp-ok $got, &[~~], $expected, $message;
         }
     }
 
     my Capture:D $args   := \(1, 2, 3, :4foo, :5bar, :6baz);
-    my           &is-arg;
-
-    &is-arg = make-is-arg sub (|foo) { }, $args;
+    my           &is-arg  = make-is-arg sub (|foo) { }, $args;
     is-arg 0, $args, 'capture parameters get mapped OK';
 
     &is-arg = make-is-arg sub (*@foo, *%bar) { }, $args;
     is-arg 0, $args.List, 'slurpy positional parameters get mapped OK';
     is-arg 1, $args.Hash, 'slurpy named parameters get mapped OK';
 
-    &is-arg = make-is-arg sub ($foo, :$bar, |) { }, $args;
+    &is-arg = make-is-arg sub ($foo, :$bar, :foo($qux), |) { }, $args;
     is-arg 0, $args[0],   'positional parameters get mapped OK';
-    is-arg 1, $args<bar>, 'named parameters get mapped OK';
+    is-arg 1, $args<bar>, 'named parameters get mapped OK...';
+    is-arg 2, $args<foo>, '...even if they are aliased';
 };
 
 subtest 'tracing', {

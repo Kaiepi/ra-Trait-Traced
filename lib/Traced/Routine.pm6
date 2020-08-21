@@ -31,50 +31,70 @@ method name(::?CLASS:D: --> Str:D) { $!routine.name || '::' }
 multi method what(::?CLASS:D: --> Str:D) { "$.declarator $!prefix$.name ($.package)" }
 
 multi method entries(::?CLASS:D: --> Iterable:D) {
-    gather for @.parameters-to-arguments -> Pair:D (Parameter:D :key($parameter), Mu :value($argument) is raw) {
+    gather for self -> Pair:D (Parameter:D :key($parameter), Mu :value($argument) is raw) {
         my Str:D $name = ~$parameter.raku.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
         once $name = 'self' if $parameter.invocant && !$parameter.name.defined;
         take $name => $argument;
     }
 }
 
-method parameters-to-arguments(::?CLASS:D: --> Seq:D) {
-    gather {
-        my Mu               @positional  = $!arguments.list;
-        my Int:D            $idx         = 0;
-        my Int:D            $total       = +@positional;
-        my Mu               %named       = $!arguments.hash;
-        my SetHash:D[Str:D] $unseen     .= new: %named.keys;
-        for $!routine.signature.params {
+my class ParameterToArgumentIterator does Iterator {
+    has Iterator:D       $!parameters is required;
+    has List:D           $!positional is required;
+    has Map:D            $!named      is required;
+    has Int:D            $!idx         = 0;
+    has SetHash:D[Str:D] $!unseen     .= new: $!named.keys;
+
+    submethod BUILD(::?CLASS:D: Signature:D :$signature!, Capture:D :$arguments! --> Nil) {
+        $!parameters := $signature.params.iterator;
+        $!positional := @$arguments;
+        $!named      := %$arguments;
+    }
+
+    method new(::?CLASS:_: Signature:D $signature, Capture:D $arguments --> ::?CLASS:D) {
+        self.bless: :$signature, :$arguments
+    }
+
+    method pull-one(::?CLASS:D: --> Mu) is raw {
+        until ($_ := $!parameters.pull-one) =:= IterationEnd {
             when .capture {
-                my Str:D @remaining = $unseen.keys;
-                take $_ => \(|($idx < $total ?? @positional[$idx..$total-1] !! ()), |%(%named{@remaining}:p));
-                $idx = $total;
-                $unseen{@remaining}:delete;
+                return $_ => Capture.new:
+                    list => $!positional[(my Int:D $ = $!idx)..^($!idx = +$!positional)],
+                    hash => %($!named{$!unseen{*}:k:delete}:p);
             }
             when .slurpy {
                 if .named {
-                    my Str:D @remaining = $unseen.keys;
-                    take $_ => %(%named{@remaining}:p);
-                    $unseen{@remaining}:delete;
+                    return $_ => %($!named{$!unseen{*}:k:delete}:p)
                 } else {
-                    take $_ => $idx < $total ?? @positional[$idx..$total-1] !! ();
-                    $idx = $total;
+                    return $_ => $!positional[(my Int:D $ = $!idx)..^($!idx = +$!positional)];
                 }
             }
             when .named {
-                my Str:D $name = .usage-name;
-                if $unseen{$name}:exists {
-                    take $_ => %named{$name};
-                    $unseen{$name}:delete;
-                }
+                if $!unseen{.named_names // ()}:k:delete.grep: *.defined -> [Str:D $named-name, **@unacceptable] {
+                    return $_ => $!named{$named-name} unless @unacceptable;
+                } # else next
             }
             when .positional {
-                take $_ => @positional[$idx++] unless $idx == $total;
+                if $!positional[$!idx]:exists {
+                    return $_ => $!positional[$!idx++];
+                } # else next
             }
         }
+        IterationEnd
     }
 }
+
+multi method iterator(::?CLASS:D: --> Iterator:D) {
+    ParameterToArgumentIterator.new: $!routine.signature, $!arguments
+}
+multi method list(::?CLASS:D: --> List:D) {
+    List.from-iterator: self.iterator
+}
+multi method Seq(::?CLASS:D: --> Seq:D) {
+    Seq.new: self.iterator
+}
+
+method parameters-to-arguments(::?CLASS:D: --> Seq:D) { self.Seq }
 
 my role TracedRoutine {
     method is-traced(--> True) { }
