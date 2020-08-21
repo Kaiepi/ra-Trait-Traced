@@ -89,8 +89,9 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Nil) 
     WRAP $wrapper.code, :$multiness
 }
 
-sub WRAP(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Nil) {
-    return if &routine ~~ TracedRoutine;
+proto sub WRAP(&, *% --> Nil) {*}
+multi sub WRAP(TracedRoutine, *%) { #`[ Already wrapped; nothing doing. ] }
+multi sub WRAP(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '') {
     if $*W {
         my &fixup := { DO-WRAP &routine, :$scope, :$multiness, :$prefix };
         $*W.add_object_if_no_sc: &fixup;
@@ -103,6 +104,7 @@ sub WRAP(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$pr
     }
     &routine does TracedRoutine;
 }
+
 sub DO-WRAP(&routine is raw, Str:D :$scope!, Str:D :$multiness!, Str:D :$prefix! --> Nil) {
     use nqp;
 
@@ -124,7 +126,6 @@ sub DO-WRAP(&routine is raw, Str:D :$scope!, Str:D :$multiness!, Str:D :$prefix!
         Traced::Routine.trace: &cloned, arguments, :$scope, :$multiness, :$prefix
     }
 }
-
 
 multi method trace(::?CLASS:U: &routine, Capture:D \arguments --> Mu) is raw {
     routine |arguments
