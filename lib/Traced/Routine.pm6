@@ -35,7 +35,7 @@ multi method entries(::?CLASS:D: --> Iterable:D) {
         # TODO: This regex will no longer be necessary in v6.e, due to the
         # existence of the new Parameter.prefix and Parameter.suffix methods.
         my Str:D $name = ~$parameter.raku.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
-        once $name = 'self' if $parameter.invocant && !$parameter.name.defined;
+        once $name = 'self' if $parameter.invocant && !$parameter.name;
         take $name => $argument;
     }
 }
