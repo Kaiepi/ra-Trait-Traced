@@ -72,3 +72,6 @@ v0.4.3:
     - Fix a bug in Traced::Routine's parameter to argument mapping where
       arguments corresponding to aliases of named parameters would never get
       mapped.
+
+v0.4.4:
+    - Fix Traced::Routine "self" parameter detection on newer Rakudo versions.
