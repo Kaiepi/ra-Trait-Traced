@@ -1,5 +1,4 @@
 use v6.d;
-use NativeCall;
 use Traced;
 use Tracer;
 unit class Tracer::Default is Tracer;
@@ -59,25 +58,8 @@ role TTY[IO::Handle:D $handle] {
         }
     }
 
-    my class FILE is repr<CPointer> { }
-    sub fdopen(int32, Str --> FILE) is native {*}
-    sub fputs(Str, FILE --> int32)  is native {*}
-    sub strerror(int32 --> Str)     is native {*}
-
-    my Int:D      $fd       = $handle.native-descriptor;
-    my Junction:D $standard = ($*OUT, $*ERR, $*IN).any.native-descriptor;
     multi method say(::?CLASS:U: Traced:D $traced --> Bool:_) {
-        my Str:D $nl-out = $handle.nl-out;
-        my Str:D $output = self.lines($traced).join($nl-out) ~ $nl-out;
-        if $fd ~~ $standard {
-            state FILE:_ $file = fdopen $fd, 'w';
-            fputs($output, $file) != -1
-        } else {
-            my $locked = $handle.lock;
-            my $result = $handle.print: $output;
-            $handle.unlock with $locked;
-            $result
-        }
+        $handle.say: self.lines($traced).join($handle.nl-out)
     }
 }
 
@@ -122,10 +104,9 @@ role File[IO::Handle:D $handle] {
     }
 
     multi method say(::?CLASS:U: Traced:D $traced --> Bool:_) {
-        my $locked = $handle.lock;
-        my $result = $handle.say: self.lines($traced).join($handle.nl-out);
-        $handle.unlock with $locked;
-        $result
+        PRE  $handle.lock;
+        POST $handle.unlock;
+        $handle.say: self.lines($traced).join($handle.nl-out)
     }
 }
 
