@@ -29,7 +29,7 @@ proto method what(::?CLASS:D: --> Str:D) {*}
 multi method what(::?CLASS:D: --> Str:D) { ... }
 
 #|[ Produces the entries of the trace, if any. ]
-proto method entries(::?CLASS:D: --> Seq:D)      {*}
+proto method entries(::?CLASS:D: --> Iterable:D) {*}
 multi method entries(::?CLASS:D: --> Iterable:D) { () }
 
 #|[ Whether or not the traced event died. ]
