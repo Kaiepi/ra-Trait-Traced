@@ -16,13 +16,9 @@ method colour(::?CLASS:D: --> 33)           { }
 method category(::?CLASS:D: --> 'VARIABLE') { }
 method type(::?CLASS:D: --> Str:D)          { $!access.key.uc }
 
-multi method what(::?CLASS:D: --> Str:D) {
-    "$!scope $!variable.name()"
-}
+method what(::?CLASS:D: --> Str:D) { "$!scope $!variable.name()" }
 
-multi method entries(::?CLASS:D: --> Iterable:D) {
-    gather { }
-}
+method entries(::?CLASS:D: --> Iterable:D) { gather { } }
 
 # Handles tracing for scalar (and callable) variables. This is done instead of
 # using Proxy because Scalar supports atomic ops, while Proxy doesn't.
@@ -63,8 +59,9 @@ my role TracedVariableContainer[Variable:D $variable, Str:D $scope] {
     }
 }
 
-multi method wrap(::?CLASS:_: Variable:D $variable, Str:D :$scope! --> Mu) {
+method wrap(::?CLASS:_: Variable:D $variable, Str:D :$scope! --> Mu) {
     use nqp;
+
     my Mu $var       := $variable.var;
     my Mu $container := $var.VAR.WHAT;
     if $container ~~ Scalar { # $ and &

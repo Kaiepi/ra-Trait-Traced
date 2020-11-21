@@ -23,18 +23,16 @@ method category(::?CLASS:D: --> Str:D) { ... }
 method type(::?CLASS:D: --> Str:D)     { ... }
 
 #|[ Produces a name for the object for which we performed a trace. ]
-proto method what(::?CLASS:D: --> Str:D) {*}
-multi method what(::?CLASS:D: --> Str:D) { ... }
+method what(::?CLASS:D: --> Str:D) { ... }
 
 #|[ Produces the entries of the trace, if any. ]
-proto method entries(::?CLASS:D: --> Iterable:D) {*}
-multi method entries(::?CLASS:D: --> Iterable:D) { () }
+method entries(::?CLASS:D: --> Iterable:D) { ... }
 
 #|[ Whether or not the traced event died. ]
 method died(::?CLASS:D: --> Bool:D) { $!exception.DEFINITE }
 
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
-proto method wrap(::?CLASS:U: | --> Mu) {*}
+method wrap(::?CLASS:U: | --> Mu) { ... }
 
 #|[ Traces an event. ]
 proto method trace(::?CLASS:U: |rest --> Mu) is raw {

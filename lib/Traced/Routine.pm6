@@ -28,9 +28,9 @@ method declarator(::?CLASS:D: --> Str:D)  {
 
 method name(::?CLASS:D: --> Str:D) { $!routine.name || '::' }
 
-multi method what(::?CLASS:D: --> Str:D) { "$.declarator $!prefix$.name ($.package)" }
+method what(::?CLASS:D: --> Str:D) { "$.declarator $!prefix$.name ($.package)" }
 
-multi method entries(::?CLASS:D: --> Iterable:D) {
+method entries(::?CLASS:D: --> Iterable:D) {
     gather for self -> Pair:D (Parameter:D :key($parameter), Mu :value($argument) is raw) {
         # TODO: This regex will no longer be necessary in v6.e, due to the
         # existence of the new Parameter.prefix and Parameter.suffix methods.
@@ -102,6 +102,7 @@ my role TracedRoutine {
     method is-traced(--> True) { }
 }
 
+proto method wrap(::?CLASS:U: Mu --> Nil) {*}
 multi method wrap(::?CLASS:U: Routine:D $routine is raw, *%named --> Nil) {
     WRAP $routine, |%named
 }

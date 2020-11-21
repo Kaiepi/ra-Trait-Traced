@@ -17,13 +17,9 @@ method colour(::?CLASS:D: --> 34)            { }
 method category(::?CLASS:D: --> 'ATTRIBUTE') { }
 method type(::?CLASS:D: --> Str:D)           { $!access.key.uc }
 
-multi method what(::?CLASS:D: --> Str:D) {
-    "$!name ($!package.^name())"
-}
+method what(::?CLASS:D: --> Str:D) { "$!name ($!package.^name())" }
 
-multi method entries(::?CLASS:D: --> Iterable:D) {
-    gather { }
-}
+method entries(::?CLASS:D: --> Iterable:D) { gather { } }
 
 # Handles tracing for scalar (and callable) attributes. This is done instead of
 # using Proxy because Scalar supports atomic ops, while Proxy doesn't.
@@ -77,7 +73,7 @@ my role TracedAttribute {
     method is-traced(--> True) { }
 }
 
-multi method wrap(::?CLASS:_: Attribute:D $attribute, Mu :$package! is raw, Str:D :$name! --> Nil) {
+method wrap(::?CLASS:_: Attribute:D $attribute, Mu :$package! is raw, Str:D :$name! --> Nil) {
     use nqp;
     return if $attribute.?is-traced;
 

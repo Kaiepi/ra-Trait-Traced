@@ -32,7 +32,7 @@ method colour(::?CLASS:D: --> 32)        { }
 method category(::?CLASS:D: --> 'STASH') { }
 method type(::?CLASS:D: --> Str:D)       { $!access.key.uc }
 
-multi method what(::?CLASS:D: --> Str:D) {
+method what(::?CLASS:D: --> Str:D) {
     my Int:D $idx = $!key.substr(0, 1) eq <$ @ % &>.any
                  ?? $!key.substr(1, 1) eq <* . ! ^ : ? = ~>.any
                     ?? 2
@@ -43,7 +43,7 @@ multi method what(::?CLASS:D: --> Str:D) {
         !! sprintf('%s::%s', $!stash.gist, $!key)
 }
 
-multi method entries(::?CLASS:D: --> Iterable:D) {
+method entries(::?CLASS:D: --> Iterable:D) {
     gather if $!modified {
         take 'old' => $!old-value;
         take 'new' => $!new-value;
@@ -66,9 +66,7 @@ my role Mixin {
     }
 }
 
-multi method wrap(::?CLASS:U: Stash:D $stash is raw --> Mu) {
-    $stash.^mixin: Mixin;
-}
+method wrap(::?CLASS:U: Stash:D $stash is raw --> Mu) { $stash.^mixin: Mixin }
 
 multi method trace(::?CLASS:U: Access::Lookup;; Stash:D $stash, Str:D $key --> Mu) is raw {
     $stash.Stash::AT-KEY: $key
