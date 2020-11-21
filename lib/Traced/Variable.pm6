@@ -1,6 +1,6 @@
 use v6.d;
 use Traced;
-unit class Traced::Variable is Traced;
+unit class Traced::Variable does Traced;
 
 enum Access <Assign Store>;
 

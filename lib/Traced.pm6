@@ -1,6 +1,6 @@
 use v6.d;
 #|[ A role done by classes that handle tracing for a type of event. ]
-unit class Traced;
+unit role Traced;
 
 #|[ The ID of the trace. ]
 has Int:D $.id        is required;

@@ -1,6 +1,6 @@
 use v6.d;
 use Traced;
-unit class Traced::Stash is Traced;
+unit class Traced::Stash does Traced;
 
 enum Access <Lookup Assign Bind>;
 

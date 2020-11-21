@@ -1,7 +1,7 @@
 use v6.d;
 use QAST:from<NQP>;
 use Traced;
-unit class Traced::Routine is Traced;
+unit class Traced::Routine does Traced;
 
 has Routine:D $.routine   is required;
 has Capture:D $.arguments is required;
