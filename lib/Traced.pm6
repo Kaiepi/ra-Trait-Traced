@@ -15,8 +15,6 @@ has Mu    $.result    is required is built(:bind);
 #|[ The exception thrown when running the traced event, if any. ]
 has Mu    $.exception is required is built(:bind);
 
-method new(::?CLASS:_: | --> ::?CLASS:D) { ... }
-
 #|[ The colour to use for the key of the trace's output. ]
 method colour(::?CLASS:D: --> Int:D)   { ... }
 #|[ The category of trace the trace belongs to. ]
