@@ -36,28 +36,21 @@ method wrap(::?CLASS:U: | --> Mu) { ... }
 
 my atomicint $ID           = 1;
 my Int:D     @CALL-FRAMES;
-#|[ Traces an event. ]
+#|[ Traces an event, rethrowing any exceptions caught, returning the result of
+    the event otherwise. ]
 proto method trace(::?CLASS:U: |args --> Mu) is raw {
+    # We depend on &now's internals to generate a Num:D timestamp because the
+    # overhead of generating an Instant:D is unacceptable here.
     use nqp;
 
-    # Grab metadata for the trace and run the traced event. &now has too much
-    # overhead to be using here, so we depend on its internals to generate
-    # Num:D timestamp instead.
     my Int:D $id        := $ID⚛++;
     my Int:D $thread-id := $*THREAD.id;
     my Int:D $calls     := @CALL-FRAMES[$thread-id]++;
-    my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n(), 0;
+    my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n, 0;
     my Mu    $result    := try {{*}};
     @CALL-FRAMES[$thread-id] = $calls;
-
-    # Output the trace.
     $*TRACER.say: self.new:
-        :$id, :$thread-id, :$calls, :$timestamp,
-        :$result, :exception($!),
-        |args;
-
-    # Since we wrap a traced event, rethrow any exceptions caught, returning
-    # the result otherwise.
+        :$id, :$thread-id, :$calls, :$timestamp, :$result, :exception($!), |args;
     $!.rethrow with $!;
     $result
 }
