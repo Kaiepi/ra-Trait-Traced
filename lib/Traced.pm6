@@ -34,30 +34,21 @@ method died(::?CLASS:D: --> Bool:D) { $!exception.DEFINITE }
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 method wrap(::?CLASS:U: | --> Mu) { ... }
 
-#|[ Keeps track of how many call frames are currently on the call stack for a
-    thread. ]
-my role CallStack {
-    has atomicint $.call-frames is rw;
-}
-
-my atomicint $ID = 1;
+my atomicint $ID           = 1;
+my Int:D     @CALL-FRAMES;
 #|[ Traces an event. ]
 proto method trace(::?CLASS:U: |args --> Mu) is raw {
     use nqp;
-
-    # Set up the current thread for tracing.
-    my Thread:D $thread := $*THREAD;
-    $thread does CallStack unless Metamodel::Primitives.is_type: $thread, CallStack;
 
     # Grab metadata for the trace and run the traced event. &now has too much
     # overhead to be using here, so we depend on its internals to generate
     # Num:D timestamp instead.
     my Int:D $id        := $ID⚛++;
-    my Int:D $thread-id := $thread.id;
-    my Int:D $calls     := $thread.call-frames⚛++;
+    my Int:D $thread-id := $*THREAD.id;
+    my Int:D $calls     := @CALL-FRAMES[$thread-id]++;
     my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n(), 0;
     my Mu    $result    := try {{*}};
-    $thread.call-frames ⚛= $calls;
+    @CALL-FRAMES[$thread-id] = $calls;
 
     # Output the trace.
     $*TRACER.say: self.new:
