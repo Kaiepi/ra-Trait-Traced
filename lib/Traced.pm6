@@ -48,9 +48,9 @@ proto method trace(::?CLASS:U: |args --> Mu) is raw {
     my Int:D $calls     := @CALL-FRAMES[$thread-id]++;
     my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n, 0;
     my Mu    $result    := try {{*}};
-    @CALL-FRAMES[$thread-id] = $calls;
     $*TRACER.say: self.new:
         :$id, :$thread-id, :$calls, :$timestamp, :$result, :exception($!), |args;
+    @CALL-FRAMES[$thread-id] = $calls;
     $!.rethrow with $!;
     $result
 }
