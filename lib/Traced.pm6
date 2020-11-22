@@ -36,7 +36,8 @@ method wrap(::?CLASS:U: | --> Mu) { ... }
 
 my atomicint $ID           = 1;
 my Int:D     @CALL-FRAMES;
-#|[ Traces an event. ]
+#|[ Traces an event, rethrowing any exceptions it makes, returning its result
+    otherwise. ]
 proto method trace(::?CLASS:U: |args --> Mu) is raw is hidden-from-backtrace {
     # We depend on &now's internals to generate a Num:D timestamp because the
     # overhead of generating an Instant:D is unacceptable here.
