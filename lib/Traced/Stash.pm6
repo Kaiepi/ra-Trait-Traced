@@ -15,16 +15,9 @@ proto method new(::?CLASS:_: | --> ::?CLASS:D) {*}
 multi method new(::?CLASS:_: Access::Lookup $access;; Stash:D $stash, Str:D $key, *%rest --> ::?CLASS:D) {
     self.bless: :$access, :$stash, :$key, :!modified, |%rest
 }
-multi method new(
-    ::?CLASS:_:
-    Access:D  $access;;
-    Stash:D   $stash,
-    Str:D     $key,
-    Mu        $old-value is raw,
-    Mu        $new-value is raw,
-             *%rest
-    --> ::?CLASS:D
-) {
+multi method new(::?CLASS:_:
+    Access:D $access;; Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw, *%rest
+--> ::?CLASS:D) {
     self.bless: :$access, :$stash, :$key, :modified, :$old-value, :$new-value, |%rest
 }
 
@@ -71,25 +64,13 @@ method wrap(::?CLASS:U: Stash:D $stash is raw --> Mu) { $stash.^mixin: Mixin }
 multi method trace(::?CLASS:U: Access::Lookup;; Stash:D $stash, Str:D $key --> Mu) is raw {
     $stash.Stash::AT-KEY: $key
 }
-multi method trace(
-    ::?CLASS:U:
-    Access::Bind;;
-    Stash:D $stash,
-    Str:D   $key,
-    Mu      $old-value is raw,
-    Mu      $new-value is raw
-    --> Mu
-) is raw {
+multi method trace(::?CLASS:U:
+    Access::Bind;; Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw
+--> Mu) is raw {
     $stash.Hash::BIND-KEY: $key, $new-value
 }
-multi method trace(
-    ::?CLASS:U:
-    Access::Assign;;
-    Stash:D $stash,
-    Str:D   $key,
-    Mu      $old-value is raw,
-    Mu      $new-value is raw
-    --> Mu
-) is raw {
+multi method trace(::?CLASS:U:
+    Access::Assign;; Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw
+--> Mu) is raw {
     $stash.Hash::ASSIGN-KEY: $key, $new-value
 }
