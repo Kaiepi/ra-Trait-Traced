@@ -131,7 +131,7 @@ multi sub WRAP(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:
 sub DO-WRAP(&routine is raw, Str:D :$scope!, Str:D :$multiness!, Str:D :$prefix! --> Nil) {
     use nqp;
 
-    my     &cloned := nqp::clone(&routine);
+    my     &cloned := trait_mod:<is> nqp::clone(&routine), :hidden-from-backtrace;
     my Mu  $c-do   := nqp::getattr(&cloned, Code, '$!do');
     my Mu  $t-do   := nqp::getattr(&TRACED-ROUTINE, Code, '$!do');
     my str $name    = nqp::getcodename($c-do);
@@ -150,6 +150,6 @@ sub DO-WRAP(&routine is raw, Str:D :$scope!, Str:D :$multiness!, Str:D :$prefix!
     }
 }
 
-multi method trace(::?CLASS:U: &routine, Capture:D \arguments --> Mu) is raw {
+multi method trace(::?CLASS:U: &routine, Capture:D \arguments --> Mu) is raw is hidden-from-backtrace {
     routine |arguments
 }

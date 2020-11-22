@@ -11,9 +11,9 @@ has Num:D $.timestamp is required;
 #|[ The number of calls in the traced call stack.  ]
 has Int:D $.calls     is required;
 #|[ The result of the traced event. ]
-has Mu    $.result    is required is built(:bind);
+has Mu    $.result    is built(:bind) is default(Nil);
 #|[ The exception thrown when running the traced event, if any. ]
-has Mu    $.exception is required is built(:bind);
+has Mu    $.exception is built(:bind) is default(Nil);
 
 #|[ Whether or not the traced event died. ]
 method died(::?CLASS:D: --> Bool:D) { $!exception.DEFINITE }
@@ -36,9 +36,8 @@ method wrap(::?CLASS:U: | --> Mu) { ... }
 
 my atomicint $ID           = 1;
 my Int:D     @CALL-FRAMES;
-#|[ Traces an event, rethrowing any exceptions caught, returning the result of
-    the event otherwise. ]
-proto method trace(::?CLASS:U: |args --> Mu) is raw {
+#|[ Traces an event. ]
+proto method trace(::?CLASS:U: |args --> Mu) is raw is hidden-from-backtrace {
     # We depend on &now's internals to generate a Num:D timestamp because the
     # overhead of generating an Instant:D is unacceptable here.
     use nqp;
@@ -47,10 +46,13 @@ proto method trace(::?CLASS:U: |args --> Mu) is raw {
     my Int:D $thread-id := $*THREAD.id;
     my Int:D $calls     := @CALL-FRAMES[$thread-id]++;
     my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n, 0;
-    my Mu    $result    := try {{*}};
-    $*TRACER.say: self.new:
-        :$id, :$thread-id, :$calls, :$timestamp, :$result, :exception($!), |args;
+    my Mu    $result    := {*};
+    CATCH {
+        $*TRACER.say: self.new: :$id, :$thread-id, :$calls, :$timestamp, :exception($_), |args;
+        @CALL-FRAMES[$thread-id] = $calls;
+        .rethrow;
+    }
+    $*TRACER.say: self.new: :$id, :$thread-id, :$calls, :$timestamp, :$result, |args;
     @CALL-FRAMES[$thread-id] = $calls;
-    $!.rethrow with $!;
     $result
 }
