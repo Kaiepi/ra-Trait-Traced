@@ -15,6 +15,9 @@ has Mu    $.result    is required is built(:bind);
 #|[ The exception thrown when running the traced event, if any. ]
 has Mu    $.exception is required is built(:bind);
 
+#|[ Whether or not the traced event died. ]
+method died(::?CLASS:D: --> Bool:D) { $!exception.DEFINITE }
+
 #|[ The colour to use for the key of the trace's output. ]
 method colour(::?CLASS:D: --> Int:D)   { ... }
 #|[ The category of trace the trace belongs to. ]
@@ -27,9 +30,6 @@ method what(::?CLASS:D: --> Str:D) { ... }
 
 #|[ Produces the entries of the trace, if any. ]
 method entries(::?CLASS:D: --> Iterable:D) { ... }
-
-#|[ Whether or not the traced event died. ]
-method died(::?CLASS:D: --> Bool:D) { $!exception.DEFINITE }
 
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 method wrap(::?CLASS:U: | --> Mu) { ... }
