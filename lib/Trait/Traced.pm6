@@ -45,10 +45,11 @@ multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :traced($)! where ?*)
 
 multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) is export {
     use nqp;
+
     if my str $scope = $*SCOPE {
         Traced::Routine.wrap:
             $method,
-            scope     => $scope eq 'has' ?? '' !! $scope,
+            scope     => ($scope eq 'has' ?? '' !! $scope),
             multiness => $*MULTINESS,
             prefix    => '';
     } elsif nqp::can($method.package.HOW, 'compose') {
