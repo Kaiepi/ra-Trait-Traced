@@ -1,4 +1,6 @@
 use v6.d;
+my atomicint $ID           = 1;
+my Int:D     @CALL-FRAMES;
 #|[ A role done by classes that handle tracing for a type of event. ]
 unit role Traced;
 
@@ -34,8 +36,6 @@ method entries(::?CLASS:D: --> Iterable:D) { ... }
 #|[ Wraps an object of this trace's event type to make it traceable somehow. ]
 method wrap(::?CLASS:U: | --> Mu) { ... }
 
-my atomicint $ID           = 1;
-my Int:D     @CALL-FRAMES;
 #|[ Traces an event, rethrowing any exceptions it makes, returning its result
     otherwise. ]
 proto method trace(::?CLASS:U: |args --> Mu) is raw is hidden-from-backtrace {
