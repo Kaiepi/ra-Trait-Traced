@@ -5,12 +5,15 @@ unit class Traced::Routine does Traced;
 
 has Routine:D $.routine   is required;
 has Capture:D $.arguments is required;
-has Str:D     $.scope     = '';
-has Str:D     $.multiness = '';
-has Str:D     $.prefix    = '';
+has Str:D     $.scope     is required;
+has Str:D     $.multiness is required;
+has Str:D     $.prefix    is required;
 
-method new(::?CLASS:_: Routine:D  $routine is raw, Capture:D $arguments is raw, *%rest --> ::?CLASS:D) {
-    self.bless: :$routine, :$arguments, |%rest
+method new(::?CLASS:_:
+    Routine:D $routine is raw, Capture:D $arguments is raw,
+    Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '', *%rest
+--> ::?CLASS:D) {
+    self.bless: :$routine, :$arguments, :$scope, :$multiness, :$prefix, |%rest
 }
 
 method colour(::?CLASS:D: --> 31)          { }
@@ -109,53 +112,51 @@ my role TracedRoutine {
 }
 
 proto method wrap(::?CLASS:U: Mu --> Nil) {*}
+multi method wrap(::?CLASS:U: TracedRoutine:D --> Nil) is default { }
 multi method wrap(::?CLASS:U: Routine:D $routine is raw, *%named --> Nil) {
-    WRAP $routine, |%named
-}
-# Metamodel::MultiMethodContainer wraps multi routines with an internal class;
-# we need another candidate to handle these.
-multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness! --> Nil) {
-    WRAP $wrapper.code, :$multiness
-}
-
-proto sub WRAP(&, *% --> Nil) {*}
-multi sub WRAP(TracedRoutine, *%) { #`[ Already wrapped; nothing doing. ] }
-multi sub WRAP(&routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '') {
     if $*W {
-        my &fixup := { DO-WRAP &routine, :$scope, :$multiness, :$prefix };
+        my &fixup := { DO-WRAP $routine, |%named };
         $*W.add_object_if_no_sc: &fixup;
         $*W.add_fixup_task:
             deserialize_ast => QAST::Op.new(:op<call>, QAST::WVal.new(:value(&fixup))),
             fixup_ast       => QAST::Op.new(:op<call>, QAST::WVal.new(:value(&fixup)));
         Nil
     } else {
-        DO-WRAP &routine, :$scope, :$multiness, :$prefix;
+        DO-WRAP $routine, |%named;
     }
-    &routine does TracedRoutine;
+
+    $routine does TracedRoutine;
+}
+multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness!, *%rest --> Nil) {
+    # Metamodel::MultiMethodContainer wraps multi routines with an internal
+    # class; we need this candidate to handle those.
+    samewith $wrapper.code, :$multiness, |%rest
 }
 
-sub DO-WRAP(&routine is raw, Str:D :$scope!, Str:D :$multiness!, Str:D :$prefix! --> Nil) {
+sub DO-WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Nil) {
     use nqp;
 
-    my     &cloned := trait_mod:<is> nqp::clone(&routine), :hidden-from-backtrace;
-    my Mu  $c-do   := nqp::getattr(&cloned, Code, '$!do');
-    my Mu  $t-do   := nqp::getattr(&TRACED-ROUTINE, Code, '$!do');
-    my str $name    = nqp::getcodename($c-do);
-    nqp::setcodeobj($c-do, &cloned);
-    nqp::setcodeobj($t-do, &routine);
+    my Routine:D $cloned := trait_mod:<is> nqp::clone($routine), :hidden-from-backtrace;
+    my Mu        $c-do   := nqp::getattr($cloned, Code, '$!do');
+    my Mu        $t-do   := nqp::getattr(&TRACED-ROUTINE, Code, '$!do');
+    my str       $name    = nqp::getcodename($c-do);
+    nqp::setcodeobj($c-do, $cloned);
+    nqp::setcodeobj($t-do, $routine);
     nqp::setcodename($t-do, $name);
-    nqp::bindattr(&routine, Code, '$!do', $t-do);
+    nqp::bindattr($routine, Code, '$!do', $t-do);
     if $*W {
-        $*W.add_object_if_no_sc: &cloned;
+        $*W.add_object_if_no_sc: $cloned;
         $*W.add_object_if_no_sc: &TRACED-ROUTINE;
     }
 
     sub TRACED-ROUTINE(|arguments --> Mu) is raw is hidden-from-backtrace {
         $/ := nqp::getlexcaller('$/');
-        Traced::Routine.trace: &cloned, arguments, :$scope, :$multiness, :$prefix
+        Traced::Routine.trace: $cloned, arguments, :$scope, :$multiness, :$prefix
     }
 }
 
-multi method trace(::?CLASS:U: &routine, Capture:D \arguments --> Mu) is raw is hidden-from-backtrace {
-    routine |arguments
+multi method trace(::?CLASS:U:
+    Routine:D $routine is raw, Capture:D \arguments
+--> Mu) is raw is hidden-from-backtrace {
+    $routine(|arguments)
 }

@@ -36,11 +36,7 @@ multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is
 }
 
 multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :traced($)! where ?*) is export {
-    Traced::Routine.wrap:
-        $routine,
-        scope     => $*SCOPE,
-        multiness => $*MULTINESS;
-        prefix    => '';
+    Traced::Routine.wrap: $routine, scope => $*SCOPE, multiness => $*MULTINESS;
 }
 
 multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) is export {
@@ -49,9 +45,8 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
     if my str $scope = $*SCOPE {
         Traced::Routine.wrap:
             $method,
-            scope     => ($scope eq 'has' ?? '' !! $scope),
-            multiness => $*MULTINESS,
-            prefix    => '';
+            scope     => $scope eq 'has' ?? '' !! $scope,
+            multiness => $*MULTINESS;
     } elsif nqp::can($method.package.HOW, 'compose') {
         # We know this is a method belonging to a class/role/etc., but we can't
         # possibly know if it's a regular method, private method, or metamethod
