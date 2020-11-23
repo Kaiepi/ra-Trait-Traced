@@ -44,41 +44,50 @@ my class ParameterToArgumentIterator does Iterator {
     has Int:D            $!idx         = 0;
     has SetHash:D[Str:D] $!unseen     .= new: $!named.keys;
 
-    submethod BUILD(::?CLASS:D: Signature:D :$signature!, Capture:D :$arguments! --> Nil) {
+    submethod BUILD(::?CLASS:D: Signature:D :$signature! is raw, Capture:D :$arguments! is raw --> Nil) {
         $!parameters := $signature.params.iterator;
         $!positional := @$arguments;
         $!named      := %$arguments;
     }
 
-    method new(::?CLASS:_: Signature:D $signature, Capture:D $arguments --> ::?CLASS:D) {
+    method new(::?CLASS:_: Signature:D $signature is raw , Capture:D $arguments is raw --> ::?CLASS:D) {
         self.bless: :$signature, :$arguments
     }
 
     method pull-one(::?CLASS:D: --> Mu) is raw {
         until ($_ := $!parameters.pull-one) =:= IterationEnd {
-            when .capture {
+            when *.capture {
+                my Int:D $begin  = $!idx;
+                my Int:D $end    = $!idx := $!positional.elems;
+                my       @names := $!unseen{*}:k:delete;
                 return $_ => Capture.new:
-                    list => $!positional[(my Int:D $ = $!idx)..^($!idx = +$!positional)],
-                    hash => %($!named{$!unseen{*}:k:delete}:p);
+                    list => $!positional[$begin..^$end],
+                    hash => Map($!named{@names}:p);
             }
-            when .slurpy {
-                if .named {
-                    return $_ => %($!named{$!unseen{*}:k:delete}:p)
+            when *.slurpy {
+                return do if .named {
+                    my @names      := $!unseen{*}:k:delete;
+                    my @parameters := $!named{@names}:p;
+                    $_ => .raw ?? Map(@parameters) !! %(@parameters)
                 } else {
-                    return $_ => $!positional[(my Int:D $ = $!idx)..^($!idx = +$!positional)];
+                    my Int:D $begin       = $!idx;
+                    my Int:D $end         = $!idx := $!positional.elems;
+                    my       @parameters := $!positional[$begin..^$end];
+                    $_ => .raw ?? @parameters !! [@parameters]
+                };
+            }
+            when *.named {
+                for .named_names -> Str:D $name {
+                    return $_ => $!named{$name} if $!named{$name}:exists and $!unseen{$name}:exists:delete;
                 }
+                # next
             }
-            when .named {
-                if $!unseen{.named_names // ()}:k:delete.grep: *.defined -> [Str:D $named-name, **@unacceptable] {
-                    return $_ => $!named{$named-name} unless @unacceptable;
-                } # else next
-            }
-            when .positional {
-                if $!positional[$!idx]:exists {
-                    return $_ => $!positional[$!idx++];
-                } # else next
+            when *.positional {
+                return $_ => $!positional[$!idx++] if $!positional[$!idx]:exists;
+                # next
             }
         }
+
         IterationEnd
     }
 }
