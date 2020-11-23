@@ -2,12 +2,11 @@ use v6.d;
 use Traced::Routine;
 unit role MetamodelX::Traced::MethodContainer;
 
-method compose(|) {
-    my Mu $type := callsame;
-    for self.methods: $type, :local -> Mu $method is raw {
+method compose(::?CLASS:D: Mu $package is raw, | --> Mu) {
+    for self.methods: $package, :local -> Mu $method is raw {
         Traced::Routine.wrap: $method, multiness => $method.is_dispatcher ?? 'proto' !! ''
             if Metamodel::Primitives.is_type($method, Routine)
             && !$method.?is-hidden-from-backtrace;
     }
-    $type
+    callsame
 }
