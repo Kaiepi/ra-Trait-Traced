@@ -31,12 +31,9 @@ method name(::?CLASS:D: --> Str:D) { $!routine.name || '::' }
 method what(::?CLASS:D: --> Str:D) { "$.declarator $!prefix$.name ($.package)" }
 
 method entries(::?CLASS:D: --> Iterable:D) {
-    gather for self -> Pair:D (Parameter:D :key($parameter), Mu :value($argument) is raw) {
-        # TODO: This regex will no longer be necessary in v6.e, due to the
-        # existence of the new Parameter.prefix and Parameter.suffix methods.
-        my Str:D $name = ~$parameter.raku.match: / ^ [ '::' \S+ \s ]* [ \S+ \s ]? <(\S+)> /;
-        once $name = 'self' if $parameter.invocant && !$parameter.name;
-        take $name => $argument;
+    gather for Seq(self) -> Pair:D (Parameter:D :key($p) is raw, Mu :value($a) is raw) {
+        once take (self => $a) and next if $p.invocant && !$p.name;
+        take $p.prefix ~ $p.sigil ~ $p.twigil ~ $p.usage-name ~ $p.suffix => $a;
     }
 }
 
