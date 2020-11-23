@@ -1,29 +1,25 @@
 use v6.d;
 use Traced;
 use Tracer;
-unit class Tracer::Default is Tracer;
+unit class Tracer::Default;
 
 #|[ Returns the handle the tracer was parameterized with. ]
 method handle(::?CLASS:_: --> IO::Handle:D) { ... }
 
-multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) { ... }
+role TTY[IO::Handle:D $handle] does Tracer {
+    method handle(::?CLASS:_: --> IO::Handle:D) { $handle }
 
-multi method say(::?CLASS:U: Traced:D --> Bool:D) { ... }
-
-role TTY[IO::Handle:D $handle] {
-    method handle(::?CLASS:U: --> IO::Handle:D) { $handle }
-
-    multi method stringify(::?CLASS:U: Mu $value is raw --> Str:D) {
+    multi method stringify(::?CLASS:_: Mu $value is raw --> Str:D) {
         $value.gist
     }
-    multi method stringify(::?CLASS:U: Exception:D $exception --> Str:D) {
+    multi method stringify(::?CLASS:_: Exception:D $exception --> Str:D) {
         sprintf "\e[31m%s\e[0m", $exception.^name
     }
-    multi method stringify(::?CLASS:U: Failure:D $failure --> Str:D) {
+    multi method stringify(::?CLASS:_: Failure:D $failure --> Str:D) {
         sprintf "\e[33m%s\e[0m", $failure.exception.^name
     }
 
-    multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) {
+    multi method lines(::?CLASS:_: Traced:D $traced --> Seq:D) {
         gather {
             my Str:D $margin = ' ' x 4 * $traced.calls;
             my Str:D $nl-out = $handle.nl-out;
@@ -58,19 +54,19 @@ role TTY[IO::Handle:D $handle] {
         }
     }
 
-    multi method say(::?CLASS:U: Traced:D $traced --> Bool:_) {
+    multi method say(::?CLASS:_: Traced:D $traced --> Bool:_) {
         $handle.say: self.lines($traced).join($handle.nl-out)
     }
 }
 
-role File[IO::Handle:D $handle] {
-    method handle(::?CLASS:U: --> IO::Handle:D) { $handle }
+role File[IO::Handle:D $handle] does Tracer {
+    method handle(::?CLASS:_: --> IO::Handle:D) { $handle }
 
-    method stringify(::?CLASS:U: Mu $value is raw --> Str:D) {
+    method stringify(::?CLASS:_: Mu $value is raw --> Str:D) {
         $value.raku
     }
 
-    multi method lines(::?CLASS:U: Traced:D $traced --> Seq:D) {
+    multi method lines(::?CLASS:_: Traced:D $traced --> Seq:D) {
         gather {
             my Str:D $margin = ' ' x 4 * $traced.calls;
 
@@ -103,7 +99,7 @@ role File[IO::Handle:D $handle] {
         }
     }
 
-    multi method say(::?CLASS:U: Traced:D $traced --> Bool:_) {
+    multi method say(::?CLASS:_: Traced:D $traced --> Bool:_) {
         PRE  $handle.lock;
         POST $handle.unlock;
         $handle.say: self.lines($traced).join($handle.nl-out)
