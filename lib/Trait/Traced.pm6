@@ -93,8 +93,9 @@ multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MetaMethodContainer], Bool:
     nextsame;
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::AttributeContainer], Bool:D :traced($)! where ?*) is export {
-    my %symbols := $*W.cur_lexpad.symtable;
-    T.HOW.^mixin: MetamodelX::Traced::AttributeContainer.^parameterize: :%symbols;
+    my        %symbols := $*W.cur_lexpad.symtable;
+    my Bool:D $repr    := Metamodel::Primitives.is_type: T.HOW, Metamodel::REPRComposeProtocol;
+    T.HOW.^mixin: MetamodelX::Traced::AttributeContainer.^parameterize: :%symbols, :$repr;
     nextsame;
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::Stashing], Bool:D :traced($)! where ?*) is export {
