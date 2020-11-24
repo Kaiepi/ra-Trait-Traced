@@ -12,23 +12,23 @@ role TTY[IO::Handle:D $handle] does Tracer {
     multi method gist(::?CLASS:_: Traced:D :event($e) --> Str:D) {
         my Str:D $nl-out = $handle.nl-out;
         gather {
-            my Str:D $margin = ' ' x 4;
-            my Str:D $indent = $margin x $e.calls;
+            my Str:D constant $border = ' ' x 4;
+            my Str:D          $margin = $border x $e.calls;
             # Title
-            take "$indent\e[0;2m$e.id() \e[$e.colour();1m$e.category() $e.type()\e[0;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]\e[22m";
+            take "$margin$border\e[;1m$e.id() \e[2;$e.colour()m$e.category() $e.type()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]";
             # Header
-            take "$indent\e[0;2m<==\e[22m \e[1m$e.what()\e[39m";
+            take "$margin\<==\e[;1m $e.what()";
             # Body
             for my Pair:D @entries = $e.entries -> (Str:D :$key, Mu :$value is raw) {
                 state Int:D $width   = @entries.map(*.key.chars).max;
                 state Str:D $padding = ' ' x $width + 2;
-                take "$indent$margin\e[0;1m$key\e[39m: $value.&prettify.subst($nl-out, qq/$nl-out$indent$margin$padding/)";
+                take "$margin$border$key\e[m: $value.&prettify.subst($nl-out, qq/$nl-out$margin$border$padding/)\e[;1m";
             }
             # Footer
             if $e.died {
-                take "$indent\e[0;2m!!!\e[22m $e.exception.&prettify.subst($nl-out, qq/$nl-out$indent$margin/, :g)";
+                take "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl-out, qq/$nl-out$margin$border/, :g)";
             } else {
-                take "$indent\e[0;2m==>\e[22m $e.result.&prettify.subst($nl-out, qq/$nl-out$indent$margin/, :g)";
+                take "$margin\e[;2m==>\e[m $e.result.&prettify.subst($nl-out, qq/$nl-out$margin$border/, :g)";
             }
         }.join: $nl-out
     }
