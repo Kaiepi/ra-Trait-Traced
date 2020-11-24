@@ -9,53 +9,37 @@ method handle(::?CLASS:_: --> IO::Handle:D) { ... }
 role TTY[IO::Handle:D $handle] does Tracer {
     method handle(::?CLASS:_: --> IO::Handle:D) { $handle }
 
-    multi method stringify(::?CLASS:_: Mu $value is raw --> Str:D) {
-        $value.gist
-    }
-    multi method stringify(::?CLASS:_: Exception:D $exception --> Str:D) {
-        sprintf "\e[31m%s\e[0m", $exception.^name
-    }
-    multi method stringify(::?CLASS:_: Failure:D $failure --> Str:D) {
-        sprintf "\e[33m%s\e[0m", $failure.exception.^name
-    }
-
-    multi method lines(::?CLASS:_: Traced:D $traced --> Seq:D) {
+    multi method gist(::?CLASS:_: Traced:D :event($e) --> Str:D) {
+        my Str:D $nl-out = $handle.nl-out;
         gather {
-            my Str:D $margin = ' ' x 4 * $traced.calls;
-            my Str:D $nl-out = $handle.nl-out;
-
+            my Str:D $margin = ' ' x 4;
+            my Str:D $indent = $margin x $e.calls;
             # Title
-            take sprintf "$margin\e[2m%d\e[0m \e[%d;1;2m%s %s\e[0m \e[2m[%d @ %f]\e[0m",
-                         $traced.id,
-                         $traced.colour, $traced.category, $traced.type,
-                         $traced.thread-id, $traced.timestamp;
-
+            take "$indent\e[0;2m$e.id() \e[$e.colour();1m$e.category() $e.type()\e[0;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]\e[22m";
             # Header
-            take sprintf "$margin\e[2m<==\e[0m \e[1m%s\e[0m", $traced.what;
-
+            take "$indent\e[0;2m<==\e[22m \e[1m$e.what()\e[39m";
             # Body
-            for my Pair:D @entries = $traced.entries {
-                state Int:D $width = @entries.map(*.key.chars).max;
-                state Str:D $extra = ' ' x $width + 6;
-                my Str:D $key     = .key;
-                my Str:D $padding = ' ' x $width - .key.chars;
-                my Str:D $value   = self.stringify(.value).subst($nl-out, $nl-out ~ $margin ~ $extra, :g);
-                take "$margin    \e[1m$key\e[0m:$padding $value";
+            for my Pair:D @entries = $e.entries -> (Str:D :$key, Mu :$value is raw) {
+                state Int:D $width   = @entries.map(*.key.chars).max;
+                state Str:D $padding = ' ' x $width + 2;
+                take "$indent$margin\e[0;1m$key\e[39m: $value.&prettify.subst($nl-out, qq/$nl-out$indent$margin$padding/)";
             }
-
             # Footer
-            if $traced.died {
-                my Str:D $exception = self.stringify($traced.exception).subst($nl-out, $nl-out ~ $margin ~ ' ' x 4);
-                take "$margin\e[2m!!!\e[0m $exception";
+            if $e.died {
+                take "$indent\e[0;2m!!!\e[22m $e.exception.&prettify.subst($nl-out, qq/$nl-out$indent$margin/, :g)";
             } else {
-                my Str:D $result = self.stringify($traced.result).subst($nl-out, $nl-out ~ $margin ~ ' ' x 4);
-                take "$margin\e[2m==>\e[0m $result";
+                take "$indent\e[0;2m==>\e[22m $e.result.&prettify.subst($nl-out, qq/$nl-out$indent$margin/, :g)";
             }
-        }
+        }.join: $nl-out
     }
 
-    multi method say(::?CLASS:_: Traced:D $traced --> Bool:_) {
-        $handle.say: self.lines($traced).join($handle.nl-out)
+    proto sub prettify(Mu --> Str:D)                     {*}
+    multi sub prettify(Mu $value is raw --> Str:D)       { $value.gist }
+    multi sub prettify(Exception:D $exception --> Str:D) { "\e[31m$exception.^name()\e[0m" }
+    multi sub prettify(Failure:D $failure --> Str:D)     { "\e[33m$failure.exception.^name()\e[0m"}
+
+    multi method say(::?CLASS:_: Traced:D $event --> Bool:_) {
+        $handle.say: self.gist: :$event
     }
 }
 
@@ -66,43 +50,32 @@ role File[IO::Handle:D $handle] does Tracer {
         $value.raku
     }
 
-    multi method lines(::?CLASS:_: Traced:D $traced --> Seq:D) {
+    multi method gist(::?CLASS:_: Traced:D :event($e) --> Seq:D) {
         gather {
-            my Str:D $margin = ' ' x 4 * $traced.calls;
-
+            my Str:D $indent = ' ' x 4 * $e.calls;
             # Title
-            take sprintf "$margin%d %s %s [%d @ %f]",
-                         $traced.id, $traced.category, $traced.type,
-                         $traced.thread-id, $traced.timestamp;
-
+            take "$indent$e.id() $e.category() $e.type() [$e.thread-id() @ $e.timestamp()]",
             # Header
-            my Str:D $what = $traced.what;
-            take "$margin\<== $what";
-
+            take "$indent\<== $e.what()";
             # Body
-            for my Pair:D @entries = $traced.entries {
-                state Int:D $width = @entries.map(*.key.chars).max;
-                my Str:D $key     = .key;
-                my Str:D $padding = ' ' x $width - .key.chars;
-                my Str:D $value   = self.stringify: .value;
-                take "$margin    $key:$padding $value";
+            for my Pair:D @entries = $e.entries -> (Str:D :$key, Mu :$value is raw) {
+                state Int:D $width   = @entries.map(*.key.chars).max;
+                state Str:D $padding = ' ' x $width - .key.chars;
+                take "$indent    $key:$padding $value.&stringify";
             }
-
             # Footer
-            if $traced.died {
-                my Str:D $exception = self.stringify: $traced.exception;
-                take "$margin!!! $exception";
-            } else {
-                my Str:D $result = self.stringify: $traced.result;
-                take "$margin==> $result";
-            }
+            take $e.died
+              ?? "$indent!!! $e.exception.&stringify"
+              !! "$indent==> $e.exception.&stringify";
         }
     }
 
-    multi method say(::?CLASS:_: Traced:D $traced --> Bool:_) {
+    sub stringify(Mu $value is raw --> Str:D) { $value.raku }
+
+    multi method say(::?CLASS:_: Traced:D $event --> Bool:_) {
         PRE  $handle.lock;
         POST $handle.unlock;
-        $handle.say: self.lines($traced).join($handle.nl-out)
+        $handle.say: self.gist: :$event
     }
 }
 
