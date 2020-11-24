@@ -12,24 +12,21 @@ role TTY[IO::Handle:D $handle] does Tracer {
     multi method gist(::?CLASS:_: Traced:D :event($e) --> Str:D) {
         my Str:D $nl-out = $handle.nl-out;
         gather {
-            my Str:D constant $border = ' ' x 4;
-            my Str:D          $margin = $border x $e.calls;
+            my Str:D $margin = ' ' x 4 * $e.calls;
             # Title
-            take "$margin$border\e[;1m$e.id() \e[2;$e.colour()m$e.category() $e.type()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]";
+            take "$margin    \e[;1m$e.id() \e[2;$e.colour()m$e.category() $e.type()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]";
             # Header
             take "$margin\<==\e[;1m $e.what()";
             # Body
             for my Pair:D @entries = $e.entries -> (Str:D :$key, Mu :$value is raw) {
                 state Int:D $width   = @entries.map(*.key.chars).max;
                 state Str:D $padding = ' ' x $width + 2;
-                take "$margin$border$key\e[m: $value.&prettify.subst($nl-out, qq/$nl-out$margin$border$padding/)\e[;1m";
+                take "$margin    $key\e[m: $value.&prettify.subst($nl-out, qq/$nl-out$margin$border$padding/)\e[;1m";
             }
             # Footer
-            if $e.died {
-                take "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl-out, qq/$nl-out$margin$border/, :g)";
-            } else {
-                take "$margin\e[;2m==>\e[m $e.result.&prettify.subst($nl-out, qq/$nl-out$margin$border/, :g)";
-            }
+            take $e.died
+              ?? "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl-out, qq/$nl-out$margin$border/, :g)";
+              !! "$margin\e[;2m==>\e[m $e.result.&prettify.subst($nl-out, qq/$nl-out$margin$border/, :g)";
         }.join: $nl-out
     }
 
@@ -50,24 +47,24 @@ role File[IO::Handle:D $handle] does Tracer {
         $value.raku
     }
 
-    multi method gist(::?CLASS:_: Traced:D :event($e) --> Seq:D) {
+    multi method gist(::?CLASS:_: Traced:D :event($e) --> Str:D) {
         gather {
-            my Str:D $indent = ' ' x 4 * $e.calls;
+            my Str:D $margin = ' ' x 4 * $e.calls;
             # Title
-            take "$indent$e.id() $e.category() $e.type() [$e.thread-id() @ $e.timestamp()]",
+            take "$margin    $e.id() $e.category() $e.type() [$e.thread-id() @ $e.timestamp()]";
             # Header
-            take "$indent\<== $e.what()";
+            take "$margin\<== $e.what()";
             # Body
             for my Pair:D @entries = $e.entries -> (Str:D :$key, Mu :$value is raw) {
                 state Int:D $width   = @entries.map(*.key.chars).max;
-                state Str:D $padding = ' ' x $width - .key.chars;
-                take "$indent    $key:$padding $value.&stringify";
+                state Str:D $padding = ' ' x $width - $key.chars;
+                take "$margin    $key\:$padding $value.&stringify()";
             }
             # Footer
             take $e.died
-              ?? "$indent!!! $e.exception.&stringify"
-              !! "$indent==> $e.exception.&stringify";
-        }
+              ?? "$margin!!! $e.exception.&stringify()"
+              !! "$margin==> $e.result.&stringify()";
+        }.join: $handle.nl-out
     }
 
     sub stringify(Mu $value is raw --> Str:D) { $value.raku }
