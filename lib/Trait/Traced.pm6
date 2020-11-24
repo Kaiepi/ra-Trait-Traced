@@ -1,16 +1,16 @@
 use v6.d;
 use Kind;
-use Tracer::Default;
-use Traced::Variable;
-use Traced::Routine;
 use Traced::Attribute;
+use Traced::Routine;
 use Traced::Stash;
+use Traced::Variable;
 use MetamodelX::Traced::AdHocMethod;
+use MetamodelX::Traced::AttributeContainer;
 use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
 use MetamodelX::Traced::MetaMethodContainer;
-use MetamodelX::Traced::AttributeContainer;
+use Tracer::Default;
 unit module Trait::Traced:ver<0.4.4>:auth<github:Kaiepi>:api<1>;
 
 INIT PROCESS::<$TRACER> := Tracer::Default[$*OUT] unless PROCESS::<$TRACER>:exists;
