@@ -87,7 +87,7 @@ role TTY does Tracer {
             # Title
             take-rw "$margin    \e[;1m$e.id() \e[2;33m$e.kind() $e.of()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]";
             # Header
-            take-rw "$margin\<==\e[;1m $e.scope() $e.variable.name()";
+            take-rw "$margin\<==\e[;1m $e.declarator() ($e.package.^name())";
             # Body
             # (none to speak of)
             # Footer
@@ -171,7 +171,7 @@ role File does Tracer {
             # Title
             take-rw "$margin    $e.id() $e.kind() $e.of() [$e.thread-id() @ $e.timestamp.fmt(<%f>)]";
             # Header
-            take-rw "$margin\<== $e.scope() $e.variable.name()";
+            take-rw "$margin\<== $e.declarator() ($e.package.^name())";
             # Body
             # (none to speak of)
             # Footer

@@ -15,15 +15,15 @@ sub trace(&run, &parse?) {
     parse $*TRACER.handle.path.slurp(:close) with &parse;
 }
 
-plan 20;
+plan 32;
 
 trace {
     lives-ok {
         my $foo is traced = 0;
     }, 'can trace $ variables...';
 }, -> Str:D $output {
-    ok $output, '...producing output on assignment';
-    ok $output ~~ / <after '<== '> 'my $foo' » /,
+    ok $output, '...producing output...';
+    ok $output ~~ / <after '<== '> 'my $foo ' /,
       '...that claims the assignment is for the correct symbol...';
     ok $output ~~ / <after '==> '> 0 » /,
       '...and has the correct result';
@@ -31,11 +31,21 @@ trace {
 
 trace {
     lives-ok {
+        my Int:D $n is traced = 42;
+    }, 'can trace typed $ variables...';
+}, -> Str:D $output {
+    ok $output, '...producing output...';
+    ok $output ~~ / <after '<== '> 'my Int:D $n ' /,
+      '...that includes its type';
+};
+
+trace {
+    lives-ok {
         my @foo is traced = 1, 2, 3;
     }, 'can trace @ variables...';
 }, -> Str:D $output {
-    ok $output, '...producing output on assignment...';
-    ok $output ~~ / <after '<== '> 'my @foo' » /,
+    ok $output, '...producing output...';
+    ok $output ~~ / <after '<== '> 'my @foo ' /,
       '...that claims the assignment is for the correct symbol...';
     ok $output ~~ / <after '==> '> { (my @ = 1, 2, 3).raku } /,
       '...and has the correct output';
@@ -43,13 +53,34 @@ trace {
 
 trace {
     lives-ok {
+        my Int:D @ns is traced = 42,;
+    }, 'can trace typed @ variables...';
+}, -> Str:D $output {
+    ok $output, '...producing output...';
+    ok $output ~~ / <after '<== '> 'my Int:D @ns ' /,
+      '...that includes its type';
+};
+
+trace {
+    lives-ok {
         my %foo is traced = :1a, :2b, :3c;
     }, 'can trace % variables...';
 }, -> Str:D $output {
-    ok $output, '...producing output on assignment...';
-    ok $output ~~ / <after '<== '> 'my %foo' » /,
+    ok $output, '...producing outpu...';
+    ok $output ~~ / <after '<== '> 'my %foo ' /,
       '...that claims the assignment is for the correct symbol';
     # @ tests handle whether or not STORE works OK
+};
+
+trace {
+    lives-ok {
+        my Int:D %ns{Str:D} is traced = :42answer;
+    }, 'can trace typed % variables...';
+}, -> Str:D $output {
+    ok $output, '...producing output...';
+    ok $output ~~ / <after '<== '> 'my Int:D %ns{Str:D}' /,
+      '...that claims the assignment is for the correct symbol';
+    # @ tests handle the no-key-type case OK
 };
 
 trace {
@@ -57,11 +88,21 @@ trace {
         my &foo is traced = { $_ };
     }, 'can trace & variables...';
 }, -> Str:D $output {
-    ok $output, '...producing output on assignment...';
-    ok $output ~~ / <after '<== '> 'my &foo' » /,
+    ok $output, '...producing output...';
+    ok $output ~~ / <after '<== '> 'my &foo ' /,
       '...that claims the assignment is for the correct symbol';
     # $ tests handle whether or not assignment works OK
 };
+
+trace {
+    lives-ok {
+        my Int:D &answer is traced = sub (--> Int:D) { 42 };
+    }, 'can trace typed & variables...';
+}, -> Str:D $output {
+    ok $output, '...producing output...';
+    ok $output ~~ / <after '<== '> 'my Int:D &answer ' /,
+      '...that claims the assignment is for the correct symbol';
+}
 
 trace {
     lives-ok {

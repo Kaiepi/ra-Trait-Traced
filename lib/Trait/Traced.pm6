@@ -26,7 +26,9 @@ my class X::Trait::Traced::NYI is Exception is export {
 }
 
 multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {
-    Traced::Variable.wrap: $variable, scope => $*SCOPE
+    Traced::Variable.wrap: $variable,
+        scope   => $*SCOPE,
+        package => $*PACKAGE
 }
 
 multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is export {
