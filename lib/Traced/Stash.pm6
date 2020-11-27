@@ -2,75 +2,106 @@ use v6.d;
 use Traced;
 unit class Traced::Stash does Traced;
 
-enum Access <Lookup Assign Bind>;
+enum Type <LOOKUP BIND ASSIGN>;
 
-has Access:D $.access    is required;
-has Stash:D  $.stash     is required;
-has Str:D    $.key       is required;
-has Bool:D   $.modified  is required;
-has Mu       $.old-value is built(:bind);
-has Mu       $.new-value is built(:bind);
+has Stash:D $.stash is required;
+has Str:D   $.key   is required;
 
-proto method new(::?CLASS:_: | --> ::?CLASS:D) {*}
-multi method new(::?CLASS:_: Access::Lookup $access;; Stash:D $stash, Str:D $key, *%rest --> ::?CLASS:D) {
-    self.bless: :$access, :$stash, :$key, :!modified, |%rest
-}
-multi method new(::?CLASS:_:
-    Access:D $access;; Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw, *%rest
---> ::?CLASS:D) {
-    self.bless: :$access, :$stash, :$key, :modified, :$old-value, :$new-value, |%rest
+method kind(::?CLASS:D: --> 'STASH') { }
+
+method of(::?CLASS:D: --> Type:D) { ... }
+
+method longname(::?CLASS:D: --> Str:D) {
+    $!key.substr(0, 1) eq <$ @ % &>.any
+      ?? $!key.substr(1, 1) eq <* . ! ^ : ? = ~>.any
+        ?? "$!key.substr(0, 2)$!stash.gist()\:\:$!key.substr(2)"
+        !! "$!key.substr(0, 1)$!stash.gist()\:\:$!key.substr(1)"
+      !! "$!stash.gist()\:\:$!key"
 }
 
-method colour(::?CLASS:D: --> 32)        { }
-method category(::?CLASS:D: --> 'STASH') { }
-method type(::?CLASS:D: --> Str:D)       { $!access.key.uc }
-
-method what(::?CLASS:D: --> Str:D) {
-    my Int:D $idx = $!key.substr(0, 1) eq <$ @ % &>.any
-                 ?? $!key.substr(1, 1) eq <* . ! ^ : ? = ~>.any
-                    ?? 2
-                    !! 1
-                 !! 0;
-    $idx > 0
-        ?? sprintf('%s%s::%s', $!key.substr(0, $idx), $!stash.gist, $!key.substr($idx))
-        !! sprintf('%s::%s', $!stash.gist, $!key)
-}
-
-method entries(::?CLASS:D: --> Iterable:D) {
-    gather if $!modified {
-        take 'old' => $!old-value;
-        take 'new' => $!new-value;
-    }
-}
-
-my role Mixin {
-    multi method AT-KEY(::?CLASS:D: Str() $key --> Mu) is raw {
-        Traced::Stash.trace: Access::Lookup, self, $key
-    }
-
-    multi method BIND-KEY(::?CLASS:D: Str() $key, Mu $new-value is raw --> Mu) is raw {
-        my Mu $old-value := self.Map::AT-KEY: $key;
-        Traced::Stash.trace: Access::Bind, self, $key, $old-value, $new-value;
-    }
-
-    multi method ASSIGN-KEY(::?CLASS:D: Str() $key, Mu $new-value is raw --> Mu) is raw {
-        my Mu $old-value = self.Map::AT-KEY: $key; # Intentionally uses $old-value's container.
-        Traced::Stash.trace: Access::Assign, self, $key, $old-value, $new-value;
-    }
-}
+my role Mixin { ... }
 
 method wrap(::?CLASS:U: Stash:D $stash is raw --> Mu) { $stash.^mixin: Mixin }
 
-multi method trace(::?CLASS:U: Access::Lookup;; Stash:D $stash, Str:D $key --> Mu) is raw {
-    $stash.Stash::AT-KEY: $key
+my role Impl { ... }
+
+method ^parameterize(::?CLASS:U $this is raw, ::Type:D $type is raw --> ::?CLASS:U) {
+    my ::?CLASS:U $mixin := self.mixin: $this, Impl.^parameterize: $type;
+    $mixin.^set_name: self.name($this) ~ qq/[$type]/;
+    $mixin
 }
-multi method trace(::?CLASS:U:
-    Access::Bind;; Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw
---> Mu) is raw {
-    $stash.Hash::BIND-KEY: $key, $new-value
+
+my role Mixin {
+    my \TracedStashLookup = CHECK Traced::Stash.^parameterize: LOOKUP;
+    multi method AT-KEY(::?CLASS:D: Str() $key --> Mu) is raw {
+        $*TRACER.render: TracedStashLookup.event: self, $key
+    }
+
+    my \TracedStashBind = CHECK Traced::Stash.^parameterize: BIND;
+    multi method BIND-KEY(::?CLASS:D: Str() $key, Mu $new-value is raw --> Mu) is raw {
+        my Mu $old-value := self.Map::AT-KEY: $key;
+        $*TRACER.render: TracedStashBind.event: self, $key, $old-value, $new-value;
+    }
+
+    my \TracedStashAssign = CHECK Traced::Stash.^parameterize: ASSIGN;
+    multi method ASSIGN-KEY(::?CLASS:D: Str() $key, Mu $new-value is raw --> Mu) is raw {
+        my Mu $old-value = self.Map::AT-KEY: $key; # Intentionally uses $old-value's container.
+        $*TRACER.render: TracedStashAssign.event: self, $key, $old-value, $new-value;
+    }
 }
-multi method trace(::?CLASS:U:
-    Access::Assign;; Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw
---> Mu) is raw {
-    $stash.Hash::ASSIGN-KEY: $key, $new-value
+
+my role Impl[LOOKUP] {
+    method new(::?ROLE:_: Stash:D $stash, Str:D $key, *%rest --> ::?ROLE:D) {
+        self.bless: :$stash, :$key, |%rest
+    }
+
+    method of(::?CLASS:D: --> LOOKUP) { }
+
+    method modified(::?CLASS:D: --> False) { }
+
+    multi method event(::?CLASS:U: Stash:D $stash, Str:D $key --> Mu) is raw {
+        $stash.Stash::AT-KEY: $key
+    }
+}
+
+my role Impl[BIND] {
+    has Mu $.old-value is built(:bind) is rw;
+    has Mu $.new-value is built(:bind) is rw;
+
+    method new(::?ROLE:_:
+        Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw, *%rest
+    --> ::?ROLE:D) {
+        self.bless: :$stash, :$key, :$old-value, :$new-value, |%rest
+    }
+
+    method of(::?CLASS:D: --> BIND) { }
+
+    method modified(::?CLASS:D: --> True) { }
+
+    multi method event(::?CLASS:U:
+        Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw
+    --> Mu) is raw {
+        $stash.Hash::BIND-KEY: $key, $new-value
+    }
+}
+
+my role Impl[ASSIGN] {
+    has Mu $.old-value is built(:bind) is rw;
+    has Mu $.new-value is built(:bind) is rw;
+
+    method new(::?ROLE:_:
+        Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw, *%rest
+    --> ::?ROLE:D) {
+        self.bless: :$stash, :$key, :$old-value, :$new-value, |%rest
+    }
+
+    method of(::?CLASS:D: --> ASSIGN) { }
+
+    method modified(::?CLASS:D: --> True) { }
+
+    multi method event(::?CLASS:U:
+        Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw
+    --> Mu) is raw {
+        $stash.Hash::ASSIGN-KEY: $key, $new-value
+    }
 }

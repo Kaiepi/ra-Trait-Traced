@@ -3,11 +3,13 @@ use QAST:from<NQP>;
 use Traced;
 unit class Traced::Routine does Traced;
 
-has Routine:D $.routine   is required;
-has Capture:D $.arguments is required;
+enum Type <CALL>;
+
 has Str:D     $.scope     is required;
 has Str:D     $.multiness is required;
 has Str:D     $.prefix    is required;
+has Routine:D $.routine   is required;
+has Capture:D $.arguments is required;
 
 method new(::?CLASS:_:
     Routine:D $routine is raw, Capture:D $arguments is raw,
@@ -16,13 +18,13 @@ method new(::?CLASS:_:
     self.bless: :$routine, :$arguments, :$scope, :$multiness, :$prefix, |%rest
 }
 
-method colour(::?CLASS:D: --> 31)          { }
-method category(::?CLASS:D: --> 'ROUTINE') { }
-method type(::?CLASS:D: --> 'CALL')        { }
+method kind(::?CLASS:D: --> 'ROUTINE') { }
 
-method package(::?CLASS:D: --> Mu) { $!routine.package.^name }
+method of(::?CLASS:D: --> CALL) { }
 
-method declarator(::?CLASS:D: --> Str:D)  {
+method package(::?CLASS:D: --> Mu) { $!routine.package }
+
+method declarator(::?CLASS:D: --> Str:D) {
     my Str:D $declarator = $!routine.^is_mixin ?? $!routine.^mixin_base.^name.lc !! $!routine.^name.lc;
     $declarator [R~]= "$!multiness " if $!multiness;
     $declarator [R~]= "$!scope "     if $!scope;
@@ -30,15 +32,6 @@ method declarator(::?CLASS:D: --> Str:D)  {
 }
 
 method name(::?CLASS:D: --> Str:D) { $!routine.name || '::' }
-
-method what(::?CLASS:D: --> Str:D) { "$.declarator $!prefix$.name ($.package)" }
-
-method entries(::?CLASS:D: --> Iterable:D) {
-    gather for Seq(self) -> Pair:D (Parameter:D :key($p) is raw, Mu :value($a) is raw) {
-        once take (self => $a) and next if $p.invocant && !$p.name;
-        take $p.prefix ~ $p.sigil ~ $p.twigil ~ $p.usage-name ~ $p.suffix => $a;
-    }
-}
 
 my class ParameterToArgumentIterator does Iterator {
     has Iterator:D       $!parameters is required;
@@ -124,7 +117,6 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw, *%named --> Nil) {
     } else {
         DO-WRAP $routine, |%named;
     }
-
     $routine does TracedRoutine;
 }
 multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness!, *%rest --> Nil) {
@@ -151,11 +143,12 @@ sub DO-WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '
 
     sub TRACED-ROUTINE(|arguments --> Mu) is raw is hidden-from-backtrace {
         $/ := nqp::getlexcaller('$/');
-        Traced::Routine.trace: $cloned, arguments, :$scope, :$multiness, :$prefix
+        $*TRACER.render: Traced::Routine.event:
+            $cloned, arguments, :$scope, :$multiness, :$prefix
     }
 }
 
-multi method trace(::?CLASS:U:
+multi method event(::?CLASS:U:
     Routine:D $routine is raw, Capture:D \arguments
 --> Mu) is raw is hidden-from-backtrace {
     $routine(|arguments)
