@@ -1,4 +1,4 @@
-use v6.d;
+use v6;
 use lib $?FILE.IO.sibling('lib');
 use Tracer::Default;
 use Test;

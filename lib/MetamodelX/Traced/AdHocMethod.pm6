@@ -1,4 +1,4 @@
-use v6.d;
+use v6;
 use Traced::Routine;
 unit role MetamodelX::Traced::AdHocMethod[Method:D $method is raw];
 

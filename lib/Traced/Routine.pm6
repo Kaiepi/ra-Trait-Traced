@@ -1,4 +1,4 @@
-use v6.d;
+use v6;
 use QAST:from<NQP>;
 use Traced;
 unit class Traced::Routine does Traced;

@@ -7,7 +7,7 @@
   "description" : "Automagic tracing",
   "license" : "Artistic-2.0",
   "name" : "Trait::Traced",
-  "perl" : "6.d",
+  "perl" : "6",
   "provides" : {
 	"MetamodelX::Traced::AdHocMethod" : "lib/MetamodelX/Traced/AdHocMethod.pm6",
 	"MetamodelX::Traced::AttributeContainer" : "lib/MetamodelX/Traced/AttributeContainer.pm6",

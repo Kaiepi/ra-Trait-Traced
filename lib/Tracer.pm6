@@ -1,4 +1,4 @@
-use v6.d;
+use v6;
 use Traced;
 #|[ Tracers render traced events as output. ]
 unit role Tracer;

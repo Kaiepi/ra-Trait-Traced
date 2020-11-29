@@ -1,4 +1,4 @@
-use v6.d;
+use v6;
 use Traced;
 use Traced::Attribute;
 use Traced::Routine;

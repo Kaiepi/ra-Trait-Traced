@@ -1,4 +1,4 @@
-use v6.d;
+use v6;
 use Tracer::Default;
 use Trait::Traced;
 use Test;
