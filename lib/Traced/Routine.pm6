@@ -11,13 +11,6 @@ has Str:D     $.prefix    is required;
 has Routine:D $.routine   is required;
 has Capture:D $.arguments is required;
 
-method new(::?CLASS:_:
-    Routine:D $routine is raw, Capture:D $arguments is raw,
-    Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '', *%rest
---> ::?CLASS:D) {
-    self.bless: :$routine, :$arguments, :$scope, :$multiness, :$prefix, |%rest
-}
-
 method kind(::?CLASS:D: --> 'ROUTINE') { }
 
 method of(::?CLASS:D: --> CALL) { }
@@ -144,12 +137,16 @@ sub DO-WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '
     sub TRACED-ROUTINE(|arguments --> Mu) is raw is hidden-from-backtrace {
         $/ := nqp::getlexcaller('$/');
         $*TRACER.render: Traced::Routine.event:
-            $cloned, arguments, :$scope, :$multiness, :$prefix
+            routine   => $cloned,
+            arguments => arguments,
+            scope     => $scope,
+            multiness => $multiness,
+            prefix    => $prefix
     }
 }
 
 multi method event(::?CLASS:U:
-    Routine:D $routine is raw, Capture:D \arguments
+    Routine:D :$routine is raw, Capture:D :$arguments is raw
 --> Mu) is raw is hidden-from-backtrace {
-    $routine(|arguments)
+    $routine(|$arguments)
 }

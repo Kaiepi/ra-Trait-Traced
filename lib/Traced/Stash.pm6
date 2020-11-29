@@ -34,32 +34,31 @@ method ^parameterize(::?CLASS:U $this is raw, ::Type:D $type is raw --> ::?CLASS
 my role Mixin {
     my \TracedStashLookup = CHECK Traced::Stash.^parameterize: LOOKUP;
     multi method AT-KEY(::?CLASS:D: Str() $key --> Mu) is raw {
-        $*TRACER.render: TracedStashLookup.event: self, $key
+        $*TRACER.render: TracedStashLookup.event:
+            :stash(self), :$key
     }
 
     my \TracedStashBind = CHECK Traced::Stash.^parameterize: BIND;
     multi method BIND-KEY(::?CLASS:D: Str() $key, Mu $new-value is raw --> Mu) is raw {
         my Mu $old-value := self.Map::AT-KEY: $key;
-        $*TRACER.render: TracedStashBind.event: self, $key, $old-value, $new-value;
+        $*TRACER.render: TracedStashBind.event:
+            :stash(self), :$key, :$old-value, :$new-value;
     }
 
     my \TracedStashAssign = CHECK Traced::Stash.^parameterize: ASSIGN;
     multi method ASSIGN-KEY(::?CLASS:D: Str() $key, Mu $new-value is raw --> Mu) is raw {
         my Mu $old-value = self.Map::AT-KEY: $key; # Intentionally uses $old-value's container.
-        $*TRACER.render: TracedStashAssign.event: self, $key, $old-value, $new-value;
+        $*TRACER.render: TracedStashAssign.event:
+            :stash(self), :$key, :$old-value, :$new-value;
     }
 }
 
 my role Impl[LOOKUP] {
-    method new(::?ROLE:_: Stash:D $stash, Str:D $key, *%rest --> ::?ROLE:D) {
-        self.bless: :$stash, :$key, |%rest
-    }
-
     method of(::?CLASS:D: --> LOOKUP) { }
 
     method modified(::?CLASS:D: --> False) { }
 
-    multi method event(::?CLASS:U: Stash:D $stash, Str:D $key --> Mu) is raw {
+    multi method event(::?CLASS:U: Stash:D :$stash, Str:D :$key --> Mu) is raw {
         $stash.Stash::AT-KEY: $key
     }
 }
@@ -68,19 +67,11 @@ my role Impl[BIND] {
     has Mu $.old-value is built(:bind) is rw;
     has Mu $.new-value is built(:bind) is rw;
 
-    method new(::?ROLE:_:
-        Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw, *%rest
-    --> ::?ROLE:D) {
-        self.bless: :$stash, :$key, :$old-value, :$new-value, |%rest
-    }
-
     method of(::?CLASS:D: --> BIND) { }
 
     method modified(::?CLASS:D: --> True) { }
 
-    multi method event(::?CLASS:U:
-        Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw
-    --> Mu) is raw {
+    multi method event(::?CLASS:U: Stash:D :$stash, Str:D :$key, Mu :$new-value is raw --> Mu) is raw {
         $stash.Hash::BIND-KEY: $key, $new-value
     }
 }
@@ -89,19 +80,11 @@ my role Impl[ASSIGN] {
     has Mu $.old-value is built(:bind) is rw;
     has Mu $.new-value is built(:bind) is rw;
 
-    method new(::?ROLE:_:
-        Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw, *%rest
-    --> ::?ROLE:D) {
-        self.bless: :$stash, :$key, :$old-value, :$new-value, |%rest
-    }
-
     method of(::?CLASS:D: --> ASSIGN) { }
 
     method modified(::?CLASS:D: --> True) { }
 
-    multi method event(::?CLASS:U:
-        Stash:D $stash, Str:D $key, Mu $old-value is raw, Mu $new-value is raw
-    --> Mu) is raw {
+    multi method event(::?CLASS:U: Stash:D :$stash, Str:D :$key, Mu :$new-value is raw --> Mu) is raw {
         $stash.Hash::ASSIGN-KEY: $key, $new-value
     }
 }

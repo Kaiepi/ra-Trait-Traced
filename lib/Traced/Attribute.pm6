@@ -8,10 +8,6 @@ has Attribute:D $.attribute is required;
 has Mu          $.package   is required is built(:bind);
 has Str:D       $.name      is required;
 
-method new(::?CLASS:_: Attribute:D $attribute, Mu $package is raw, Str:D $name, *%rest --> ::?CLASS:D) {
-    self.bless: :$attribute, :$package, :$name, |%rest
-}
-
 method kind(::?CLASS:D: --> 'ATTRIBUTE') { }
 
 method of(::?CLASS:D: --> Type:D) { ... }
@@ -69,23 +65,24 @@ my class TracedAttributeContainerDescriptor {
 
     my \TracedAttributeAssign = CHECK Traced::Attribute.^parameterize: ASSIGN;
     method assigned(::?CLASS:D: Mu $value is raw --> Mu) is raw {
-        $*TRACER.render: TracedAttributeAssign.event: $!attribute, $!package, $!name, :$value
+        $*TRACER.render: TracedAttributeAssign.event:
+            :$!attribute, :$!package, :$!name, :$value
     }
 }
 
 my role Impl[ASSIGN] {
     method of(::?CLASS:D: --> ASSIGN) { }
 
-    multi method event(::?CLASS:U: Attribute:D, Mu, Str:D, Mu :$value is raw --> Mu) is raw {
-        $value
-    }
+    multi method event(::?CLASS:U: Mu :$value is raw --> Mu) is raw { $value }
 }
 
 my role TracedAttributeContainer[Attribute:D $attribute, Mu :$package! is raw, Str:D :$name!] {
     my \TracedAttributeStore = CHECK Traced::Attribute.^parameterize: STORE;
     method STORE(|args) {
         $*TRACER.render: TracedAttributeStore.event:
-            $attribute, $package, $name,
+            attribute => $attribute,
+            package   => $package,
+            name      => $name,
             callback  => self.^mixin_base.^find_method('STORE'), # XXX: nextcallee doesn't work here as of v2020.03
             arguments => \(self, |args)
     }
@@ -94,9 +91,7 @@ my role TracedAttributeContainer[Attribute:D $attribute, Mu :$package! is raw, S
 my role Impl[STORE] {
     method of(::?CLASS:D: --> STORE) { }
 
-    multi method event(::?CLASS:U:
-        Attribute:D, Mu, Str:D, :&callback is raw, Capture:D :$arguments is raw
-    --> Mu) is raw {
+    multi method event(::?CLASS:U: :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
         callback |$arguments
     }
 }

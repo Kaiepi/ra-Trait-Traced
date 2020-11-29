@@ -32,9 +32,8 @@ method of(::?CLASS:D: --> Enumeration:D) { ... }
 #|[ Wraps events to be traced. ]
 method wrap(::?CLASS:U: | --> Mu) { ... }
 
-#|[ Generates a trace for an event. Parameters should correspond to
-    arguments to eventually give to Traced.new. ]
-proto method event(::?CLASS:U: |args --> Mu) is raw is hidden-from-backtrace {
+#|[ Generates a trace for an event. ]
+proto method event(::?CLASS:U: *%args --> Mu) is raw is hidden-from-backtrace {
     # We depend on &now's internals to generate a Num:D timestamp because the
     # overhead of generating an Instant:D is unacceptable here.
     use nqp;
@@ -45,6 +44,6 @@ proto method event(::?CLASS:U: |args --> Mu) is raw is hidden-from-backtrace {
     my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n, 0;
     my Mu    $result    := {*};
     @CALL-FRAMES[$thread-id] = $calls;
-    CATCH { return self.new: :$id, :$thread-id, :$calls, :$timestamp, :exception($_), |args }
-    self.new: :$id, :$thread-id, :$calls, :$timestamp, :$result, |args
+    CATCH { return self.bless: :$id, :$thread-id, :$calls, :$timestamp, :exception($_), |%args }
+    self.bless: :$id, :$thread-id, :$calls, :$timestamp, :$result, |%args
 }
