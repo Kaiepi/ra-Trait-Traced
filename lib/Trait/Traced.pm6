@@ -1,15 +1,15 @@
 use v6;
 use Kind;
-use Traced::Attribute;
-use Traced::Routine;
-use Traced::Stash;
-use Traced::Variable;
 use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::AttributeContainer;
 use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
 use MetamodelX::Traced::MetaMethodContainer;
+use Traced::Attribute;
+use Traced::Routine;
+use Traced::Stash;
+use Traced::Variable;
 use Tracer::Default;
 unit module Trait::Traced:ver<0.4.4>:auth<github:Kaiepi>:api<1>;
 
@@ -36,15 +36,16 @@ multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is
 }
 
 multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :traced($)! where ?*) is export {
-    Traced::Routine.wrap: $routine, scope => $*SCOPE, multiness => $*MULTINESS;
+    Traced::Routine.wrap: $routine,
+        scope     => $*SCOPE,
+        multiness => $*MULTINESS;
 }
 
 multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) is export {
     use nqp;
 
     if my str $scope = $*SCOPE {
-        Traced::Routine.wrap:
-            $method,
+        Traced::Routine.wrap: $method,
             scope     => $scope eq 'has' ?? '' !! $scope,
             multiness => $*MULTINESS;
     } elsif nqp::can($method.package.HOW, 'compose') {
@@ -52,16 +53,15 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
         # possibly know if it's a regular method, private method, or metamethod
         # at this point during compilation. We can find out when the method's
         # package gets composed though!
-        $method.package.HOW.^mixin:
-            MetamodelX::Traced::AdHocMethod.^parameterize:
-                $method;
+        $method.package.HOW.^mixin: MetamodelX::Traced::AdHocMethod.^parameterize: $method;
     }
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
     my Mu    $package := $*PACKAGE;
     my Str:D $name     = $attribute.name;
-    if $*W.?cur_lexpad.symbol: my Str:D $symbol = $name.subst: '!', '' {
+    my Str:D $symbol   = $name.subst: '!', '';
+    if $*W.?cur_lexpad.symbol: $symbol {
         $name = $symbol;
     } elsif $attribute.has_accessor {
         $name .= subst: '!', '.';
