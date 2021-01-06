@@ -22,6 +22,9 @@
 	"Traced::Variable" : "lib/Traced/Variable.pm6",
 	"Tracer" : "lib/Tracer.pm6",
 	"Tracer::Default" : "lib/Tracer/Default.pm6",
+	"Tracer::File" : "lib/Tracer/File.pm6",
+	"Tracer::Standard" : "lib/Tracer/Standard.pm6",
+	"Tracer::Stream" : "lib/Tracer/Stream.pm6",
     "Trait::Traced" : "lib/Trait/Traced.pm6"
   },
   "resources" : [ ],
