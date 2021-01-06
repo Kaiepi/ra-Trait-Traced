@@ -10,10 +10,10 @@ use Traced::Attribute;
 use Traced::Routine;
 use Traced::Stash;
 use Traced::Variable;
-use Tracer::Default;
+use Tracer::Stream;
 unit module Trait::Traced:ver<0.4.4>:auth<github:Kaiepi>:api<1>;
 
-INIT PROCESS::<$TRACER> := Tracer::Default[$*OUT] unless PROCESS::<$TRACER>:exists;
+INIT PROCESS::<$TRACER> := Tracer::Stream[:pretty].new: $*OUT unless PROCESS::<$TRACER>:exists;
 
 #|[ Exception thrown by the "is traced" trait when a feature is not yet implemented. ]
 my class X::Trait::Traced::NYI is Exception is export {
