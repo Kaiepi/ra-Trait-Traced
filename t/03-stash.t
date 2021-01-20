@@ -15,7 +15,7 @@ sub trace(&run, &parse?) {
     parse $*TRACER.handle.path.slurp(:close) with &parse;
 }
 
-plan 29;
+plan 28;
 
 # $Bar, @Baz, and %Qux get their symbols looked up outside of the tests, which
 # gets traced to $*OUT without this.
@@ -39,7 +39,8 @@ trace {
         Foo::<Foo>
     }, 'can look up sigilless symbols...';
 }, -> Str:D $output {
-    ok $output, '...which produce output...';
+    ok $output,
+      '...which produce output...';
     ok $output ~~ / <after '<== '> 'Foo::Foo' »  /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -49,7 +50,8 @@ trace {
         $Foo::Bar
     }, 'can look up $ sigilled symbols...';
 }, -> Str:D $output {
-    ok $output, '...which produce output...';
+    ok $output,
+      '...which produce output...';
     ok $output ~~ / <after '<== '> '$Foo::Bar' »  /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -59,7 +61,8 @@ trace {
         @Foo::Baz
     }, 'can look up @ sigilled symbols...';
 }, -> Str:D $output {
-    ok $output, '...which produce output...';
+    ok $output,
+      '...which produce output...';
     ok $output ~~ / <after '<== '> '@Foo::Baz' »  /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -69,7 +72,8 @@ trace {
         %Foo::Qux
     }, 'can look up % sigilled symbols...';
 }, -> Str:D $output {
-    ok $output, '...which produce output...';
+    ok $output,
+      '...which produce output...';
     ok $output ~~ / <after '<== '> '%Foo::Qux' »  /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -79,7 +83,8 @@ trace {
         &Foo::Quux
     }, 'can look up & sigilled symbols...';
 }, -> Str:D $output {
-    ok $output, '...which produce output...';
+    ok $output,
+      '...which produce output...';
     ok $output ~~ / <after '<== '> '&Foo::Quux' »  /,
       '...that claims the lookup is for the correct symbol';
 };
@@ -89,26 +94,28 @@ trace {
         my Int:D $foo = 5;
         Foo::<Foo> := Proxy.new:
             FETCH => sub FETCH($)             { $foo },
-            STORE => sub STORE($, Int:D $bar) { $foo = $bar };
+            STORE => sub STORE($, Int:D $bar) { $foo += $bar };
     }, 'can bind to symbols...';
 }, -> Str:D $output {
-    ok $output, '...which produce output...';
-    ok $output ~~ / « 'old: 0' $$ /,
-      '...that includes the old value as an entry...';
-    ok $output ~~ / « 'new: 5' $$ /,
-      '...and likewise the new value';
+    ok $output,
+      '...which produce output...';
+    ok $output ~~ / ^^ '    5' $$ /,
+      '...which contains a value...';
+    ok $output ~~ / ^^ '==> 5' $$ /,
+      '...and a result';
 };
 
 trace {
     lives-ok {
-        Foo::<$Bar> = 6;
+        Foo::<Foo> = 5;
     }, 'can assign to symbols...';
 }, -> Str:D $output {
-    ok $output, '...which produce output...';
-    ok $output ~~ / « 'old: 1' $$ /,
-      '...that includes the old value as an entry...';
-    ok $output ~~ / « 'new: 6' $$ /,
-      '...and likewise the new value';
+    ok $output,
+      '...which produce output...';
+    ok $output ~~ / ^^ '    5' $$ /,
+      '...that contains a value...';
+    ok $output ~~ / ^^ '==> 10' $$ /,
+      '...and any differing result';
 };
 
 trace {
@@ -116,15 +123,10 @@ trace {
         Foo::<$*DYNAMIC>;
     }, 'can look up symbols with twigils...';
 }, -> Str:D $output {
-    ok $output, '...which produce output...';
-    ok $output ~~ / <after '<== '> '$*Foo::DYNAMIC' »  /,
+    ok $output,
+       '...which produce output...';
+    ok $output ~~ / ^^ '<== $*Foo::DYNAMIC' $$ /,
       '...that claims the lookup is for the correct symbol';
-};
-
-trace {
-    lives-ok {
-        Foo::<Foo> = 7;
-    }, 'stash lookups/binds/assignments handle containers ok';
 };
 
 # Foo::Foo gets evaluated well before these tests actually runs.
@@ -132,8 +134,9 @@ trace {
     use MONKEY-SEE-NO-EVAL;
     EVAL Q[quietly Foo::Foo];
 }, -> Str:D $output {
-    ok $output, 'direct symbol lookups get traced...';
-    ok $output ~~ / ^^ '==> 7' $$ /,
+    ok $output,
+      'direct symbol lookups get traced...';
+    ok $output ~~ / ^^ '==> 10' $$ /,
       '...and their output includes the correct result';
 };
 

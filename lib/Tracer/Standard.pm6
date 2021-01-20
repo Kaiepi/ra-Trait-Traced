@@ -40,10 +40,7 @@ multi method Str(::?CLASS:D: Traced::Stash:D :event($e)! is raw, Str:D :$nl is r
     # Header
     $result ~= "$margin\<== $e.longname()$nl";
     # Body
-    if $e.modified {
-        $result ~= "$margin    old: $e.old-value.&stringify()$nl";
-        $result ~= "$margin    new: $e.new-value.&stringify()$nl";
-    }
+    $result ~= "$margin    $e.value.&stringify()$nl" if $e.modified;
     # Footer
     $result ~= $e.died
             ?? "$margin!!! $e.exception.&stringify()"
@@ -114,12 +111,10 @@ multi method gist(::?CLASS:D: Traced::Stash:D :event($e)! is raw, Str:D :$nl is 
     # Title
     $result ~= "$margin    \e[;1m$e.id() \e[2;32m$e.kind() $e.of()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl";
     # Header
-    $result ~= "$margin\<==\e[;1m $e.longname()$nl";
+    $result ~= "$margin\<==\e[;1m $e.longname()\e[m$nl";
     # Body
-    if $e.modified {
-        $result ~= "$margin    old\e[m: $e.old-value.&prettify.subst($nl, qq/$nl$margin         /, :g)\e[;1m$nl";
-        $result ~= "$margin    new\e[m: $e.new-value.&prettify.subst($nl, qq/$nl$margin         /, :g)$nl";
-    }
+    $result ~= "$margin    $e.value.&prettify.subst($nl, qq/$nl$margin         /, :g)$nl"
+            if $e.modified;
     # Footer
     $result ~= $e.died
             ?? "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl, qq/$nl$margin    /, :g)"

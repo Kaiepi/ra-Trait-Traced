@@ -39,17 +39,13 @@ my role Mixin {
     }
 
     my \TracedStashBind = CHECK Traced::Stash.^parameterize: BIND;
-    multi method BIND-KEY(::?CLASS:D: Str() $key, Mu $new-value is raw --> Mu) is raw {
-        my Mu $old-value := self.Map::AT-KEY: $key;
-        $*TRACER.render: TracedStashBind.event:
-            :stash(self), :$key, :$old-value, :$new-value;
+    multi method BIND-KEY(::?CLASS:D: Str() $key, Mu $value is raw --> Mu) is raw {
+        $*TRACER.render: TracedStashBind.event: :stash(self), :$key, :$value;
     }
 
     my \TracedStashAssign = CHECK Traced::Stash.^parameterize: ASSIGN;
-    multi method ASSIGN-KEY(::?CLASS:D: Str() $key, Mu $new-value is raw --> Mu) is raw {
-        my Mu $old-value = self.Map::AT-KEY: $key; # Intentionally uses $old-value's container.
-        $*TRACER.render: TracedStashAssign.event:
-            :stash(self), :$key, :$old-value, :$new-value;
+    multi method ASSIGN-KEY(::?CLASS:D: Str() $key, Mu $value is raw --> Mu) is raw {
+        $*TRACER.render: TracedStashAssign.event: :stash(self), :$key, :$value;
     }
 }
 
@@ -64,27 +60,25 @@ my role Impl[LOOKUP] {
 }
 
 my role Impl[BIND] {
-    has Mu $.old-value is built(:bind) is rw;
-    has Mu $.new-value is built(:bind) is rw;
+    has Mu $.value is built(:bind) is rw;
 
     method of(::?CLASS:D: --> BIND) { }
 
     method modified(::?CLASS:D: --> True) { }
 
-    multi method event(::?CLASS:U: Stash:D :$stash, Str:D :$key, Mu :$new-value is raw --> Mu) is raw {
-        $stash.Hash::BIND-KEY: $key, $new-value
+    multi method event(::?CLASS:U: Stash:D :$stash, Str:D :$key, Mu :$value is raw --> Mu) is raw {
+        $stash.Hash::BIND-KEY: $key, $value
     }
 }
 
 my role Impl[ASSIGN] {
-    has Mu $.old-value is built(:bind) is rw;
-    has Mu $.new-value is built(:bind) is rw;
+    has Mu $.value is built(:bind) is rw;
 
     method of(::?CLASS:D: --> ASSIGN) { }
 
     method modified(::?CLASS:D: --> True) { }
 
-    multi method event(::?CLASS:U: Stash:D :$stash, Str:D :$key, Mu :$new-value is raw --> Mu) is raw {
-        $stash.Hash::ASSIGN-KEY: $key, $new-value
+    multi method event(::?CLASS:U: Stash:D :$stash, Str:D :$key, Mu :$value is raw --> Mu) is raw {
+        $stash.Hash::ASSIGN-KEY: $key, $value
     }
 }
