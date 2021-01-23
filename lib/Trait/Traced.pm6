@@ -1,4 +1,5 @@
 use v6;
+use Perl6::Grammar:from<NQP>;
 use Kind;
 use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::AttributeContainer;
@@ -25,10 +26,20 @@ my class X::Trait::Traced::NYI is Exception is export {
     }
 }
 
+multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key --> Mu) is raw {
+    use nqp;
+    nqp::atkey($/, nqp::decont_s($key))
+}
+
 multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {
-    Traced::Variable.wrap: $variable,
-        scope   => $*SCOPE,
-        package => $*PACKAGE
+    # We can get key/value types from the keyof/of methods on
+    # Positional/Associative, but the problem with this approach is we don't
+    # necessarily know what their defaults will be for any type doing those
+    # roles. The compiler knows what the user wrote though...
+    my %rest = :package($*PACKAGE), :scope($*SCOPE);
+    %rest<key>   := .[0].<statement>.[0].ast.value if $_ given $variable.slash.<semilist>;
+    %rest<value> := .ast with $*OFTYPE;
+    Traced::Variable.wrap: $variable, |%rest;
 }
 
 multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is export {
@@ -60,13 +71,17 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
     my Mu    $package := $*PACKAGE;
     my Str:D $name     = $attribute.name;
-    my Str:D $symbol   = $name.subst: '!', '';
+    my Str:D $symbol  := $name.subst: '!', '';
     if $*W.?cur_lexpad.symbol: $symbol {
         $name = $symbol;
     } elsif $attribute.has_accessor {
         $name .= subst: '!', '.';
     }
-    Traced::Attribute.wrap: $attribute, :$name, :$package
+
+    my %rest = :$package, :$name;
+    %rest<value> := .ast with $*OFTYPE;
+    %rest<key>   := .[0].<statement>.[0].ast.value if $_ given $variable.slash.<semilist>;
+    Traced::Attribute.wrap: $attribute, |%rest;
 }
 
 multi sub trait_mod:<is>(Mu \T, Bool:D :traced($)! where ?*) is export {
