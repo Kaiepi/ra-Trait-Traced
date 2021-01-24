@@ -18,7 +18,7 @@ unit module Trait::Traced:ver<0.4.4>:auth<github:Kaiepi>:api<1>;
 INIT PROCESS::<$TRACER> := Tracer::Stream[:pretty].new: $*OUT unless PROCESS::<$TRACER>:exists;
 
 #|[ Exception thrown by the "is traced" trait when a feature is not yet implemented. ]
-my class X::Trait::Traced::NYI is Exception is export {
+class X::Trait::Traced::NYI is Exception {
     #|[ The feature that is not yet implemented. ]
     has Str:D $.what is required;
     #|[ The exception's message. ]
