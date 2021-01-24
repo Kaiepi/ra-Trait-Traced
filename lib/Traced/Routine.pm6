@@ -17,14 +17,14 @@ method of(::?CLASS:D: --> CALL) { }
 
 method package(::?CLASS:D: --> Mu) { $!routine.package }
 
+method name(::?CLASS:D: --> Str:D) { $!routine.name || '::' }
+
 method declarator(::?CLASS:D: --> Str:D) {
     my Str:D $declarator = $!routine.^is_mixin ?? $!routine.^mixin_base.^name.lc !! $!routine.^name.lc;
     $declarator [R~]= "$!multiness " if $!multiness;
-    $declarator [R~]= "$!scope "     if $!scope;
-    $declarator
+    $declarator [R~]= "$!scope " if $!scope;
+    "$declarator $!prefix$.name"
 }
-
-method name(::?CLASS:D: --> Str:D) { $!routine.name || '::' }
 
 my class ParameterToArgumentIterator does Iterator {
     has Iterator:D       $!parameters is required;

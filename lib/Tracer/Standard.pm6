@@ -86,7 +86,7 @@ multi method gist(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl i
     # Title
     $result ~= "$margin    \e[;1m$e.id() \e[2;31m$e.kind() $e.of()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl";
     # Header
-    $result ~= "$margin\<==\e[;1m $e.declarator() $e.prefix()$e.name() ($e.package.^name())$nl";
+    $result ~= "$margin\<==\e[;1m $e.declarator() ($e.package.^name())$nl";
     # Body
     $result ~= gather for my Pair:D @entries = gather for Seq($e) -> (
         Parameter:D :key($p) is raw, Mu :value($a) is raw
