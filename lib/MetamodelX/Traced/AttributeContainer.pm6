@@ -1,19 +1,20 @@
 use v6;
 use Perl6::Grammar:from<NQP>;
 use Traced::Attribute;
+use Trait::Traced::Utils;
 unit package MetamodelX::Traced;
 
 role AttributeContainer[:%symbols!, Bool:D :repr($)! where !*] {
     method compose(::?CLASS:D: | --> Mu) {
         my Mu $package := callsame;
-        $package.&trace-attributes(self.attributes($package, :local), %symbols);
+        self.&trace-attributes($package, %symbols);
         $package
     }
 }
 
-role AttributeContainer[:%symbols!, Bool:D :repr($) where ?*] {
+role AttributeContainer[:%symbols!, Bool:D :repr($)! where ?*] {
     method compose_repr(::?CLASS:D: Mu $package is raw, | --> Mu) {
-        $package.&trace-attributes(self.attributes($package, :local), %symbols);
+        self.&trace-attributes($package, %symbols);
         callsame
     }
 }
@@ -25,11 +26,11 @@ role AttributeContainer[:%symbols!, Bool:D :repr($) where ?*] {
 # We can't invent the key and value types of attributes easily for the same
 # reason we can't with variables, only now we can't easily gain direct access
 # to the attributes either since type traits are applied before its attributes
-# actually exist! 
-sub trace-attributes(Mu $package is raw, @attributes, %symbols --> Nil) {
+# actually exist!
+sub trace-attributes(Mu $how is raw, Mu $package is raw, %symbols --> Nil) {
     $/ := $*LEAF;
     $/ := $<blockoid> if $<blockoid>:exists;
-    for @attributes Z (
+    for $how.attributes($package, :local) Z (
         $<statementlist><statement>\
             .map(*.<EXPR>.<scope_declarator>)\
             .grep([&] ?*, *.<sym>.Str eq 'has')\
@@ -53,15 +54,4 @@ sub trace-attributes(Mu $package is raw, @attributes, %symbols --> Nil) {
             Traced::Attribute.wrap: $attribute, |%rest
         }
     }
-}
-
-multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key --> Mu) is raw {
-    use nqp;
-
-    nqp::hllize(nqp::atkey($/, nqp::decont_s($key)))
-}
-multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key, Bool:D :exists($)! where ?* --> Mu) is raw {
-    use nqp;
-
-    nqp::hllbool(nqp::existskey($/, nqp::decont_s($key)))
 }

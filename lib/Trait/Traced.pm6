@@ -1,5 +1,4 @@
 use v6;
-use Perl6::Grammar:from<NQP>;
 use Kind;
 use MetamodelX::Traced::AdHocAttribute;
 use MetamodelX::Traced::AdHocMethod;
@@ -13,6 +12,7 @@ use Traced::Routine;
 use Traced::Stash;
 use Traced::Variable;
 use Tracer::Stream;
+use Trait::Traced::Utils;
 unit module Trait::Traced:ver<0.4.4>:auth<github:Kaiepi>:api<1>;
 
 INIT PROCESS::<$TRACER> := Tracer::Stream[:pretty].new: $*OUT unless PROCESS::<$TRACER>:exists;
@@ -25,11 +25,6 @@ my class X::Trait::Traced::NYI is Exception is export {
     method message(::?CLASS:D: --> Str:D) {
         "Support for tracing $!what NYI"
     }
-}
-
-multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key --> Mu) is raw {
-    use nqp;
-    nqp::atkey($/, nqp::decont_s($key))
 }
 
 multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {

@@ -1,6 +1,7 @@
 use v6;
 use Perl6::Grammar:from<NQP>;
 use Traced::Attribute;
+use Trait::Traced::Utils;
 unit package MetamodelX::Traced;
 
 role AdHocAttribute[Attribute:D :$attribute!, Str:D :$name!, Bool:D :$repr! where !*] {
@@ -46,15 +47,4 @@ sub declarator(Perl6::Grammar:D $/ is raw --> Perl6::Grammar:D) {
     $declarator := $declarator<DECL> if $declarator<DECL>:exists;
     $declarator := $declarator<declarator> if $declarator<declarator>:exists;
     $declarator
-}
-
-multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key --> Mu) is raw {
-    use nqp;
-
-    nqp::hllize(nqp::atkey($/, nqp::decont_s($key)))
-}
-multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key, Bool:D :exists($)! where ?* --> Mu) is raw {
-    use nqp;
-
-    nqp::hllbool(nqp::existskey($/, nqp::decont_s($key)))
 }
