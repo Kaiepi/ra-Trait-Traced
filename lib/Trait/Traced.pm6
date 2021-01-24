@@ -61,17 +61,10 @@ multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is e
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
-    my Mu    $package := $*PACKAGE;
-    my Str:D $name     = $attribute.name;
-    my Str:D $symbol  := $name.subst: '!', '';
-    if $*W.?cur_lexpad.symbol: $symbol {
-        $name = $symbol;
-    } elsif $attribute.has_accessor {
-        $name .= subst: '!', '.';
-    }
-
-    my Bool:D $repr := Metamodel::Primitives.is_type: $package.HOW, Metamodel::REPRComposeProtocol;
-    $package.HOW.^mixin: MetamodelX::Traced::AdHocAttribute.^parameterize: :$attribute, :$name, :$repr;
+    my        %symbols := $*W.cur_lexpad.symtable;
+    my Mu     $how     := $attribute.package.HOW;
+    my Bool:D $repr    := Metamodel::Primitives.is_type: $how, Metamodel::REPRComposeProtocol;
+    $how.^mixin: MetamodelX::Traced::AdHocAttribute.^parameterize: :$attribute, :%symbols, :$repr;
 }
 
 multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is export {
