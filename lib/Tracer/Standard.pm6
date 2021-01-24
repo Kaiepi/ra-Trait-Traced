@@ -155,4 +155,4 @@ proto sub prettify(Mu --> Str:D)                            {*}
 multi sub prettify(Mu $value is raw --> Str:D)              { $value.gist }
 multi sub prettify(Exception:D $exception is raw --> Str:D) { "\e[31m$exception.^name()\e[m" }
 multi sub prettify(Failure:D $failure is raw --> Str:D)     { "\e[33m$failure.exception.^name()\e[m" }
-multi sub prettify(Junction:D $junction is raw --> Str:D)   { $junction.THREAD: &prettify }
+multi sub prettify(Junction:D $junction is raw --> Str:D)   { $junction.THREAD(&prettify).gist }
