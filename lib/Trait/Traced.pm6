@@ -27,21 +27,6 @@ my class X::Trait::Traced::NYI is Exception is export {
     }
 }
 
-multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {
-    # We can get key/value types from the keyof/of methods on
-    # Positional/Associative, but the problem with this approach is we don't
-    # necessarily know what their defaults will be for any type doing those
-    # roles. The compiler knows what the user wrote though...
-    my %rest = :package($*PACKAGE), :scope($*SCOPE);
-    %rest<key>   := .[0].<statement>.[0].ast.value if $_ given $variable.slash.<semilist>;
-    %rest<value> := .ast with $*OFTYPE;
-    Traced::Variable.wrap: $variable, |%rest;
-}
-
-multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is export {
-    X::Trait::Traced::NYI.new(:what<parameters>).throw
-}
-
 multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :traced($)! where ?*) is export {
     Traced::Routine.wrap: $routine,
         scope     => $*SCOPE,
@@ -64,6 +49,17 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
     }
 }
 
+multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {
+    # We can get key/value types from the keyof/of methods on
+    # Positional/Associative, but the problem with this approach is we don't
+    # necessarily know what their defaults will be for any type doing those
+    # roles. The compiler knows what the user wrote though...
+    my %rest = :package($*PACKAGE), :scope($*SCOPE);
+    %rest<key>   := .[0].<statement>.[0].ast.value if $_ given $variable.slash.<semilist>;
+    %rest<value> := .ast with $*OFTYPE;
+    Traced::Variable.wrap: $variable, |%rest;
+}
+
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
     my Mu    $package := $*PACKAGE;
     my Str:D $name     = $attribute.name;
@@ -76,6 +72,10 @@ multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is
 
     my Bool:D $repr := Metamodel::Primitives.is_type: $package.HOW, Metamodel::REPRComposeProtocol;
     $package.HOW.^mixin: MetamodelX::Traced::AdHocAttribute.^parameterize: :$attribute, :$name, :$repr;
+}
+
+multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is export {
+    X::Trait::Traced::NYI.new(:what<parameters>).throw
 }
 
 multi sub trait_mod:<is>(Mu \T, Bool:D :traced($)! where ?*) is export {
