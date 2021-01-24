@@ -55,7 +55,7 @@ multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is e
     # necessarily know what their defaults will be for any type doing those
     # roles. The compiler knows what the user wrote though...
     my %rest = :package($*PACKAGE), :scope($*SCOPE);
-    %rest<key>   := .[0].<statement>.[0].ast.value if $_ given $variable.slash.<semilist>;
+    %rest<key>   := .[0].<statement>.[0].ast.value if .[0]:exists given $variable.slash.<semilist>;
     %rest<value> := .ast with $*OFTYPE;
     Traced::Variable.wrap: $variable, |%rest;
 }
