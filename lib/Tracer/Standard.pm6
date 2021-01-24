@@ -86,7 +86,7 @@ multi method gist(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl i
     # Title
     $result ~= "$margin    \e[;1m$e.id() \e[2;31m$e.kind() $e.of()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl";
     # Header
-    $result ~= "$margin\<==\e[;1m $e.declarator() ($e.package.^name())$nl";
+    $result ~= "$margin\<== \e[;1m$e.declarator() \e[;2m($e.package.^name())\e[m$nl";
     # Body
     $result ~= gather for my Pair:D @entries = gather for Seq($e) -> (
         Parameter:D :key($p) is raw, Mu :value($a) is raw
@@ -98,7 +98,7 @@ multi method gist(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl i
         state Str:D $extra    = ' ' x $width + 2;
         my    Str:D $padding := ' ' x $width - $key.chars;
         take-rw "$margin    \e[1m$key\e[m:$padding $value.&prettify.subst($nl, qq/$nl$margin    $extra/, :g)$nl";
-    }.join: "\e[1m";
+    }.join;
     # Footer
     $result ~= $e.died
             ?? "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl, qq/$nl$margin    /, :g)"
@@ -113,8 +113,7 @@ multi method gist(::?CLASS:D: Traced::Stash:D :event($e)! is raw, Str:D :$nl is 
     # Header
     $result ~= "$margin\<==\e[;1m $e.longname()\e[m$nl";
     # Body
-    $result ~= "$margin    $e.value.&prettify.subst($nl, qq/$nl$margin         /, :g)$nl"
-            if $e.modified;
+    $result ~= "$margin    $e.value.&prettify.subst($nl, qq/$nl$margin         /, :g)$nl" if $e.modified;
     # Footer
     $result ~= $e.died
             ?? "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl, qq/$nl$margin    /, :g)"
@@ -127,13 +126,13 @@ multi method gist(::?CLASS:D: Traced::Attribute:D :event($e)! is raw, Str:D :$nl
     # Title
     $result ~= "$margin    \e[;1m$e.id() \e[2;34m$e.kind() $e.of()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl";
     # Header
-    $result ~= "$margin\<==\e[;1m $e.declarator() ($e.package.^name())$nl";
+    $result ~= "$margin\<==\e[;1m $e.declarator() \e[;2m($e.package.^name())$nl";
     # Body
     # (none to speak of)
     # Footer
     $result ~= $e.died
-            ?? "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl, qq/$nl$margin    /, :g)"
-            !! "$margin\e[;2m==>\e[m $e.result.&prettify.subst($nl, qq/$nl$margin    /, :g)";
+            ?? "$margin!!! \e[m$e.exception.&prettify.subst($nl, qq/$nl$margin    /, :g)"
+            !! "$margin==> \e[m$e.result.&prettify.subst($nl, qq/$nl$margin    /, :g)";
     $result
 }
 multi method gist(::?CLASS:D: Traced::Variable:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
@@ -142,13 +141,13 @@ multi method gist(::?CLASS:D: Traced::Variable:D :event($e)! is raw, Str:D :$nl 
     # Title
     $result ~= "$margin    \e[;1m$e.id() \e[2;33m$e.kind() $e.of()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl";
     # Header
-    $result ~= "$margin\<==\e[;1m $e.declarator() ($e.package.^name())$nl";
+    $result ~= "$margin\<== \e[;1m$e.declarator() \e[;2m($e.package.^name())$nl";
     # Body
     # (none to speak of)
     # Footer
     $result ~= $e.died
-            ?? "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl, qq/$nl$margin    /, :g)"
-            !! "$margin\e[;2m==>\e[m $e.result.&prettify.subst($nl, qq/$nl$margin    /, :g)";
+            ?? "$margin!!! \e[m$e.exception.&prettify.subst($nl, qq/$nl$margin    /, :g)"
+            !! "$margin==> \e[m$e.result.&prettify.subst($nl, qq/$nl$margin    /, :g)";
     $result
 }
 
