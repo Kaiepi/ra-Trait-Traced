@@ -146,7 +146,7 @@ subtest 'Metamodel::AttributeContainer', {
         }, 'can assign to public attributes of traced classes...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> '$.attribute' /,
+        ok $output ~~ / <after '<== '> 'has $.attribute' /,
           '...that claims theys have the correct symbol';
     };
 
@@ -159,7 +159,7 @@ subtest 'Metamodel::AttributeContainer', {
         }, 'can assign to private attributes of traced classes...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> '$!attribute' /,
+        ok $output ~~ / <after '<== '> 'has $!attribute' /,
           '...that claims they have the correct symbol';
     };
 
@@ -172,7 +172,7 @@ subtest 'Metamodel::AttributeContainer', {
         }, 'can assign to lexical attributes of traced classes...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> '$attribute' /,
+        ok $output ~~ / <after '<== '> 'has $attribute' /,
           '...that claims they have the correct symbol';
     };
 
@@ -184,7 +184,7 @@ subtest 'Metamodel::AttributeContainer', {
         }, 'can assign to attributes of traced roles...';
     }, -> Str:D $output {
         ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> '$.attribute (WithTracedAttribute)' $$ /,
+        ok $output ~~ / <after '<== '> 'has $.attribute (WithTracedAttribute)' $$ /,
           '...that claims attributes belong to the role, not $?CLASS';
     };
 };

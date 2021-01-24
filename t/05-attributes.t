@@ -26,7 +26,7 @@ trace {
     }, 'can assign to traced ro attributes...';
 }, -> Str:D $output {
     ok $output, '...which produce output...';
-    ok $output ~~ / <after '<== '> '$!traced' /,
+    ok $output ~~ / <after '<== '> 'has $!traced' /,
       '...that claims the attribute has the correct symbol...';
     ok $output ~~ / <after '==> '> '"ok"' /,
       '...and has the correct result';
@@ -40,7 +40,7 @@ trace {
     }, 'can assign to traced rw attributes...';
 }, -> Str:D $output {
     ok $output, '...which produces output...';
-    ok $output ~~ / <after '<== '> '$.traced' /,
+    ok $output ~~ / <after '<== '> 'has $.traced' /,
       '...that claims the attribute has the correct symbol...';
     ok $output ~~ / <after '==> '> '"ok"' /,
       '...and has the correct result';
@@ -55,7 +55,7 @@ trace {
     }, 'can STORE in traced ro attributes...';
 }, -> Str:D $output {
     ok $output, '...which produce output...';
-    ok $output ~~ / <after '<== '> '@!traced' /,
+    ok $output ~~ / <after '<== '> 'has @!traced' /,
       '...that claims the attribute has the correct symbol...';
     ok $output ~~ / <after '==> '> '[1, 2, 3]' /,
       '...and has the correct result';
@@ -69,7 +69,7 @@ trace {
     }, 'can STORE in traced rw attributes...';
 }, -> Str:D $output {
     ok $output, '...which produces output...';
-    ok $output ~~ / <after '<== '> '@.traced' /,
+    ok $output ~~ / <after '<== '> 'has @.traced' /,
       '...that claims the attribute has the correct symbol...';
     ok $output ~~ / <after '==> '> '[1, 2, 3]' /,
       '...and has the correct result';
@@ -84,7 +84,7 @@ trace {
     }, 'can trace attributes with lexical symbols...';
 }, -> Str:D $output {
     ok $output, '...which produces output...';
-    ok $output ~~ / <after '<== '> '$traced' /,
+    ok $output ~~ / <after '<== '> 'has $traced' /,
       '...that claims the attribute has the correct symbol';
 };
 

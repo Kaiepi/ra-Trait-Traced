@@ -9,6 +9,7 @@
   "name" : "Trait::Traced",
   "perl" : "6",
   "provides" : {
+	"MetamodelX::Traced::AdHocAttribute" : "lib/MetamodelX/Traced/AdHocAttribute.pm6",
 	"MetamodelX::Traced::AdHocMethod" : "lib/MetamodelX/Traced/AdHocMethod.pm6",
 	"MetamodelX::Traced::AttributeContainer" : "lib/MetamodelX/Traced/AttributeContainer.pm6",
 	"MetamodelX::Traced::MethodContainer" : "lib/MetamodelX/Traced/MethodContainer.pm6",

@@ -1,6 +1,7 @@
 use v6;
 use Perl6::Grammar:from<NQP>;
 use Kind;
+use MetamodelX::Traced::AdHocAttribute;
 use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::AttributeContainer;
 use MetamodelX::Traced::MethodContainer;
@@ -78,10 +79,8 @@ multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is
         $name .= subst: '!', '.';
     }
 
-    my %rest = :$package, :$name;
-    %rest<value> := .ast with $*OFTYPE;
-    %rest<key>   := .[0].<statement>.[0].ast.value if $_ given $variable.slash.<semilist>;
-    Traced::Attribute.wrap: $attribute, |%rest;
+    my Bool:D $repr := Metamodel::Primitives.is_type: $package.HOW, Metamodel::REPRComposeProtocol;
+    $package.HOW.^mixin: MetamodelX::Traced::AdHocAttribute.^parameterize: :$attribute, :$name, :$repr;
 }
 
 multi sub trait_mod:<is>(Mu \T, Bool:D :traced($)! where ?*) is export {

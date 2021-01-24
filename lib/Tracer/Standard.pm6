@@ -53,7 +53,7 @@ multi method Str(::?CLASS:D: Traced::Attribute:D :event($e)! is raw, Str:D :$nl 
     # Title
     $result ~= "$margin    $e.id() $e.kind() $e.of() [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl";
     # Header
-    $result ~= "$margin\<== $e.name() ($e.package.^name())$nl";
+    $result ~= "$margin\<== $e.declarator() ($e.package.^name())$nl";
     # Body
     # (none to speak of)
     # Footer
@@ -127,7 +127,7 @@ multi method gist(::?CLASS:D: Traced::Attribute:D :event($e)! is raw, Str:D :$nl
     # Title
     $result ~= "$margin    \e[;1m$e.id() \e[2;34m$e.kind() $e.of()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl";
     # Header
-    $result ~= "$margin\<==\e[;1m $e.name() ($e.package.^name())$nl";
+    $result ~= "$margin\<==\e[;1m $e.declarator() ($e.package.^name())$nl";
     # Body
     # (none to speak of)
     # Footer
