@@ -16,7 +16,7 @@ multi method Str(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl is
     # Title
     $result ~= "$margin    $e.id() $e.kind() $e.of() [$e.thread-id() @ $e.timestamp()]$nl";
     # Header
-    $result ~= "$margin\<== $e.declarator() $e.prefix()$e.name() ($e.package.^name())$nl";
+    $result ~= "$margin\<== $e.declarator() ($e.package.^name())$nl";
     # Body
     for my Pair:D @entries = gather for Seq($e) -> (Parameter:D :key($p) is raw, Mu :value($a) is raw) {
         once take-rw (self => $a) and next if $p.invocant and not $p.name;
