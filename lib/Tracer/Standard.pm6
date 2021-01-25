@@ -18,11 +18,15 @@ multi method Str(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl is
     # Header
     $result ~= "$margin\<== $e.declarator() ($e.package.^name())$nl";
     # Body
-    for my Pair:D @entries = gather for Seq($e) -> (Parameter:D :key($p) is raw, Mu :value($a) is raw) {
+    for my Pair:D @entries = gather for $e -> Pair:D $argument {
+        my Parameter:D $p := $argument.key;
+        my Mu          $a := $argument.value;
         once take-rw (self => $a) and next if $p.invocant and not $p.name;
         take-rw ("$p.prefix()$p.sigil()$p.twigil()$p.usage-name()$p.suffix()" => $a);
-    } -> (Str:D :$key is raw, Mu :$value is raw) {
+    } -> Pair:D $entry {
         state Int:D $width    = @entries.map(*.key.chars).max;
+        my    Str:D $key     := $entry.key;
+        my    Mu    $value   := $entry.value;
         my    Str:D $padding := ' ' x $width - $key.chars;
         $result ~= "$margin    $key:$padding $value.&stringify()$nl";
     }
@@ -88,17 +92,19 @@ multi method gist(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl i
     # Header
     $result ~= "$margin\<== \e[;1m$e.declarator() \e[;2m($e.package.^name())\e[m$nl";
     # Body
-    $result ~= gather for my Pair:D @entries = gather for Seq($e) -> (
-        Parameter:D :key($p) is raw, Mu :value($a) is raw
-    ) {
+    for my Pair:D @entries = gather for $e -> Pair:D $argument is raw {
+        my Parameter:D $p := $argument.key;
+        my Mu          $a := $argument.value;
         once take-rw (self => $a) and next if $p.invocant and not $p.name;
         take-rw ("$p.prefix()$p.sigil()$p.twigil()$p.usage-name()$p.suffix()" => $a);
-    } -> (Str:D :$key is raw, Mu :$value is raw) {
+    } -> Pair:D $entry is raw {
         state Int:D $width    = @entries.map(*.key.chars).max;
         state Str:D $extra    = ' ' x $width + 2;
+        my    Str:D $key     := $entry.key;
+        my    Mu    $value   := $entry.value;
         my    Str:D $padding := ' ' x $width - $key.chars;
-        take-rw "$margin    \e[1m$key\e[m:$padding $value.&prettify.subst($nl, qq/$nl$margin    $extra/, :g)$nl";
-    }.join;
+        $result ~= "$margin    \e[1m$key\e[m:$padding $value.&prettify.subst($nl, qq/$nl$margin    $extra/, :g)$nl";
+    }
     # Footer
     $result ~= $e.died
             ?? "$margin\e[;2m!!!\e[m $e.exception.&prettify.subst($nl, qq/$nl$margin    /, :g)"
