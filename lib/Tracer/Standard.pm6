@@ -1,4 +1,5 @@
 use v6;
+use Traced;
 use Traced::Attribute;
 use Traced::Routine;
 use Traced::Stash;
@@ -10,7 +11,8 @@ unit role Tracer::Standard does Tracer;
 # containerization &take performs on values, which is rather costly in our
 # case.
 
-multi method Str(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
+proto method stringify(::?CLASS:D: Traced:D --> Str:D) {*}
+multi method stringify(::?CLASS:D: Traced::Routine:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     my Str:D $result  = '';
     # Title
@@ -36,7 +38,7 @@ multi method Str(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl is
             !! "$margin==> $e.result.&stringify()";
     $result
 }
-multi method Str(::?CLASS:D: Traced::Stash:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
+multi method stringify(::?CLASS:D: Traced::Stash:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     my Str:D $result  = '';
     # Title
@@ -51,7 +53,7 @@ multi method Str(::?CLASS:D: Traced::Stash:D :event($e)! is raw, Str:D :$nl is r
             !! "$margin==> $e.result.&stringify()";
     $result
 }
-multi method Str(::?CLASS:D: Traced::Attribute:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
+multi method stringify(::?CLASS:D: Traced::Attribute:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     my Str:D $result  = '';
     # Title
@@ -66,7 +68,7 @@ multi method Str(::?CLASS:D: Traced::Attribute:D :event($e)! is raw, Str:D :$nl 
             !! "$margin==> $e.result.&stringify()";
     $result
 }
-multi method Str(::?CLASS:D: Traced::Variable:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
+multi method stringify(::?CLASS:D: Traced::Variable:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     my Str:D $result  = '';
     # Title
@@ -84,7 +86,8 @@ multi method Str(::?CLASS:D: Traced::Variable:D :event($e)! is raw, Str:D :$nl i
 
 sub stringify(Mu $value is raw --> Str:D) { $value.raku }
 
-multi method gist(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
+proto method prettify(::?CLASS:D: Traced:D --> Str:D) {*}
+multi method prettify(::?CLASS:D: Traced::Routine:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     my Str:D $result  = '';
     # Title
@@ -111,7 +114,7 @@ multi method gist(::?CLASS:D: Traced::Routine:D :event($e)! is raw, Str:D :$nl i
             !! "$margin\e[;2m==>\e[m $e.result.&prettify.subst($nl, qq/$nl$margin    /, :g)";
     $result
 }
-multi method gist(::?CLASS:D: Traced::Stash:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
+multi method prettify(::?CLASS:D: Traced::Stash:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     my Str:D $result  = '';
     # Title
@@ -126,7 +129,7 @@ multi method gist(::?CLASS:D: Traced::Stash:D :event($e)! is raw, Str:D :$nl is 
             !! "$margin\e[;2m==>\e[m $e.result.&prettify.subst($nl, qq/$nl$margin    /, :g)";
     $result
 }
-multi method gist(::?CLASS:D: Traced::Attribute:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
+multi method prettify(::?CLASS:D: Traced::Attribute:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     my Str:D $result  = '';
     # Title
@@ -141,7 +144,7 @@ multi method gist(::?CLASS:D: Traced::Attribute:D :event($e)! is raw, Str:D :$nl
             !! "$margin==> \e[m$e.result.&prettify.subst($nl, qq/$nl$margin    /, :g)";
     $result
 }
-multi method gist(::?CLASS:D: Traced::Variable:D :event($e)! is raw, Str:D :$nl is raw = $?NL --> Str:D) {
+multi method prettify(::?CLASS:D: Traced::Variable:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     my Str:D $result  = '';
     # Title

@@ -11,7 +11,7 @@ role Tracer::Stream[Bool:D :pretty($) where !* = False] does Tracer::Standard {
     }
 
     multi method render(::?CLASS:D: Traced:D $event is raw --> Bool:_) {
-        $!handle.say: self.Str: :$event, :nl($!handle.nl-out)
+        $!handle.say: self.stringify: $event, :nl($!handle.nl-out)
     }
 }
 
@@ -24,6 +24,6 @@ role Tracer::Stream[Bool:D :pretty($)! where ?*] does Tracer::Standard {
     }
 
     multi method render(::?CLASS:D: Traced:D $event is raw --> Bool:_) {
-        $!handle.say: self.gist: :$event, :nl($!handle.nl-out)
+        $!handle.say: self.prettify: $event, :nl($!handle.nl-out)
     }
 }
