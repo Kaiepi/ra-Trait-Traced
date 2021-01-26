@@ -59,6 +59,6 @@ multi method entries(::?CLASS:U:
 
 method footer(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw --> Str:D) {
     $e.died
-        ?? "$margin!!! $e.exception.&stringify()"
-        !! "$margin==> $e.result.&stringify()"
+        ?? "$margin!!! $e.exception.&stringify()$nl"
+        !! "$margin==> $e.result.&stringify()$nl"
 }

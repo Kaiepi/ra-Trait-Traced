@@ -12,5 +12,5 @@ method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {
 }
 
 multi method render(::?ROLE:D: Traced:D $event is raw --> Bool:_) {
-    $!handle.say: $tracee.fill: $event, :nl($!handle.nl-out)
+    $!handle.print: $tracee.fill: $event, :nl($!handle.nl-out)
 }
