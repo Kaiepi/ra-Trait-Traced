@@ -1,24 +1,26 @@
 use v6;
 use Traced;
-use Tracer::Standard;
+use Tracee::Bitty;
+use Tracee::Pretty;
+use Tracer;
 
 #|[ A standard tracer for files with machine-readable output. ]
-role Tracer::File[Bool:D :pretty($) where !* = False] does Tracer::Standard {
+role Tracer::File[Tracee::Bitty ::T] does Tracer {
     has IO::Handle:D $.handle is required;
 
     method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {
         self.bless: :$handle
     }
 
-    multi method render(::?CLASS:D: Traced:D $event is raw --> Bool:_) {
+    multi method render(::?ROLE:D: Traced:D $event is raw --> Bool:_) {
         PRE  $!handle.lock;
         POST $!handle.unlock;
-        $!handle.say: self.stringify: $event, :nl($!handle.nl-out)
+        $!handle.say: T.fill: $event, :nl($!handle.nl-out)
     }
 }
 
 #|[ A standard tracer for files with human-readable output. ]
-role Tracer::File[Bool:D :pretty($)! where ?*] does Tracer::Standard {
+role Tracer::File[Tracee::Pretty ::T] does Tracer {
     has IO::Handle:D $.handle is required;
 
     method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {
@@ -28,6 +30,6 @@ role Tracer::File[Bool:D :pretty($)! where ?*] does Tracer::Standard {
     multi method render(::?CLASS:D: Traced:D $event is raw --> Bool:_) {
         PRE  $!handle.lock;
         POST $!handle.unlock;
-        $!handle.say: self.prettify: $event, :nl($!handle.nl-out)
+        $!handle.say: T.fill: $event, :nl($!handle.nl-out)
     }
 }

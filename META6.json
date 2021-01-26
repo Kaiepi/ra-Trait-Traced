@@ -21,10 +21,12 @@
 	"Traced::Routine" : "lib/Traced/Routine.pm6",
 	"Traced::Stash" : "lib/Traced/Stash.pm6",
 	"Traced::Variable" : "lib/Traced/Variable.pm6",
+	"Tracee" : "lib/Tracee.pm6",
+	"Tracee::Bitty" : "lib/Tracee/Bitty.pm6",
+	"Tracee::Pretty" : "lib/Tracee/Pretty.pm6",
 	"Tracer" : "lib/Tracer.pm6",
 	"Tracer::Default" : "lib/Tracer/Default.pm6",
 	"Tracer::File" : "lib/Tracer/File.pm6",
-	"Tracer::Standard" : "lib/Tracer/Standard.pm6",
 	"Tracer::Stream" : "lib/Tracer/Stream.pm6",
 	"Trait::Traced" : "lib/Trait/Traced.pm6",
 	"Trait::Traced::Utils" : "lib/Trait/Traced/Utils.pm6"

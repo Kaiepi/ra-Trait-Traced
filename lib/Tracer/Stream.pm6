@@ -1,9 +1,11 @@
 use v6;
 use Traced;
-use Tracer::Standard;
+use Tracee::Bitty;
+use Tracee::Pretty;
+use Tracer;
 
 #|[ A standard tracer for standard streams with machine-readable output. ]
-role Tracer::Stream[Bool:D :pretty($) where !* = False] does Tracer::Standard {
+role Tracer::Stream[Tracee::Bitty ::T] does Tracer {
     has IO::Handle:D $.handle is required;
 
     method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {
@@ -11,12 +13,12 @@ role Tracer::Stream[Bool:D :pretty($) where !* = False] does Tracer::Standard {
     }
 
     multi method render(::?CLASS:D: Traced:D $event is raw --> Bool:_) {
-        $!handle.say: self.stringify: $event, :nl($!handle.nl-out)
+        $!handle.say: T.fill: $event, :nl($!handle.nl-out)
     }
 }
 
 #|[ A standard tracer for standard streams with human-readable output. ]
-role Tracer::Stream[Bool:D :pretty($)! where ?*] does Tracer::Standard {
+role Tracer::Stream[Tracee::Pretty ::T] does Tracer {
     has IO::Handle:D $.handle is required;
 
     method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {
@@ -24,6 +26,6 @@ role Tracer::Stream[Bool:D :pretty($)! where ?*] does Tracer::Standard {
     }
 
     multi method render(::?CLASS:D: Traced:D $event is raw --> Bool:_) {
-        $!handle.say: self.prettify: $event, :nl($!handle.nl-out)
+        $!handle.say: T.fill: $event, :nl($!handle.nl-out)
     }
 }

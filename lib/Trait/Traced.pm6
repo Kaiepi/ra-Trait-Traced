@@ -11,11 +11,12 @@ use Traced::Attribute;
 use Traced::Routine;
 use Traced::Stash;
 use Traced::Variable;
+use Tracee::Pretty;
 use Tracer::Stream;
 use Trait::Traced::Utils;
 unit module Trait::Traced:ver<0.4.4>:auth<github:Kaiepi>:api<1>;
 
-INIT PROCESS::<$TRACER> := Tracer::Stream[:pretty].new: $*OUT unless PROCESS::<$TRACER>:exists;
+INIT PROCESS::<$TRACER> := Tracer::Stream[Tracee::Pretty].new: $*OUT unless PROCESS::<$TRACER>:exists;
 
 #|[ An exception thrown by Trait::Traced explicitly. ]
 role X::Trait::Traced { }
