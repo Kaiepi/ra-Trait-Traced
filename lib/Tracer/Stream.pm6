@@ -11,6 +11,6 @@ method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {
     self.bless: :$handle
 }
 
-multi method render(::?CLASS:D: Traced:D $event is raw --> Bool:_) {
+multi method render(::?ROLE:D: Traced:D $event is raw --> Bool:_) {
     $!handle.say: $tracee.fill: $event, :nl($!handle.nl-out)
 }

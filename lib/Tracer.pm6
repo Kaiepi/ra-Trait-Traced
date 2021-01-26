@@ -6,7 +6,7 @@ unit role Tracer;
 
 #|[ Wraps a traced event transparently, transforming any information
     collected with a tracee. ]
-proto method render(::?CLASS:D: Traced:D $event is raw --> Mu:_) is raw {
+proto method render(::?ROLE:D: Traced:D $event is raw --> Mu:_) is raw {
     {*} orelse .exception.rethrow;
     $event.exception.rethrow if $event.died;
     $event.result
