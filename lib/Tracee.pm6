@@ -4,4 +4,4 @@ use Traced;
 unit role Tracee[::T];
 
 #|[ Transforms a traced event to a format that can be output by a tracer. ]
-method fill(::?CLASS:D: Traced:D --> T) { ... }
+method fill(::?CLASS:_: Traced:D --> T) { ... }
