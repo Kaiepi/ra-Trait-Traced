@@ -4,8 +4,8 @@ use Traced::Attribute;
 use Traced::Routine;
 use Traced::Stash;
 use Traced::Variable;
-use Tracee;
-unit class Tracee::Pretty does Tracee[Str:D] is repr<Uninstantiable>;
+use Tracee::Standard;
+unit class Tracee::Pretty does Tracee::Standard is repr<Uninstantiable>;
 
 our proto sub prettify(Mu --> Str:D)                            {*}
     multi sub prettify(Mu $value is raw --> Str:D)              { $value.gist }

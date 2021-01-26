@@ -24,6 +24,7 @@
 	"Tracee" : "lib/Tracee.pm6",
 	"Tracee::Bitty" : "lib/Tracee/Bitty.pm6",
 	"Tracee::Pretty" : "lib/Tracee/Pretty.pm6",
+	"Tracee::Standard" : "lib/Tracee/Standard.pm6",
 	"Tracer" : "lib/Tracer.pm6",
 	"Tracer::Default" : "lib/Tracer/Default.pm6",
 	"Tracer::File" : "lib/Tracer/File.pm6",

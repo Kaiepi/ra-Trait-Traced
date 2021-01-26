@@ -4,8 +4,8 @@ use Traced::Attribute;
 use Traced::Routine;
 use Traced::Stash;
 use Traced::Variable;
-use Tracee;
-unit class Tracee::Bitty does Tracee[Str:D] is repr<Uninstantiable>;
+use Tracee::Standard;
+unit class Tracee::Bitty does Tracee::Standard is repr<Uninstantiable>;
 
 our sub stringify(Mu $value is raw --> Str:D) { $value.raku }
 
