@@ -3,7 +3,7 @@ use Traced;
 use Tracee::Standard;
 use Tracer;
 #|[ A tracer for files following the standard format. ]
-unit role Tracer::File[Tracee::Standard ::T] does Tracer;
+unit role Tracer::File[Tracee::Standard:_ $tracee] does Tracer;
 
 has IO::Handle:D $.handle is required;
 
@@ -14,5 +14,5 @@ method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {
 multi method render(::?ROLE:D: Traced:D $event is raw --> Bool:_) {
     PRE  $!handle.lock;
     POST $!handle.unlock;
-    $!handle.say: T.fill: $event, :nl($!handle.nl-out)
+    $!handle.say: $tracee.fill: $event, :nl($!handle.nl-out)
 }
