@@ -1,5 +1,4 @@
 use v6;
-use QAST:from<NQP>;
 use Traced;
 unit class Traced::Routine does Traced;
 
@@ -100,6 +99,8 @@ my role TracedRoutine {
 proto method wrap(::?CLASS:U: Mu --> Nil) {*}
 multi method wrap(::?CLASS:U: TracedRoutine:D --> Nil) is default { }
 multi method wrap(::?CLASS:U: Routine:D $routine is raw, *%named --> Nil) {
+    use QAST:from<NQP>;
+
     if $*W {
         my &fixup := { DO-WRAP $routine, |%named };
         $*W.add_object_if_no_sc: &fixup;
@@ -110,6 +111,7 @@ multi method wrap(::?CLASS:U: Routine:D $routine is raw, *%named --> Nil) {
     } else {
         DO-WRAP $routine, |%named;
     }
+
     $routine does TracedRoutine;
 }
 multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness!, *%rest --> Nil) {

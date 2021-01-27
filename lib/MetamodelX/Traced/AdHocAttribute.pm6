@@ -1,7 +1,7 @@
 use v6;
 use Perl6::Grammar:from<NQP>;
-use Traced::Attribute;
 use Trait::Traced::Utils;
+use Traced::Attribute;
 unit package MetamodelX::Traced;
 
 role AdHocAttribute[Attribute:D :$attribute!, :%symbols!, Bool:D :$repr! where !*] {
