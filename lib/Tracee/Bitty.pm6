@@ -5,6 +5,7 @@ use Traced::Routine;
 use Traced::Stash;
 use Traced::Variable;
 use Tracee::Standard;
+#|[ A tracee that produces standard, machine-readable output. ]
 unit class Tracee::Bitty does Tracee::Standard is repr<Uninstantiable>;
 
 our sub stringify(Mu $value is raw --> Str:D) { $value.raku }

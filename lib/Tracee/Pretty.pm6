@@ -5,6 +5,7 @@ use Traced::Routine;
 use Traced::Stash;
 use Traced::Variable;
 use Tracee::Standard;
+#|[ A tracee that produces standard, human-readable output. ]
 unit class Tracee::Pretty does Tracee::Standard is repr<Uninstantiable>;
 
 our proto sub prettify(Mu --> Str:D)                            {*}
