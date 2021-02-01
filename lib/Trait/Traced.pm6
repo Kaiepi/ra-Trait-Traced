@@ -18,6 +18,10 @@ unit module Trait::Traced:ver<0.4.4>:auth<github:Kaiepi>:api<1>;
 
 INIT PROCESS::<$TRACER> := Tracer::Stream[Tracee::Pretty].new: $*OUT unless PROCESS::<$TRACER>:exists;
 
+################################################################################
+#                                 Exceptions                                   #
+################################################################################
+
 #|[ An exception thrown by Trait::Traced explicitly. ]
 role X::Trait::Traced { }
 
@@ -31,7 +35,20 @@ class X::Trait::Traced::NYI is Exception does X::Trait::Traced {
     }
 }
 
+#|[ An exception thrown when the "is traced" trait is applied during runtime. ]
+class X::Trait::Traced::Runtime is Exception does X::Trait::Traced {
+    #|[ The exception's message. ]
+    method message(::?CLASS:D: --> 'Please do not apply the "is traced" trait during runtime.') { }
+}
+
+################################################################################
+#                                   Traits                                     #
+################################################################################
+
+my &ASSERT-COMPILING := { X::Trait::Traced::Runtime.new.throw without $*LANG & $*W };
+
 multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :traced($)! where ?*) is export {
+    ASSERT-COMPILING;
     Traced::Routine.wrap: $routine,
         scope     => $*SCOPE,
         multiness => $*MULTINESS;
@@ -40,6 +57,7 @@ multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :traced($)! where ?*)
 multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) is export {
     use nqp;
 
+    ASSERT-COMPILING;
     if my str $scope = $*SCOPE {
         Traced::Routine.wrap: $method,
             scope     => $scope eq 'has' ?? '' !! $scope,
@@ -54,21 +72,22 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
 }
 
 multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {
-    $/ := $variable.slash;
-
     # We can get key/value types from the keyof/of methods on
     # Positional/Associative, but the problem with this approach is we don't
     # necessarily know what their defaults will be for any type doing those
     # roles. The compiler knows what the user wrote though...
+    ASSERT-COMPILING;
     my %rest = :package($*PACKAGE), :scope($*SCOPE);
     %rest<value> := .ast with $*OFTYPE;
     if $variable.name.starts-with: '%' {
+        $/ := $variable.slash;
         %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given @<semilist>;
     }
     Traced::Variable.wrap: $variable, |%rest;
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
+    ASSERT-COMPILING;
     my        %symbols := $*W.cur_lexpad.symtable;
     my Mu     $how     := $attribute.package.HOW;
     my Bool:D $repr    := Metamodel::Primitives.is_type: $how, Metamodel::REPRComposeProtocol;
@@ -79,8 +98,9 @@ multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is
     X::Trait::Traced::NYI.new(:what<parameters>).throw
 }
 
-multi sub trait_mod:<is>(Mu \T, Bool:D :traced($)! where ?*) is export {
-    # Do nothing. This candidate exists so tracing for types can be composable.
+multi sub trait_mod:<is>(Mu \T where *, Bool:D :traced($)! where ?*) is default is export {
+    ASSERT-COMPILING;
+    nextsame;
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::MethodContainer], Bool:D :traced($)! where ?*) is export {
     T.HOW.^mixin: MetamodelX::Traced::MethodContainer;
@@ -107,4 +127,7 @@ multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::AttributeContainer], Bool:D
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::Stashing], Bool:D :traced($)! where ?*) is export {
     Traced::Stash.wrap: T.WHO;
     nextsame;
+}
+multi sub trait_mod:<is>(Mu \T, Bool:D :traced($)! where ?*) is export {
+    # Do nothing. This candidate exists so tracing for types can be composable.
 }
