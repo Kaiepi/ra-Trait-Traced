@@ -101,16 +101,11 @@ multi method wrap(::?CLASS:U: TracedRoutine:D --> Nil) is default { }
 multi method wrap(::?CLASS:U: Routine:D $routine is raw, *%named --> Nil) {
     use QAST:from<NQP>;
 
-    if $*W {
-        my &fixup := { DO-WRAP $routine, |%named };
-        $*W.add_object_if_no_sc: &fixup;
-        $*W.add_fixup_task:
-            deserialize_ast => QAST::Op.new(:op<call>, QAST::WVal.new(:value(&fixup))),
-            fixup_ast       => QAST::Op.new(:op<call>, QAST::WVal.new(:value(&fixup)));
-        Nil
-    } else {
-        DO-WRAP $routine, |%named;
-    }
+    my &fixup := { DO-WRAP $routine, |%named };
+    $*W.add_object_if_no_sc: &fixup;
+    $*W.add_fixup_task:
+        deserialize_ast => QAST::Op.new(:op<call>, QAST::WVal.new(:value(&fixup))),
+        fixup_ast       => QAST::Op.new(:op<call>, QAST::WVal.new(:value(&fixup)));
 
     $routine does TracedRoutine;
 }
@@ -131,10 +126,6 @@ sub DO-WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '
     nqp::setcodeobj($t-do, $routine);
     nqp::setcodename($t-do, $name);
     nqp::bindattr($routine, Code, '$!do', $t-do);
-    if $*W {
-        $*W.add_object_if_no_sc: $cloned;
-        $*W.add_object_if_no_sc: &TRACED-ROUTINE;
-    }
 
     sub TRACED-ROUTINE(|arguments --> Mu) is raw is hidden-from-backtrace {
         $/ := nqp::getlexcaller('$/');
