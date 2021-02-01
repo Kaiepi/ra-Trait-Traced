@@ -35,7 +35,7 @@ sub trace-attributes(Mu $how is raw, Mu $package is raw, %symbols --> Nil) {
             .map(*.<EXPR>.<scope_declarator>)\
             .grep([&] ?*, *.<sym>.Str eq 'has')\
             .map(*.<scoped>)
-    ) -> [Mu $attribute is raw, Perl6::Grammar:D $leaf is raw] {
+    ) -> [Mu $attribute is raw, Perl6::Grammar:D $/ is raw] {
         if Metamodel::Primitives.is_type: $attribute, Attribute {
             my Str:D $name = $attribute.name;
             if $attribute.has_accessor {
@@ -44,13 +44,13 @@ sub trace-attributes(Mu $how is raw, Mu $package is raw, %symbols --> Nil) {
                 $name = $symbol;
             }
 
-            my Perl6::Grammar:D $declarator := $leaf;
-            $declarator := $declarator<DECL> if $declarator<DECL>:exists;
-            $declarator := $declarator<declarator> if $declarator<declarator>:exists;
-
             my %rest = :$package, :$name;
-            %rest<key>   := .[0].<statement>.[0].ast.value if .[0]:exists given $declarator<variable_declarator><semilist>;
-            %rest<value> := .[0].ast if .[0]:exists given $leaf<typename>;
+            %rest<value> := .[0].ast if .[0]:exists given $<typename>;
+            if $name.starts-with: '%' {
+                $/ := $<DECL> if $<DECL>:exists;
+                $/ := $<declarator> if $<declarator>:exists;
+                %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given $<variable_declarator><semilist>;
+            }
             Traced::Attribute.wrap: $attribute, |%rest
         }
     }

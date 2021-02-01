@@ -54,13 +54,17 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
 }
 
 multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {
+    $/ := $variable.slash;
+
     # We can get key/value types from the keyof/of methods on
     # Positional/Associative, but the problem with this approach is we don't
     # necessarily know what their defaults will be for any type doing those
     # roles. The compiler knows what the user wrote though...
     my %rest = :package($*PACKAGE), :scope($*SCOPE);
-    %rest<key>   := .[0].<statement>.[0].ast.value if .[0]:exists given $variable.slash.<semilist>;
     %rest<value> := .ast with $*OFTYPE;
+    if $variable.name.starts-with: '%' {
+        %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given @<semilist>;
+    }
     Traced::Variable.wrap: $variable, |%rest;
 }
 

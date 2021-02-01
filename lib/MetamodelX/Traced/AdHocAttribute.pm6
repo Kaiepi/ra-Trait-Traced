@@ -41,11 +41,14 @@ sub trace-attribute(Mu $package is raw, Attribute:D $attribute, %symbols --> Nil
           .grep([&] ?*, *.<sym>.Str eq 'has')\
           .map(*.<scoped>)\
           .grep(*.&declarator.<variable_declarator>.<variable>.Str eq $name)\
-          .head; # XXX: first broken with Mu as of v2020.12
+          .head;
 
     my %rest = :$package, :$name;
-    %rest<key>   := .[0].<statement>.[0].ast.value if .[0]:exists given $/.&declarator.<variable_declarator>.<semilist>;
     %rest<value> := .[0].ast if .[0]:exists given $<typename>;
+    if $name.starts-with: '%' {
+        $/ := $/.&declarator;
+        %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given $<variable_declarator><semilist>;
+    }
     Traced::Attribute.wrap: $attribute, |%rest
 }
 
