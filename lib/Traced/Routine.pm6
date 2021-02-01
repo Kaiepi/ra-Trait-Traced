@@ -101,7 +101,7 @@ multi method wrap(::?CLASS:U: TracedRoutine:D --> Nil) is default { }
 multi method wrap(::?CLASS:U: Routine:D $routine is raw, *%named --> Nil) {
     use QAST:from<NQP>;
 
-    my &fixup := { DO-WRAP $routine, |%named };
+    my &fixup := { WRAP $routine, |%named };
     $*W.add_object_if_no_sc: &fixup;
     $*W.add_fixup_task:
         deserialize_ast => QAST::Op.new(:op<call>, QAST::WVal.new(:value(&fixup))),
@@ -115,7 +115,7 @@ multi method wrap(::?CLASS:U: Mu $wrapper is raw, 'multi' :$multiness!, *%rest -
     samewith $wrapper.code, :$multiness, |%rest
 }
 
-sub DO-WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Nil) {
+sub WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Nil) {
     use nqp;
 
     my Routine:D $cloned := trait_mod:<is> nqp::clone($routine), :hidden-from-backtrace;
