@@ -5,17 +5,17 @@ my Int:D     @CALL-FRAMES;
 unit role Traced;
 
 #|[ The ID of the trace. ]
-has Int:D $.id        is required;
+has Int:D       $.id        is required;
 #|[ The ID of the thread the trace was taken in. ]
-has Int:D $.thread-id is required;
+has Int:D       $.thread-id is required;
 #|[ The instant the trace was taken at. ]
-has Num:D $.timestamp is required;
+has Num:D       $.timestamp is required;
 #|[ The number of calls in the traced call stack.  ]
-has Int:D $.calls     is required;
+has Int:D       $.calls     is required;
 #|[ The result of the traced event. ]
-has Mu    $.result    is built(:bind) is default(Nil) is rw;
+has Mu          $.result    is built(:bind) is rw;
 #|[ The exception thrown when running the traced event, if any. ]
-has Mu    $.exception is built(:bind) is default(Nil);
+has Exception:_ $.exception is built(:bind);
 
 #|[ Whether or not the traced event died. ]
 method died(::?ROLE:D: --> Bool:D) { $!exception.DEFINITE }
