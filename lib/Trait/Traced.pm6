@@ -1,10 +1,10 @@
 use v6;
 use Kind;
 use Trait::Traced::Utils;
-use Traced::Attribute;
-use Traced::Routine;
-use Traced::Stash;
-use Traced::Variable;
+use Traced :TRACING;
+use Traced::Routine :TRACING;
+use Traced::Stash :TRACING;
+use Traced::Variable :TRACING;
 use Tracee::Pretty;
 use Tracer::Stream;
 use MetamodelX::Traced::AdHocAttribute;
@@ -45,11 +45,11 @@ class X::Trait::Traced::Runtime is Exception does X::Trait::Traced {
 #                                   Traits                                     #
 ################################################################################
 
-my &ASSERT-COMPILING := { X::Trait::Traced::Runtime.new.throw without $*LANG & $*W };
+my &ASSERT-COMPILING := { X::Trait::Traced::Runtime.new.throw without $*LANG | $*W };
 
 multi sub trait_mod:<is>(Routine:D $routine is raw, Bool:D :traced($)! where ?*) is export {
     ASSERT-COMPILING;
-    Traced::Routine.wrap: $routine,
+    TRACING Traced::Routine::Event, $routine,
         scope     => $*SCOPE,
         multiness => $*MULTINESS;
 }
@@ -59,7 +59,7 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
 
     ASSERT-COMPILING;
     if my str $scope = $*SCOPE {
-        Traced::Routine.wrap: $method,
+        TRACING Traced::Routine::Event, $method,
             scope     => $scope eq 'has' ?? '' !! $scope,
             multiness => $*MULTINESS;
     } elsif nqp::can($method.package.HOW, 'compose') {
@@ -83,7 +83,7 @@ multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is e
         $/ := $variable.slash;
         %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given @<semilist>;
     }
-    Traced::Variable.wrap: $variable, |%rest;
+    TRACING Traced::Variable::Event, $variable, |%rest;
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
@@ -125,7 +125,7 @@ multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::AttributeContainer], Bool:D
     nextsame;
 }
 multi sub trait_mod:<is>(Mu \T where Kind[Metamodel::Stashing], Bool:D :traced($)! where ?*) is export {
-    Traced::Stash.wrap: T.WHO;
+    TRACING Traced::Stash::Event, T.WHO;
     nextsame;
 }
 multi sub trait_mod:<is>(Mu \T, Bool:D :traced($)! where ?*) is export {

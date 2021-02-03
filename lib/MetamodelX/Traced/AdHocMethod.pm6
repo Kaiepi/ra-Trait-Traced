@@ -1,5 +1,6 @@
 use v6;
-use Traced::Routine;
+use Traced :TRACING;
+use Traced::Routine :TRACING;
 unit role MetamodelX::Traced::AdHocMethod[Method:D $method is raw];
 
 method compose(Mu $obj is raw, |) {
@@ -7,7 +8,7 @@ method compose(Mu $obj is raw, |) {
     if Metamodel::Primitives.is_type: self, Metamodel::MultiMethodContainer {
         for self.multi_methods_to_incorporate: $obj {
             next unless .code =:= $method;
-            Traced::Routine.wrap: $_, multiness => 'multi';
+            TRACING Traced::Routine::Event, $_, :multiness<multi>;
             $multi-found = True;
             last;
         }
@@ -16,16 +17,16 @@ method compose(Mu $obj is raw, |) {
 
     if Metamodel::Primitives.is_type(self, Metamodel::MethodContainer)
     && self.method_table($obj).{$method.name} =:= $method {
-        Traced::Routine.wrap: $method, multiness => $method.is_dispatcher ?? 'proto' !! '';
+        TRACING Traced::Routine::Event, $method, multiness => $method.is_dispatcher ?? 'proto' !! '';
         callsame
     } elsif Metamodel::Primitives.is_type(self, Metamodel::PrivateMethodContainer)
          && self.private_method_table($obj).{$method.name} =:= $method {
-        Traced::Routine.wrap: $method, prefix => '!';
+        TRACING Traced::Routine::Event, $method, :prefix<!>;
         callsame
     } elsif Metamodel::Primitives.is_type(self, Metamodel::MetaMethodContainer)
          && self.meta_method_table($obj).{$method.name} =:= $method {
         my Mu $type := callsame;
-        Traced::Routine.wrap: self.^find_method($method.name), prefix => '^';
+        TRACING Traced::Routine::Event, self.^find_method($method.name), :prefix<^>;
         $type
     }
 }

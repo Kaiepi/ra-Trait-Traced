@@ -1,7 +1,8 @@
 use v6;
 use Perl6::Grammar:from<NQP>;
 use Trait::Traced::Utils;
-use Traced::Attribute;
+use Traced :TRACING;
+use Traced::Attribute :TRACING;
 unit package MetamodelX::Traced;
 
 role AdHocAttribute[Attribute:D :$attribute!, :%symbols!, Bool:D :$repr! where !*] {
@@ -49,7 +50,7 @@ sub trace-attribute(Mu $package is raw, Attribute:D $attribute, %symbols --> Nil
         $/ := $/.&declarator;
         %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given $<variable_declarator><semilist>;
     }
-    Traced::Attribute.wrap: $attribute, |%rest
+    TRACING Traced::Attribute::Event, $attribute, |%rest
 }
 
 sub declarator(Perl6::Grammar:D $/ is raw --> Perl6::Grammar:D) {

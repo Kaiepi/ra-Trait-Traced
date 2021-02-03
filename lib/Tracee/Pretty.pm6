@@ -25,23 +25,31 @@ method fill(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) 
 proto method title(::?CLASS:U: Traced:D $e is raw;; Str:D :$nl is raw = $?NL, Str:D :$margin! is raw --> Str:D) {
     "$margin    \e[;1m$e.id() {{*}}$e.kind() $e.of()\e[;2m [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl"
 }
-multi method title(::?CLASS:U: Traced::Routine --> "\e[2;31m")   { }
-multi method title(::?CLASS:U: Traced::Stash --> "\e[2;32m")     { }
-multi method title(::?CLASS:U: Traced::Variable --> "\e[2;33m")  { }
-multi method title(::?CLASS:U: Traced::Attribute --> "\e[2;34m") { }
+multi method title(::?CLASS:U: Traced::Routine::Event --> "\e[2;31m")   { }
+multi method title(::?CLASS:U: Traced::Stash::Event --> "\e[2;32m")     { }
+multi method title(::?CLASS:U: Traced::Variable::Event --> "\e[2;33m")  { }
+multi method title(::?CLASS:U: Traced::Attribute::Event --> "\e[2;34m") { }
 
 proto method header(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw --> Str:D) {
     "$margin\<== \e[;1m{{*}}$nl"
 }
-multi method header(::?CLASS:U: Traced::Routine $e is raw --> Str:D)   { "$e.declarator() \e[2m($e.package.^name())\e[m" }
-multi method header(::?CLASS:U: Traced::Stash $e is raw --> Str:D)     { $e.longname }
-multi method header(::?CLASS:U: Traced::Variable $e is raw --> Str:D)  { "$e.declarator() \e[2m($e.package.^name())\e[m" }
-multi method header(::?CLASS:U: Traced::Attribute $e is raw --> Str:D) { "$e.declarator() \e[2m($e.package.^name())\e[m" }
+multi method header(::?CLASS:U: Traced::Routine::Event $e is raw --> Str:D) {
+    "$e.declarator() \e[2m($e.package.^name())\e[m"
+}
+multi method header(::?CLASS:U: Traced::Stash::Event $e is raw --> Str:D) {
+    $e.longname
+}
+multi method header(::?CLASS:U: Traced::Variable::Event $e is raw --> Str:D) {
+    "$e.declarator() \e[2m($e.package.^name())\e[m"
+}
+multi method header(::?CLASS:U: Traced::Attribute::Event $e is raw --> Str:D) {
+    "$e.declarator() \e[2m($e.package.^name())\e[m"
+}
     
 proto method entries(::?CLASS:U: Traced:D --> Seq:D) {*}
 multi method entries(::?CLASS:U: Traced:D --> Seq:D) { Empty.Seq }
 multi method entries(::?CLASS:U:
-    Traced::Routine:D $e is raw;; Str:D :$nl is raw = $?NL, Str:D :$margin! is raw
+    Traced::Routine::Event:D $e is raw;; Str:D :$nl is raw = $?NL, Str:D :$margin! is raw
 --> Seq:D) {
     gather for $e -> Pair:D $argument is raw {
         my Parameter:D $p := $argument.key;
@@ -60,7 +68,7 @@ multi method entries(::?CLASS:U:
     }
 }
 multi method entries(::?CLASS:U:
-    Traced::Stash:D $e is raw;; Str:D :$nl is raw = $?NL, Str:D :$margin! is raw
+    Traced::Stash::Event:D $e is raw;; Str:D :$nl is raw = $?NL, Str:D :$margin! is raw
 --> Seq:D) {
     gather if $e.modified {
         take-rw "$margin    $e.value.&prettify.subst($nl, qq/$nl$margin         /, :g)$nl";

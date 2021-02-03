@@ -25,15 +25,23 @@ method title(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$m
 proto method header(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw --> Str:D) {
     "$margin\<== {{*}}$nl"
 }
-multi method header(::?CLASS:U: Traced::Routine:D $e is raw --> Str:D)   { "$e.declarator() ($e.package.^name())" }
-multi method header(::?CLASS:U: Traced::Stash:D $e is raw --> Str:D)     { $e.longname }
-multi method header(::?CLASS:U: Traced::Variable:D $e is raw --> Str:D)  { "$e.declarator() ($e.package.^name())" }
-multi method header(::?CLASS:U: Traced::Attribute:D $e is raw --> Str:D) { "$e.declarator() ($e.package.^name())" }
+multi method header(::?CLASS:U: Traced::Routine::Event $e is raw --> Str:D) {
+    "$e.declarator() ($e.package.^name())"
+}
+multi method header(::?CLASS:U: Traced::Stash::Event $e is raw --> Str:D) {
+    $e.longname
+}
+multi method header(::?CLASS:U: Traced::Variable::Event $e is raw --> Str:D) {
+    "$e.declarator() ($e.package.^name())"
+}
+multi method header(::?CLASS:U: Traced::Attribute::Event $e is raw --> Str:D) {
+    "$e.declarator() ($e.package.^name())"
+}
 
 proto method entries(::?CLASS:U: Traced:D --> Seq:D) {*}
 multi method entries(::?CLASS:U: Traced:D --> Seq:D) { Empty.Seq }
 multi method entries(::?CLASS:U:
-    Traced::Routine:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw
+    Traced::Routine::Event:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw
 --> Seq:D) {
     gather for $e -> Pair:D $argument {
         my Parameter:D $p := $argument.key;
@@ -51,7 +59,7 @@ multi method entries(::?CLASS:U:
     }
 }
 multi method entries(::?CLASS:U:
-    Traced::Stash:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw
+    Traced::Stash::Event:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw
 --> Seq:D) {
     gather if $e.modified {
         take-rw "$margin    $e.value.&stringify()$nl";

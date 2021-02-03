@@ -29,9 +29,6 @@ method kind(::?CLASS:D: --> Str:D) { ... }
     these. ]
 method of(::?CLASS:D: --> Enumeration:D) { ... }
 
-#|[ Wraps events to be traced. ]
-method wrap(::?CLASS:U: | --> Mu) { ... }
-
 #|[ Generates a trace for an event. ]
 proto method event(::?CLASS:U: *%args --> Mu) is raw is hidden-from-backtrace {
     # We depend on &now's internals to generate a Num:D timestamp because the
@@ -47,3 +44,6 @@ proto method event(::?CLASS:U: *%args --> Mu) is raw is hidden-from-backtrace {
     CATCH { return self.bless: :$id, :$thread-id, :$calls, :$timestamp, :exception($_), |%args }
     self.bless: :$id, :$thread-id, :$calls, :$timestamp, :$result, |%args
 }
+
+#|[ Wraps events to be traced. ]
+proto sub TRACING(Traced, | --> Mu) is export(:TRACING) {*}

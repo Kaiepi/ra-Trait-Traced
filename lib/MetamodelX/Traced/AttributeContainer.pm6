@@ -1,7 +1,8 @@
 use v6;
 use Perl6::Grammar:from<NQP>;
 use Trait::Traced::Utils;
-use Traced::Attribute;
+use Traced :TRACING;
+use Traced::Attribute :TRACING;
 unit package MetamodelX::Traced;
 
 role AttributeContainer[:%symbols!, Bool:D :repr($)! where !*] {
@@ -51,7 +52,7 @@ sub trace-attributes(Mu $how is raw, Mu $package is raw, %symbols --> Nil) {
                 $/ := $<declarator> if $<declarator>:exists;
                 %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given $<variable_declarator><semilist>;
             }
-            Traced::Attribute.wrap: $attribute, |%rest
+            TRACING Traced::Attribute::Event, $attribute, |%rest
         }
     }
 }
