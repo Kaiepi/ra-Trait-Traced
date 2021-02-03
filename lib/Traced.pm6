@@ -30,7 +30,7 @@ method kind(::?CLASS:D: --> Str:D) { ... }
 method of(::?CLASS:D: --> Enumeration:D) { ... }
 
 #|[ Generates a trace for an event. ]
-proto method event(::?CLASS:U: *%args --> Mu) is raw is hidden-from-backtrace {
+proto method capture(::?CLASS:U: *%args --> Mu) is raw is hidden-from-backtrace {
     # We depend on &now's internals to generate a Num:D timestamp because the
     # overhead of generating an Instant:D is unacceptable here.
     use nqp;

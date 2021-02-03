@@ -27,13 +27,13 @@ role Event does Traced {
 role Event[ASSIGN] does Event {
     method of(::?CLASS:D: --> ASSIGN) { }
 
-    multi method event(::?CLASS:U: Mu :$result is raw --> Mu) is raw { $result }
+    multi method capture(::?CLASS:U: Mu :$result is raw --> Mu) is raw { $result }
 }
 
 role Event[STORE] does Event {
     method of(::?CLASS:D: --> STORE) { }
 
-    multi method event(::?CLASS:U: :&callback, Capture:D :$arguments is raw --> Mu) is raw {
+    multi method capture(::?CLASS:U: :&callback, Capture:D :$arguments is raw --> Mu) is raw {
         callback |$arguments
     }
 }
@@ -76,7 +76,7 @@ my class ContainerDescriptor {
 
     method assigned(::?CLASS:D: Mu $result is raw --> Mu) is raw {
         my constant AssignEvent = Event[ASSIGN].^pun;
-        $*TRACER.render: AssignEvent.event:
+        $*TRACER.render: AssignEvent.capture:
             :$!package, :$!scope, :$!variable, :$!key, :$!value, :$result
     }
 }
@@ -84,7 +84,7 @@ my class ContainerDescriptor {
 my role Container[*%rest] {
     method STORE(|args) {
         my constant StoreEvent = Event[STORE].^pun;
-        $*TRACER.render: StoreEvent.event:
+        $*TRACER.render: StoreEvent.capture:
             callback  => self.^mixin_base.^find_method('STORE'), # XXX: nextcallee doesn't work here as of v2020.03
             arguments => \(self, |args),
             |%rest

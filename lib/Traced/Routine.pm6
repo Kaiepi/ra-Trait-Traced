@@ -93,7 +93,7 @@ role Event does Traced {
 
     method parameters-to-arguments(::?CLASS:D: --> Seq:D) { self.Seq }
 
-    multi method event(::?CLASS:U:
+    multi method capture(::?CLASS:U:
         Routine:D :$routine is raw, Capture:D :$arguments is raw
     --> Mu) is raw is hidden-from-backtrace {
         $routine(|$arguments)
@@ -138,7 +138,7 @@ sub WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '', 
         my constant CallEvent = Event.^pun;
 
         $/ := nqp::getlexcaller('$/');
-        $*TRACER.render: CallEvent.event:
+        $*TRACER.render: CallEvent.capture:
             routine   => $cloned,
             arguments => arguments,
             scope     => $scope,

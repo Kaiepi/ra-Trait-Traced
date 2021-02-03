@@ -10,7 +10,7 @@ subtest 'mapping parameters to arguments', {
     plan 6;
 
     sub make-is-arg(&routine, Capture:D $arguments is raw --> Sub:D) {
-        my Traced::Routine::Event:D $traced .= event:
+        my Traced::Routine::Event:D $traced .= capture:
             scope     => '',
             multiness => '',
             prefix    => '',
