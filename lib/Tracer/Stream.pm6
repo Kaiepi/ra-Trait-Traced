@@ -5,6 +5,7 @@ use Tracer;
 #|[ A tracer for standard streams following the standard format. ]
 unit role Tracer::Stream[Tracee::Standard:_ $tracee] does Tracer;
 
+#|[ A standard stream file handle. ]
 has IO::Handle:D $.handle is required;
 
 method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {

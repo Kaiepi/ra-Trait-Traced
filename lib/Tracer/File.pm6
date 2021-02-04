@@ -5,6 +5,7 @@ use Tracer;
 #|[ A tracer for files following the standard format. ]
 unit role Tracer::File[Tracee::Standard:_ $tracee] does Tracer;
 
+#|[ A file handle. ]
 has IO::Handle:D $.handle is required;
 
 method new(::?ROLE:_: IO::Handle:D $handle --> ::?ROLE:D) {
