@@ -8,7 +8,7 @@ unit role Traced;
 has Int:D       $.id        is required;
 #|[ The ID of the thread the trace was taken in. ]
 has Int:D       $.thread-id is required;
-#|[ The instant the trace was taken at. ]
+#|[ The (numeric) instant the trace was taken at. ]
 has Num:D       $.timestamp is required;
 #|[ The number of calls in the traced call stack.  ]
 has Int:D       $.calls     is required;
