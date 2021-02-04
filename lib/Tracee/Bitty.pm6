@@ -8,8 +8,10 @@ use Tracee::Standard;
 #|[ A tracee that produces standard, machine-readable output. ]
 unit class Tracee::Bitty does Tracee::Standard is repr<Uninstantiable>;
 
+#|[ Stringifies a value for output. ]
 our sub stringify(Mu $value is raw --> Str:D) { $value.raku }
 
+#|[ Transforms a traced event to the standard format. ]
 method fill(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) {
     my Str:D $margin := ' ' x 4 * $e.calls;
     self.title($e, :$nl, :$margin) ~
@@ -18,10 +20,12 @@ method fill(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL --> Str:D) 
     self.footer($e, :$nl, :$margin)
 }
 
+#|[ A trace's title. This contains metadata that distinguishes traces from one another. ]
 method title(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw --> Str:D) {
     "$margin    $e.id() $e.kind() $e.of() [$e.thread-id() @ $e.timestamp.fmt(<%f>)]$nl"
 }
 
+#|[ A trace's header. This represents an input of some sort. ]
 proto method header(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw --> Str:D) {
     "$margin\<== {{*}}$nl"
 }
@@ -38,6 +42,7 @@ multi method header(::?CLASS:U: Traced::Attribute::Event $e is raw --> Str:D) {
     "$e.declarator() ($e.package.^name())"
 }
 
+#|[ A trace's entries. This represents arguments of some sort given alongside an input. ]
 proto method entries(::?CLASS:U: Traced:D --> Seq:D) {*}
 multi method entries(::?CLASS:U: Traced:D --> Seq:D) { Empty.Seq }
 multi method entries(::?CLASS:U:
@@ -66,6 +71,7 @@ multi method entries(::?CLASS:U:
     }
 }
 
+#|[ A trace's footers. This represents an output of some sort. ]
 method footer(::?CLASS:U: Traced:D $e is raw, Str:D :$nl is raw = $?NL, Str:D :$margin! is raw --> Str:D) {
     $e.died
         ?? "$margin!!! $e.exception.&stringify()$nl"
