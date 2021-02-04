@@ -31,28 +31,23 @@ class Power is traced {
 # clear the bug's in the Numeric method:
 my Power:D $two-cubed .= new: 2, 3;
 quietly +$two-cubed; # OUTPUT:
-#     2 ATTRIBUTE ASSIGN [1 @ 1585174889.522927]
-#     <== $.base (Power)
+#         2 ATTRIBUTE ASSIGN [1 @ 1612442348.394997]
+#     <== has Numeric:D $.base (Power)
 #     ==> 2
-#     3 ATTRIBUTE ASSIGN [1 @ 1585174889.532436]
-#     <== $.exponent (Power)
+#         3 ATTRIBUTE ASSIGN [1 @ 1612442348.400778]
+#     <== has Numeric:D $.exponent (Power)
 #     ==> 3
-# 1 ROUTINE CALL [1 @ 1585174889.522555]
+#     1 ROUTINE CALL [1 @ 1612442348.393752]
 # <== method new (Power)
 #     self:      (Power)
 #     $base:     2
 #     $exponent: 3
 #     *%_:       {}
 # ==> Power.new(base => 2, exponent => 3)
-#     5 ROUTINE CALL [1 @ 1585174889.579421]
-#     <== multi method Numeric (Power)
-#         self: Power.new(base => 2, exponent => 3)
-#         *%_:  {}
-#     ==> 9
-# 4 ROUTINE CALL [1 @ 1585174889.579181]
-# <== proto method Numeric (Mu)
+#     4 ROUTINE CALL [1 @ 1612442348.417632]
+# <== multi method Numeric (Power)
 #     self: Power.new(base => 2, exponent => 3)
-#     |:    \()
+#     *%_:  {}
 # ==> 9
 ```
 
