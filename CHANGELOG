@@ -75,3 +75,10 @@ v0.4.3:
 
 v0.4.4:
     - Fix Traced::Routine "self" parameter detection on newer Rakudo versions.
+
+v1.0.0:
+    - Eliminated NativeCall as a dependency.
+    - Refactored the internal Traced/Tracer API, introducing Tracee for
+      transforming traces to output.
+    - Deprecated Tracer::Default.
+    - Documented the new internal API.
