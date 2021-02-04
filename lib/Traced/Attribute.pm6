@@ -12,7 +12,7 @@ enum Type <ASSIGN STORE>;
 #|[ A traced attribute event template. ]
 role Event does Traced {
     #|[ The package this attribute belongs to. ]
-    has Mu          $.package   is required is built(:bind);
+    has Mu          $.package   is built(:bind) is required;
     #|[ The name of the attribute as written. ]
     has Str:D       $.name      is required;
     #|[ The attribute in question. ]

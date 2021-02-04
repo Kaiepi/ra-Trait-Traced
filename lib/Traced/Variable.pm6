@@ -12,7 +12,7 @@ enum Type <ASSIGN STORE>;
 #|[ A traced variable event template. ]
 role Event does Traced {
     #|[ The package this variable was declared in. ]
-    has Mu         $.package  is required;
+    has Mu         $.package  is built(:bind) is required;
     #|[ The scope of the variable. ]
     has Str:D      $.scope    is required;
     #|[ The variable in question. ]
