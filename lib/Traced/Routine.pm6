@@ -1,24 +1,37 @@
 use v6;
 use Traced;
+#|[ Routine tracing module. ]
 unit module Traced::Routine;
 
+#|[ A type of routine trace. ]
 enum Type <CALL>;
 
+#|[ A traced routine call. ]
 role Event does Traced {
+    #|[ The scope the routine was declared in. ]
     has Str:D     $.scope     is required;
+    #|[ The multiness of the routine (proto, multi, only). ]
     has Str:D     $.multiness is required;
+    #|[ The prefix of the routine's name (!, ^). ]
     has Str:D     $.prefix    is required;
+    #|[ The routine in question. ]
     has Routine:D $.routine   is required;
+    #|[ The arguments of the routine call. ]
     has Capture:D $.arguments is required;
 
+    #|[ The name of this kind of traced event. ]
     method kind(::?CLASS:D: --> 'ROUTINE') { }
 
+    #|[ The type of traced routine event. ]
     method of(::?CLASS:D: --> CALL) { }
 
+    #|[ The package this routine was declared in. ]
     method package(::?CLASS:D: --> Mu) { $!routine.package }
 
+    #|[ The name of the routine as written. ]
     method name(::?CLASS:D: --> Str:D) { $!routine.name || '::' }
 
+    #|[ The routine declaration as written. ]
     method declarator(::?CLASS:D: --> Str:D) {
         my Str:D $declarator = $!routine.^is_mixin ?? $!routine.^mixin_base.^name.lc !! $!routine.^name.lc;
         $declarator [R~]= "$!multiness " if $!multiness;
@@ -26,6 +39,7 @@ role Event does Traced {
         "$declarator $!prefix$.name"
     }
 
+    #|[ An iterator mapping routine parameters to call arguments. ]
     my class ParameterToArgumentIterator does Iterator {
         has Iterator:D       $!parameters is required;
         has List:D           $!positional is required;
@@ -91,6 +105,7 @@ role Event does Traced {
         Seq.new: self.iterator
     }
 
+    #|[ A sequence of parameters mapped to arguments. ]
     method parameters-to-arguments(::?CLASS:D: --> Seq:D) { self.Seq }
 
     multi method capture(::?CLASS:U:
@@ -100,6 +115,7 @@ role Event does Traced {
     }
 }
 
+#|[ Marks a traced routine. ]
 my role Wrap { method is-traced(--> True) { } }
 
 multi sub TRACING(Event:U, Wrap:D;; *%rest --> Nil) is default is export(:TRACING) { }

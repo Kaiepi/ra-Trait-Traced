@@ -1,20 +1,31 @@
 use v6;
 use Traced;
+#|[ Attribute tracing module. ]
 unit module Traced::Attribute;
 
+#|[ The absence of a type. ]
 constant VOID = Mu.new;
 
+#|[ A type of attribute trace. ]
 enum Type <ASSIGN STORE>;
 
+#|[ A traced attribute event template. ]
 role Event does Traced {
+    #|[ The package this attribute belongs to. ]
     has Mu          $.package   is required is built(:bind);
+    #|[ The name of the attribute as written. ]
     has Str:D       $.name      is required;
+    #|[ The attribute in question. ]
     has Attribute:D $.attribute is required;
+    #|[ Any attribute key typing. ]
     has Mu          $.key       is built(:bind) = VOID;
+    #|[ Any attribute value typing. ]
     has Mu          $.value     is built(:bind) = VOID;
 
+    #|[ The name of this kind of traced event. ]
     method kind(::?CLASS:D: --> 'ATTRIBUTE') { }
 
+    #|[ The attribute declaration as written. ]
     method declarator(::?CLASS:D: --> Str:D) {
         my Str:D $declarator = 'has ';
         $declarator ~= Qs/$!value.^name() / without $!value;
@@ -24,13 +35,17 @@ role Event does Traced {
     }
 }
 
+#|[ A traced scalar attribute assignment. ]
 role Event[ASSIGN] does Event {
+    #|[ The type of traced attribute event. ]
     method of(::?CLASS:D: --> ASSIGN) { }
 
     multi method capture(::?CLASS:U: Mu :$result is raw --> Mu) is raw { $result }
 }
 
+#|[ A traced positional or associative attribute assignment (STORE method call). ]
 role Event[STORE] does Event {
+    #|[ The type of traced attribute event. ]
     method of(::?CLASS:D: --> STORE) { }
 
     multi method capture(::?CLASS:U: :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
@@ -38,15 +53,13 @@ role Event[STORE] does Event {
     }
 }
 
+#|[ Marks a traced attribute. ]
 my role Wrap { method is-traced(--> True) { } }
 
 multi sub TRACING(Event:U, Wrap:D;; *%rest --> Nil) is export(:TRACING) { }
 
-# Handles tracing for scalar (and callable) attributes. This is done instead of
-# using Proxy because Scalar supports atomic ops, while Proxy doesn't.
 my class ContainerDescriptor { ... }
 
-# Handles tracing for positional and associative variables.
 my role Container { ... }
 
 multi sub TRACING(Event:U, Attribute:D $attribute;; *%rest --> Nil) is export(:TRACING) {
@@ -66,6 +79,7 @@ multi sub TRACING(Event:U, Attribute:D $attribute;; *%rest --> Nil) is export(:T
     $attribute does Wrap;
 }
 
+#|[ A container descriptor for traced scalar attributes. ]
 my class ContainerDescriptor {
     has Mu          $.descriptor is required is built(:bind);
     has Mu          $.package    is required;
@@ -88,6 +102,7 @@ my class ContainerDescriptor {
     }
 }
 
+#|[ A traced positional or associative attribute container. ]
 my role Container[*%rest] {
     method STORE(|args) {
         my constant StoreEvent = Event[STORE].^pun;

@@ -1,20 +1,31 @@
 use v6;
 use Traced;
+#|[ Variable tracing module. ]
 unit module Traced::Variable;
 
+#|[ The absence of a type. ]
 constant VOID = Mu.new;
 
+#|[ A type of variable trace. ]
 enum Type <ASSIGN STORE>;
 
+#|[ A traced variable event template. ]
 role Event does Traced {
+    #|[ The package this variable was declared in. ]
     has Mu         $.package  is required;
+    #|[ The scope of the variable. ]
     has Str:D      $.scope    is required;
+    #|[ The variable in question. ]
     has Variable:D $.variable is required;
+    #|[ Any variable key typing. ]
     has Mu         $.key      is built(:bind) = VOID;
+    #|[ Any variable value typing. ]
     has Mu         $.value    is built(:bind) = VOID;
 
+    #|[ The name of the kind of traced event. ]
     method kind(::?CLASS:D: --> 'VARIABLE') { }
 
+    #|[ The variable declaration as written. ]
     method declarator(::?CLASS:D: --> Str:D) {
         my Str:D $declarator = $!scope;
         $declarator ~= Qs/ $!value.^name()/ without $!value;
@@ -24,13 +35,17 @@ role Event does Traced {
     }
 }
 
+#|[ A traced scalar variable assignment. ]
 role Event[ASSIGN] does Event {
+    #|[ The type of traced variable event. ]
     method of(::?CLASS:D: --> ASSIGN) { }
 
     multi method capture(::?CLASS:U: Mu :$result is raw --> Mu) is raw { $result }
 }
 
+#|[ A traced positional or associative variable assignment. ]
 role Event[STORE] does Event {
+    #|[ The type of traced variable event. ]
     method of(::?CLASS:D: --> STORE) { }
 
     multi method capture(::?CLASS:U: :&callback, Capture:D :$arguments is raw --> Mu) is raw {
@@ -38,11 +53,8 @@ role Event[STORE] does Event {
     }
 }
 
-# Handles tracing for scalar (and callable) variables. This is done instead of
-# using Proxy because Scalar supports atomic ops, while Proxy doesn't.
 my class ContainerDescriptor { ... }
 
-# Handles tracing for positional and associative variables.
 my role Container { ... }
 
 multi sub TRACING(Event:U, Variable:D $variable;; *%rest --> Mu) is export(:TRACING) {
@@ -59,6 +71,7 @@ multi sub TRACING(Event:U, Variable:D $variable;; *%rest --> Mu) is export(:TRAC
     }
 }
 
+#|[ A container descriptor for traced scalar variables. ]
 my class ContainerDescriptor {
     has Mu         $.descriptor is required is built(:bind);
     has Mu         $.package    is required is built(:bind);
@@ -81,6 +94,7 @@ my class ContainerDescriptor {
     }
 }
 
+#|[ A traced positional or associative variable container. ]
 my role Container[*%rest] {
     method STORE(|args) {
         my constant StoreEvent = Event[STORE].^pun;

@@ -20,13 +20,10 @@ has Exception:_ $.exception is built(:bind);
 #|[ Whether or not the traced event died. ]
 method died(::?ROLE:D: --> Bool:D) { $!exception.DEFINITE }
 
-#|[ A trace kind name. The shortname of your Traced type is probably good
-    enough. ]
+#|[ The name of this kind of traced event. ]
 method kind(::?CLASS:D: --> Str:D) { ... }
 
-#|[ A trace type enum value. This can be used to index
-    different Traced type parameterizations should there be more than one of
-    these. ]
+#|[ The type of traced event. ]
 method of(::?CLASS:D: --> Enumeration:D) { ... }
 
 #|[ Generates a trace for an event. ]
