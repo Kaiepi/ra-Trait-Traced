@@ -34,7 +34,9 @@ role Event[LOOKUP] does Event {
     #|[ Whether or not the stash has a new value. ]
     method modified(::?CLASS:D: --> False) { }
 
-    multi method capture(::?CLASS:U: Stash:D :$stash, Str:D :$key --> Mu) is raw {
+    multi method capture(::?CLASS:U:
+        Stash:D :$stash, Str:D :$key
+    --> Mu) is raw is hidden-from-backtrace {
         $stash.Stash::AT-KEY: $key
     }
 }
@@ -50,7 +52,9 @@ role Event[BIND] does Event {
     #|[ Whether or not the stash has a new value. ]
     method modified(::?CLASS:D: --> True) { }
 
-    multi method capture(::?CLASS:U: Stash:D :$stash, Str:D :$key, Mu :$value is raw --> Mu) is raw {
+    multi method capture(::?CLASS:U:
+        Stash:D :$stash, Str:D :$key, Mu :$value is raw
+    --> Mu) is raw is hidden-from-backtrace {
         $stash.Hash::BIND-KEY: $key, $value
     }
 }
@@ -66,7 +70,9 @@ role Event[ASSIGN] does Event {
     #|[ Whether or not the stash has a new value. ]
     method modified(::?CLASS:D: --> True) { }
 
-    multi method capture(::?CLASS:U: Stash:D :$stash, Str:D :$key, Mu :$value is raw --> Mu) is raw {
+    multi method capture(::?CLASS:U:
+        Stash:D :$stash, Str:D :$key, Mu :$value is raw
+    --> Mu) is raw is hidden-from-backtrace {
         $stash.Hash::ASSIGN-KEY: $key, $value
     }
 }
@@ -79,17 +85,23 @@ multi sub TRACING(Event:U, Stash:D $stash --> Nil) is export(:TRACING) {
 
 #|[ Traces stash events. ]
 my role Wrap {
-    multi method AT-KEY(::?CLASS:D $stash: Str() $key --> Mu) is raw {
+    multi method AT-KEY(::?CLASS:D $stash:
+        Str() $key
+    --> Mu) is raw is hidden-from-backtrace {
         my constant LookupEvent = Event[LOOKUP].^pun;
         $*TRACER.render: LookupEvent.capture: :$stash, :$key
     }
 
-    multi method BIND-KEY(::?CLASS:D $stash: Str() $key, Mu $value is raw --> Mu) is raw {
+    multi method BIND-KEY(::?CLASS:D $stash:
+        Str() $key, Mu $value is raw
+    --> Mu) is raw is hidden-from-backtrace {
         my constant BindEvent = Event[BIND].^pun;
         $*TRACER.render: BindEvent.capture: :$stash, :$key, :$value;
     }
 
-    multi method ASSIGN-KEY(::?CLASS:D $stash: Str() $key, Mu $value is raw --> Mu) is raw {
+    multi method ASSIGN-KEY(::?CLASS:D $stash:
+        Str() $key, Mu $value is raw
+    --> Mu) is raw is hidden-from-backtrace {
         my constant AssignEvent = Event[ASSIGN].^pun;
         $*TRACER.render: AssignEvent.capture: :$stash, :$key, :$value;
     }

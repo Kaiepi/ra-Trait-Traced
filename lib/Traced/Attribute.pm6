@@ -40,7 +40,9 @@ role Event[ASSIGN] does Event {
     #|[ The type of traced attribute event. ]
     method of(::?CLASS:D: --> ASSIGN) { }
 
-    multi method capture(::?CLASS:U: Mu :$result is raw --> Mu) is raw { $result }
+    multi method capture(::?CLASS:U:
+        Mu :$result is raw
+    --> Mu) is raw is hidden-from-backtrace { $result }
 }
 
 #|[ A traced positional or associative attribute assignment (STORE method call). ]
@@ -48,7 +50,9 @@ role Event[STORE] does Event {
     #|[ The type of traced attribute event. ]
     method of(::?CLASS:D: --> STORE) { }
 
-    multi method capture(::?CLASS:U: :&callback is raw, Capture:D :$arguments is raw --> Mu) is raw {
+    multi method capture(::?CLASS:U:
+        :&callback is raw, Capture:D :$arguments is raw
+    --> Mu) is raw is hidden-from-backtrace {
         callback |$arguments
     }
 }
@@ -95,7 +99,7 @@ my class ContainerDescriptor {
 
     method name(::?CLASS:D: --> Str:D) { "traced attribute $!name" }
 
-    method assigned(::?CLASS:D: Mu $result is raw --> Mu) is raw {
+    method assigned(::?CLASS:D: Mu $result is raw --> Mu) is raw is hidden-from-backtrace {
         my constant AssignEvent = Event[ASSIGN].^pun;
         $*TRACER.render: AssignEvent.capture:
             :$!attribute, :$!package, :$!name, :$!key, :$!value, :$result
@@ -104,7 +108,7 @@ my class ContainerDescriptor {
 
 #|[ A traced positional or associative attribute container. ]
 my role Container[*%rest] {
-    method STORE(|args) {
+    method STORE(|args) is hidden-from-backtrace {
         my constant StoreEvent = Event[STORE].^pun;
         $*TRACER.render: StoreEvent.capture:
             callback  => self.^mixin_base.^find_method('STORE'), # XXX: nextcallee doesn't work here as of v2020.03

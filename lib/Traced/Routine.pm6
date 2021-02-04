@@ -141,7 +141,7 @@ multi sub TRACING(Event:U \T, Mu $wrapper is raw;; 'multi' :$multiness!, *%rest 
 sub WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '', Str:D :$prefix = '' --> Nil) {
     use nqp;
 
-    my Routine:D $cloned := trait_mod:<is> nqp::clone($routine), :hidden-from-backtrace;
+    my Routine:D $cloned := nqp::clone($routine);
     my Mu        $c-do   := nqp::getattr($cloned, Code, '$!do');
     my Mu        $t-do   := nqp::getattr(&TRACED-ROUTINE, Code, '$!do');
     my str       $name    = nqp::getcodename($c-do);
@@ -149,6 +149,7 @@ sub WRAP(Routine:D $routine is raw, Str:D :$scope = '', Str:D :$multiness = '', 
     nqp::setcodeobj($t-do, $routine);
     nqp::setcodename($t-do, $name);
     nqp::bindattr($routine, Code, '$!do', $t-do);
+    trait_mod:<is> $routine, :hidden-from-backtrace;
 
     sub TRACED-ROUTINE(|arguments --> Mu) is raw is hidden-from-backtrace {
         my constant CallEvent = Event.^pun;
