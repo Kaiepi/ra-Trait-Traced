@@ -55,7 +55,7 @@ multi method entries(::?CLASS:U:
         my Parameter:D $p := $argument.key;
         my Mu          $a := $argument.value;
         once take-rw (self => $a) and next if $p.invocant and not $p.name;
-        take-rw ("$p.prefix()$p.sigil()$p.twigil()$p.usage-name()$p.suffix()" => $a);
+        take-rw ("$p.prefix()$p.sigil()$p.twigil()$p.usage-name()" => $a);
     } ==> my Pair:D @entries;
 
     gather for @entries -> Pair:D $entry is raw {
