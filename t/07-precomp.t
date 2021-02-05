@@ -1,5 +1,5 @@
 use v6;
-use lib $?FILE.IO.sibling('lib');
+use lib $?FILE.IO.sibling: 'lib';
 use Tracer::Default;
 use Test;
 
@@ -17,10 +17,10 @@ sub trace(&trace, &parse?) {
 
 plan 3;
 
-use-ok 'Test::Module', 'can import traced modules';
+use-ok 'Test::Trait::Traced::Module', 'can import traced modules';
 trace {
-    use Test::Module;
-    lives-ok { Test::Module.traced }, 'can call traced methods of traced modules...';
+    use Test::Trait::Traced::Module;
+    lives-ok { Test::Trait::Traced::Module.traced }, 'can call traced methods of traced modules...';
 }, -> Str:D $output {
     ok $output, '...which produces output';
 };
