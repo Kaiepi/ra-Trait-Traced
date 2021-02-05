@@ -1,22 +1,10 @@
 use v6;
+use lib $?FILE.IO.sibling: 'lib';
 use Tracee::Bitty;
-use Tracer::File;
+use Tracer::Stream;
 use Trait::Traced;
 use Test;
-
-sub trace(&run, &parse?) {
-    my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
-    my $*TRACER := Tracer::File[Tracee::Bitty].new: $*TMPDIR.child($filename).open: :w;
-    LEAVE {
-        $*TRACER.handle.close;
-        $*TRACER.handle.path.unlink;
-    }
-    run;
-    $*TRACER.handle.flush;
-    parse $*TRACER.handle.path.slurp(:close) with &parse;
-}
-
-plan 28;
+use Test::Trait::Traced;
 
 # $Bar, @Baz, and %Qux get their symbols looked up outside of the tests, which
 # gets traced to $*OUT without this.
@@ -25,6 +13,8 @@ PROCESS::<$TRACER> := Tracer::Stream[Tracee::Bitty].new: $*OUT but role {
     method unlock(| --> True) { }
     method WRITE(| --> 0)     { }
 };
+
+plan 28;
 
 my module Foo is traced {
     constant Foo = 0;
@@ -39,55 +29,50 @@ trace {
     lives-ok {
         Foo::<Foo>
     }, 'can look up sigilless symbols...';
-}, -> Str:D $output {
-    ok $output,
-      '...which produce output...';
-    ok $output ~~ / <after '<== '> 'Foo::Foo' »  /,
-      '...that claims the lookup is for the correct symbol';
+}, {
+    ok $^output, '...which produce output...';
+    has-header $^output, 'Foo::Foo',
+        '...that claims the lookup is for the correct symbol';
 };
 
 trace {
     lives-ok {
         $Foo::Bar
     }, 'can look up $ sigilled symbols...';
-}, -> Str:D $output {
-    ok $output,
-      '...which produce output...';
-    ok $output ~~ / <after '<== '> '$Foo::Bar' »  /,
-      '...that claims the lookup is for the correct symbol';
+}, {
+    ok $^output, '...which produce output...';
+    has-header $^output, '$Foo::Bar',
+        '...that claims the lookup is for the correct symbol';
 };
 
 trace {
     lives-ok {
         @Foo::Baz
     }, 'can look up @ sigilled symbols...';
-}, -> Str:D $output {
-    ok $output,
-      '...which produce output...';
-    ok $output ~~ / <after '<== '> '@Foo::Baz' »  /,
-      '...that claims the lookup is for the correct symbol';
+}, {
+    ok $^output, '...which produce output...';
+    has-header $^output, '@Foo::Baz',
+        '...that claims the lookup is for the correct symbol';
 };
 
 trace {
     lives-ok {
         %Foo::Qux
     }, 'can look up % sigilled symbols...';
-}, -> Str:D $output {
-    ok $output,
-      '...which produce output...';
-    ok $output ~~ / <after '<== '> '%Foo::Qux' »  /,
-      '...that claims the lookup is for the correct symbol';
+}, {
+    ok $^output, '...which produce output...';
+    has-header $^output, '%Foo::Qux',
+        '...that claims the lookup is for the correct symbol';
 };
 
 trace {
     lives-ok {
         &Foo::Quux
     }, 'can look up & sigilled symbols...';
-}, -> Str:D $output {
-    ok $output,
-      '...which produce output...';
-    ok $output ~~ / <after '<== '> '&Foo::Quux' »  /,
-      '...that claims the lookup is for the correct symbol';
+}, {
+    ok $^output, '...which produce output...';
+    has-header $^output, '&Foo::Quux',
+        '...that claims the lookup is for the correct symbol';
 };
 
 trace {
@@ -97,48 +82,40 @@ trace {
             FETCH => sub FETCH($)             { $foo },
             STORE => sub STORE($, Int:D $bar) { $foo += $bar };
     }, 'can bind to symbols...';
-}, -> Str:D $output {
-    ok $output,
-      '...which produce output...';
-    ok $output ~~ / ^^ '    5' $$ /,
-      '...which contains a value...';
-    ok $output ~~ / ^^ '==> 5' $$ /,
-      '...and a result';
+}, {
+    ok $^output, '...which produce output...';
+    has-entry $^output, '5', '...which contains a value...';
+    has-footer $^output, '5', '...and a result';
 };
 
 trace {
     lives-ok {
         Foo::<Foo> = 5;
     }, 'can assign to symbols...';
-}, -> Str:D $output {
-    ok $output,
-      '...which produce output...';
-    ok $output ~~ / ^^ '    5' $$ /,
-      '...that contains a value...';
-    ok $output ~~ / ^^ '==> 10' $$ /,
-      '...and any differing result';
+}, {
+    ok $^output, '...which produce output...';
+    has-entry $^output, '5', '...that contains a value...';
+    has-footer $^output, '10', '...and any differing result';
 };
 
 trace {
     lives-ok {
         Foo::<$*DYNAMIC>;
     }, 'can look up symbols with twigils...';
-}, -> Str:D $output {
-    ok $output,
-       '...which produce output...';
-    ok $output ~~ / ^^ '<== $*Foo::DYNAMIC' $$ /,
-      '...that claims the lookup is for the correct symbol';
+}, {
+    ok $^output, '...which produce output...';
+    has-header $^output, '$*Foo::DYNAMIC',
+        '...that claims the lookup is for the correct symbol';
 };
 
 # Foo::Foo gets evaluated well before these tests actually runs.
 trace {
     use MONKEY-SEE-NO-EVAL;
     EVAL Q[quietly Foo::Foo];
-}, -> Str:D $output {
-    ok $output,
-      'direct symbol lookups get traced...';
-    ok $output ~~ / ^^ '==> 10' $$ /,
-      '...and their output includes the correct result';
+}, {
+    ok $^output, 'direct symbol lookups get traced...';
+    has-footer $^output, '10',
+        '...and their output includes the correct result';
 };
 
 # vim: ft=perl6 sw=4 ts=4 sts=4 et

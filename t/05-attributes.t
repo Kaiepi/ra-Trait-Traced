@@ -1,20 +1,8 @@
 use v6;
-use Tracee::Bitty;
-use Tracer::File;
+use lib $?FILE.IO.sibling: 'lib';
 use Trait::Traced;
 use Test;
-
-sub trace(&run, &parse?) {
-    my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
-    my $*TRACER := Tracer::File[Tracee::Bitty].new: $*TMPDIR.child($filename).open: :w;
-    LEAVE {
-        $*TRACER.handle.close;
-        $*TRACER.handle.path.unlink;
-    }
-    run;
-    $*TRACER.handle.flush;
-    parse $*TRACER.handle.path.slurp(:close) with &parse;
-}
+use Test::Trait::Traced;
 
 plan 19;
 
@@ -25,12 +13,12 @@ trace {
             method set-traced($!traced) { }
         }.new.set-traced: 'ok';
     }, 'can assign to traced ro attributes...';
-}, -> Str:D $output {
-    ok $output, '...which produce output...';
-    ok $output ~~ / <after '<== '> 'has $!traced' /,
-      '...that claims the attribute has the correct symbol...';
-    ok $output ~~ / <after '==> '> '"ok"' /,
-      '...and has the correct result';
+}, {
+    ok $^output, '...which produce output...';
+    has-header $^output, 'has $!traced',
+        '...that claims the attribute has the correct symbol...';
+    has-footer $^output, 'ok'.raku,
+        '...and has the correct result';
 };
 
 trace {
@@ -39,12 +27,12 @@ trace {
             has $.traced is rw is traced;
         }.new.traced = 'ok';
     }, 'can assign to traced rw attributes...';
-}, -> Str:D $output {
-    ok $output, '...which produces output...';
-    ok $output ~~ / <after '<== '> 'has $.traced' /,
-      '...that claims the attribute has the correct symbol...';
-    ok $output ~~ / <after '==> '> '"ok"' /,
-      '...and has the correct result';
+}, {
+    ok $^output, '...which produces output...';
+    has-header $^output, 'has $.traced',
+        '...that claims the attribute has the correct symbol...';
+    has-footer $^output, 'ok'.raku,
+        '...and has the correct result';
 };
 
 trace {
@@ -54,12 +42,12 @@ trace {
             method set-traced(+@!traced) { }
         }.new.set-traced: 1, 2, 3;
     }, 'can STORE in traced ro attributes...';
-}, -> Str:D $output {
-    ok $output, '...which produce output...';
-    ok $output ~~ / <after '<== '> 'has @!traced' /,
-      '...that claims the attribute has the correct symbol...';
-    ok $output ~~ / <after '==> '> '[1, 2, 3]' /,
-      '...and has the correct result';
+}, {
+    ok $^output, '...which produce output...';
+    has-header $^output, 'has @!traced',
+        '...that claims the attribute has the correct symbol...';
+    has-footer $^output, [1, 2, 3].raku,
+        '...and has the correct result';
 };
 
 trace {
@@ -68,12 +56,12 @@ trace {
             has @.traced is rw is traced;
         }.new.traced = 1, 2, 3;
     }, 'can STORE in traced rw attributes...';
-}, -> Str:D $output {
-    ok $output, '...which produces output...';
-    ok $output ~~ / <after '<== '> 'has @.traced' /,
-      '...that claims the attribute has the correct symbol...';
-    ok $output ~~ / <after '==> '> '[1, 2, 3]' /,
-      '...and has the correct result';
+}, {
+    ok $^output, '...which produces output...';
+    has-header $^output, 'has @.traced',
+        '...that claims the attribute has the correct symbol...';
+    has-footer $^output, [1, 2, 3].raku,
+        '...and has the correct result';
 };
 
 trace {
@@ -83,10 +71,10 @@ trace {
             method set-traced($!traced) { }
         }.new.set-traced: 1;
     }, 'can trace attributes with lexical symbols...';
-}, -> Str:D $output {
-    ok $output, '...which produces output...';
-    ok $output ~~ / <after '<== '> 'has $traced' /,
-      '...that claims the attribute has the correct symbol';
+}, {
+    ok $^output, '...which produces output...';
+    has-header $^output, 'has $traced',
+        '...that claims the attribute has the correct symbol';
 };
 
 # vim: ft=perl6 sw=4 ts=4 sts=4 et

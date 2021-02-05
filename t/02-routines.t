@@ -1,9 +1,9 @@
 use v6;
+use lib $?FILE.IO.sibling: 'lib';
 use Traced::Routine;
-use Tracee::Bitty;
-use Tracer::File;
 use Trait::Traced;
 use Test;
+use Test::Trait::Traced;
 
 plan 2;
 
@@ -39,34 +39,22 @@ subtest 'mapping parameters to arguments', {
 };
 
 subtest 'tracing', {
-    sub trace(&run, &parse?) {
-        my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
-        my $*TRACER := Tracer::File[Tracee::Bitty].new: $*TMPDIR.child($filename).open: :w;
-        LEAVE {
-            $*TRACER.handle.close;
-            $*TRACER.handle.path.unlink;
-        }
-        run;
-        $*TRACER.handle.flush;
-        parse $*TRACER.handle.path.slurp(:close) with &parse;
-    }
-
     plan 26;
 
     trace {
         lives-ok {
             sub traced($foo) is traced { $foo }(1)
         }, 'traced subroutines do not throw while tracing...';
-    }, -> Str:D $output {
-        ok $output, '...and produce output';
+    }, {
+        ok $^output, '...and produce output';
     };
 
     trace {
         lives-ok {
             my method traced() is traced { self }(1)
         }, 'traced methods do not throw while tracing...';
-    }, -> Str:D $output {
-        ok $output, '...and produce output';
+    }, {
+        ok $^output, '...and produce output';
     };
 
     trace {
@@ -75,9 +63,9 @@ subtest 'tracing', {
             multi sub multi-sub()           { }
             multi-sub
         }, 'traced proto routines do not throw while tracing...';
-    }, -> Str:D $output {
-        ok $output, '...and produce output...';
-        cmp-ok $output, '~~', / proto /, '...which contains "proto"';
+    }, {
+        ok $^output, '...and produce output...';
+        ok $^output ~~ / proto /, '...which contains "proto"';
     };
 
     trace {
@@ -86,9 +74,9 @@ subtest 'tracing', {
             multi sub multi-sub() is traced { }
             multi-sub
         }, 'traced multi routines do not throw while tracing...';
-    }, -> Str:D $output {
-        ok $output, '...and produce output...';
-        cmp-ok $output, '~~', / multi /, '...which contains "multi"';
+    }, {
+        ok $^output, '...and produce output...';
+        ok $^output ~~ / multi /, '...which contains "multi"';
     };
 
     trace {
@@ -97,18 +85,18 @@ subtest 'tracing', {
             multi sub multi-sub() is traced { }
             multi-sub;
         }, 'a combination of traced proto and multi routines do not throw while tracing...';
-    }, -> Str:D $output {
-        ok $output, '...and produce output...';
-        cmp-ok $output, '~~', / proto /, '...which contains "proto"...';
-        cmp-ok $output, '~~', / multi /, '...as well as "multi"';
+    }, {
+        ok $^output, '...and produce output...';
+        ok $^output ~~ / proto /, '...which contains "proto"...';
+        ok $^output ~~ / multi /, '...as well as "multi"';
     };
 
     trace {
         dies-ok {
             sub throws() is traced { die }()
         }, 'traced routines rethrow exceptions...';
-    }, -> Str:D $output {
-        ok $output, '...but still produce output';
+    }, {
+        ok $^output, '...but still produce output';
     };
 
     trace {
@@ -124,47 +112,42 @@ subtest 'tracing', {
 
     trace {
         sub foo is traced { }();
-    }, -> Str:D $output {
-        ok $output ~~ / <after '<== '> 'sub foo' » /,
-          'unscoped routines have the correct declarator';
+    }, {
+        has-header $^output, 'sub foo', 'unscoped routines have the correct declarator';
     };
 
     trace {
         my sub foo is traced { }();
-    }, -> Str:D $output {
-        ok $output ~~ / <after '<== '> 'my sub foo' » /,
-          'scoped routines have the correct declarator';
+    }, {
+        has-header $^output, 'my sub foo', 'scoped routines have the correct declarator';
     };
 
     trace {
         lives-ok {
             my class Foo {
                 method ^foo(\this) is traced { this.foo }
+
                 proto method foo is traced {*}
                 multi method foo is traced { self!foo }
-                method !foo is traced { foo self }
+
+                method !foo is traced { self.&foo }
+
                 my method foo is traced { 1 }
-            }.^foo
+            }.^foo;
         }, 'can trace the various types of methods a class can contain...';
-    }, -> Str:D $output {
-        ok $output ~~ / <after '<== '> 'proto method foo' » /,
-          '...and trace output includes regular methods...';
-        ok $output ~~ / <after '<== '> 'multi method foo' » /,
-          '...multi methods...';
-        ok $output ~~ / <after '<== '> 'method !foo' » /,
-          '...private methods...';
-        ok $output ~~ / <after '<== '> 'method ^foo' » /,
-          '...metamethods...';
-        ok $output ~~ / <after '<== '> 'my method foo' » /,
-          '...and scoped methods';
+    }, {
+        has-header $^output, 'proto method foo', '...and trace output includes regular methods...';
+        has-header $^output, 'multi method foo', '...multi methods...';
+        has-header $^output, 'method !foo', '...private methods...';
+        has-header $^output, 'method ^foo', '...metamethods...';
+        has-header $^output, 'my method foo', '...and scoped methods';
     };
 
     trace {
         my Int:D $lexical = 1;
         sub with-outer-lexical() is traced { $lexical }();
-    }, -> Str:D $output {
-        ok $output ~~ / <after '==> '> 1 /,
-          'tracing routines handles their outer lexical variables alright';
+    }, {
+        has-footer $^output, '1', 'traced routines handles their outer lexical variables alright';
     }
 }
 

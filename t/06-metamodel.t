@@ -1,20 +1,8 @@
 use v6;
-use Tracee::Bitty;
-use Tracer::File;
+use lib $?FILE.IO.sibling: 'lib';
 use Trait::Traced;
 use Test;
-
-sub trace(&run, &parse?) {
-    my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
-    my $*TRACER := Tracer::File[Tracee::Bitty].new: $*TMPDIR.child($filename).open: :w;
-    LEAVE {
-        $*TRACER.handle.close;
-        $*TRACER.handle.path.unlink;
-    }
-    run;
-    $*TRACER.handle.flush;
-    parse $*TRACER.handle.path.slurp(:close) with &parse;
-}
+use Test::Trait::Traced;
 
 plan 5;
 
@@ -27,10 +15,10 @@ subtest 'Metamodel::MethodContainer', {
                 method method(::?CLASS:U: --> 1) { }
             }.method;
         }, 'can call methods of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> 'method method' » /,
-          '...that claims methods have the correct declarator';
+    }, {
+        ok $^output, '...which produce output...';
+        has-header $^output, 'method method',
+            '...that claims methods have the correct declarator';
     };
 
     trace {
@@ -39,10 +27,9 @@ subtest 'Metamodel::MethodContainer', {
                 method method(|) is traced {*}
             }.method;
         }, 'can call traced methods of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        nok $output ~~ / 'TRACED-ROUTINE' /,
-          '...and do not rewrap themselves';
+    }, {
+        ok $^output, '...which produce output...';
+        nok $^output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
     };
 
     trace {
@@ -68,12 +55,12 @@ subtest 'Metamodel::MultiMethodContainer', {
                 multi method multi-method(--> 1) { }
             }.multi-method;
         }, 'can call multi methods of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> 'proto method multi-method' » /,
-          '...that claims proto methods have the correct declarator...';
-        ok $output ~~ / <after '<== '> 'multi method multi-method' » /,
-          '...and likewise for multi methods';
+    }, {
+        ok $^output, '...which produce output...';
+        has-header $^output, 'proto method multi-method',
+            '...that claims proto methods have the correct declarator...';
+        has-header $^output, 'multi method multi-method',
+            '...and likewise for multi methods';
     };
 
     trace {
@@ -83,10 +70,9 @@ subtest 'Metamodel::MultiMethodContainer', {
                 multi method multi-method(--> 1) is traced { }
             }.multi-method;
         }, 'can call traced multi methods of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        nok $output ~~ / 'TRACED-ROUTINE' /,
-          '...and do not rewrap themselves';
+    }, {
+        ok $^output, '...which produce output...';
+        nok $^output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
     };
 
     trace {
@@ -112,10 +98,10 @@ subtest 'Metamodel::PrivateMethodContainer', {
                 method !private-method(|) is traced { }
             }.^find_private_method('private-method').(WithTracedPrivateMethod)
         }, 'can call traced private methods of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> 'method !private-method' » /,
-          '...that claims private methods have the correct declarator';
+    }, {
+        ok $^output, '...which produce output...';
+        has-header $^output, 'method !private-method',
+            '...that claims private methods have the correct declarator';
     };
 };
 
@@ -129,10 +115,10 @@ subtest 'Metamodel::MetaMethodContainer', {
                 method ^meta-method(|) { }
             }.^meta-method;
         }, 'can call traced metamethods of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> 'method ^meta-method' » /,
-          '...that claims metamethods have the correct declarator';
+    }, {
+        ok $^output, '...which produce output...';
+        has-header $^output, 'method ^meta-method',
+            '...that claims metamethods have the correct declarator';
     };
 };
 
@@ -145,10 +131,10 @@ subtest 'Metamodel::AttributeContainer', {
                 has $.attribute;
             }.new: attribute => 'ok';
         }, 'can assign to public attributes of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> 'has $.attribute' /,
-          '...that claims theys have the correct symbol';
+    }, {
+        ok $^output, '...which produce output...';
+        has-header $^output, 'has $.attribute',
+            '...that claims theys have the correct symbol';
     };
 
     trace {
@@ -158,10 +144,10 @@ subtest 'Metamodel::AttributeContainer', {
                 method set-attribute($!attribute) { }
             }.new.set-attribute: 1;
         }, 'can assign to private attributes of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> 'has $!attribute' /,
-          '...that claims they have the correct symbol';
+    }, {
+        ok $^output, '...which produce output...';
+        has-header $^output, 'has $!attribute',
+            '...that claims they have the correct symbol';
     };
 
     trace {
@@ -171,10 +157,10 @@ subtest 'Metamodel::AttributeContainer', {
                 method set-attribute($!attribute) { }
             }.new.set-attribute: 1;
         }, 'can assign to lexical attributes of traced classes...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> 'has $attribute' /,
-          '...that claims they have the correct symbol';
+    }, {
+        ok $^output, '...which produce output...';
+        has-header $^output, 'has $attribute',
+            '...that claims they have the correct symbol';
     };
 
     trace {
@@ -183,10 +169,10 @@ subtest 'Metamodel::AttributeContainer', {
                 has $.attribute;
             }.new: attribute => 'ok';
         }, 'can assign to attributes of traced roles...';
-    }, -> Str:D $output {
-        ok $output, '...which produce output...';
-        ok $output ~~ / <after '<== '> 'has $.attribute (WithTracedAttribute)' $$ /,
-          '...that claims attributes belong to the role, not $?CLASS';
+    }, {
+        ok $^output, '...which produce output...';
+        has-header $^output, 'has $.attribute (WithTracedAttribute)',
+            '...that claims attributes belong to the role, not $?CLASS';
     };
 };
 
