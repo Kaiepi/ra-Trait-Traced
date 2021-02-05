@@ -1,11 +1,12 @@
 use v6;
-use Tracer::Default;
+use Tracee::Bitty;
+use Tracer::File;
 use Trait::Traced;
 use Test;
 
 sub trace(&run, &parse?) {
     my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
-    my $*TRACER := Tracer::Default[$*TMPDIR.child($filename).open: :w];
+    my $*TRACER := Tracer::File[Tracee::Bitty].new: $*TMPDIR.child($filename).open: :w;
     LEAVE {
         $*TRACER.handle.close;
         $*TRACER.handle.path.unlink;
@@ -19,11 +20,11 @@ plan 28;
 
 # $Bar, @Baz, and %Qux get their symbols looked up outside of the tests, which
 # gets traced to $*OUT without this.
-PROCESS::<$TRACER> := Tracer::Default[$*OUT but role {
+PROCESS::<$TRACER> := Tracer::Stream[Tracee::Bitty].new: $*OUT but role {
     method lock(| --> True)   { }
     method unlock(| --> True) { }
     method WRITE(| --> 0)     { }
-}];
+};
 
 my module Foo is traced {
     constant Foo = 0;

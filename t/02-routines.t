@@ -1,6 +1,7 @@
 use v6;
 use Traced::Routine;
-use Tracer::Default;
+use Tracee::Bitty;
+use Tracer::File;
 use Trait::Traced;
 use Test;
 
@@ -40,7 +41,7 @@ subtest 'mapping parameters to arguments', {
 subtest 'tracing', {
     sub trace(&run, &parse?) {
         my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
-        my $*TRACER := Tracer::Default[$*TMPDIR.child($filename).open: :w];
+        my $*TRACER := Tracer::File[Tracee::Bitty].new: $*TMPDIR.child($filename).open: :w;
         LEAVE {
             $*TRACER.handle.close;
             $*TRACER.handle.path.unlink;

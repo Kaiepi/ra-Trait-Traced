@@ -1,11 +1,12 @@
 use v6;
 use lib $?FILE.IO.sibling: 'lib';
-use Tracer::Default;
+use Tracee::Bitty;
+use Tracer::File;
 use Test;
 
 sub trace(&trace, &parse?) {
     my Str:D $filename = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
-    my $*TRACER = Tracer::Default[$*TMPDIR.child($filename).open: :w];
+    my $*TRACER = Tracer::File[Tracee::Bitty].new: $*TMPDIR.child($filename).open: :w;
     LEAVE {
         $*TRACER.handle.close;
         $*TRACER.handle.path.unlink;
