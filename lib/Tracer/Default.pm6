@@ -12,7 +12,9 @@ role TTY does Tracer::Stream[Tracee::Pretty] { }
 
 role File does Tracer::File[Tracee::Bitty] { }
 
-method ^parameterize(::?CLASS:U $this is raw, IO::Handle:D $handle is raw --> ::?CLASS:D) {
+method ^parameterize(
+    ::?CLASS:U $this is raw, IO::Handle:D $handle is raw
+--> ::?CLASS:D) is DEPRECATED('Tracer::Stream or Tracer::File') {
     my Mu         $mixin  := $handle.t ?? TTY !! File;
     my ::?CLASS:D $tracer := $this.new does $mixin :value($handle);
     $tracer.^set_name: self.name($this) ~ qq/["$handle"]/;
