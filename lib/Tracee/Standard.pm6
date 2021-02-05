@@ -6,7 +6,7 @@ use Tracee;
 unit role Tracee::Standard does Tracee[Str:D];
 
 # This type's fill method should include a named parameter:
-#     Str:D :$nl = $?NL
+#     Str:D :$nl is raw = $?NL
 
 #|[ A trace's title. This contains metadata that distinguishes traces from one another. ]
 method title(::?CLASS:_: Traced:D --> Str:D) { ... }
