@@ -49,7 +49,7 @@ multi method header(::?CLASS:U: Traced::Variable::Event $e is raw --> Str:D) {
 multi method header(::?CLASS:U: Traced::Attribute::Event $e is raw --> Str:D) {
     "$e.declarator() \e[2m($e.package.^name())\e[m"
 }
-    
+
 #|[ A trace's entries. This represents arguments of some sort given alongside an input. ]
 proto method entries(::?CLASS:U: Traced:D --> Seq:D) {*}
 multi method entries(::?CLASS:U: Traced:D --> Seq:D) { Empty.Seq }
