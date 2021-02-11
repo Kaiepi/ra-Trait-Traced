@@ -1,7 +1,7 @@
 use v6;
 my atomicint $ID           = 1;
 my Int:D     @CALL-FRAMES;
-#|[ Traced wraps events to be rendered by a tracer. ]
+#|[ Traced captures events to be rendered by a tracer. ]
 unit role Traced;
 
 #|[ The ID of the trace. ]
