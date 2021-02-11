@@ -69,8 +69,7 @@ my role Container { ... }
 multi sub TRACING(Event:U, Attribute:D $attribute;; *%rest --> Nil) is export(:TRACING) {
     use nqp;
 
-    my Str:D $sigil := $attribute.name.substr: 0, 1;
-    if $sigil eq <$ &>.any {
+    if Metamodel::Primitives.is_type: $attribute.container.VAR, Scalar {
         my Mu $descriptor := nqp::getattr($attribute<>, Attribute, '$!container_descriptor');
         $descriptor := ContainerDescriptor.new: :$descriptor, :$attribute, |%rest;
         my Mu $container := nqp::p6scalarfromdesc($descriptor);

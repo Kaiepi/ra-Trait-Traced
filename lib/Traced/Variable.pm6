@@ -69,9 +69,9 @@ multi sub TRACING(Event:U, Variable:D $variable;; *%rest --> Mu) is export(:TRAC
     my Mu $var       := $variable.var;
     my Mu $container := $var.VAR;
     if Metamodel::Primitives.is_type: $container, Scalar { # $ and &
-        my Mu $descriptor := nqp::getattr($var, $container.WHAT, '$!descriptor');
+        my Mu $descriptor := nqp::getattr($var, Scalar, '$!descriptor');
         $descriptor := ContainerDescriptor.new: :$descriptor, :$variable, |%rest;
-        nqp::bindattr($var, $container.WHAT, '$!descriptor', $descriptor);
+        nqp::bindattr($var, Scalar, '$!descriptor', $descriptor);
     } else { # @ and %
         $container.^mixin: Container.^parameterize: :$variable, |%rest;
     }
