@@ -1,5 +1,4 @@
 use v6;
-use Perl6::Grammar:from<NQP>;
 use Trait::Traced::Utils;
 use Traced :TRACING;
 use Traced::Attribute :TRACING;
