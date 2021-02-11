@@ -20,23 +20,8 @@ role AttributeContainer[:%symbols!, Bool:D :repr($)! where ?*] {
     }
 }
 
-# 🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
-# 🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉　ＨＥＲＥ ＢＥ ＤＲＡＧＯＮＳ　🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
-# 🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉🐉
-#
-# We can't invent the key and value types of attributes easily for the same
-# reason we can't with variables, only now we can't easily gain direct access
-# to the attributes either since type traits are applied before its attributes
-# actually exist!
 sub trace-attributes(Mu $how is raw, Mu $package is raw, %symbols --> Nil) {
-    $/ := $*LEAF;
-    $/ := $<blockoid> if $<blockoid>:exists;
-    for $how.attributes($package, :local) Z (
-        $<statementlist><statement>\
-            .map(*.<EXPR>.<scope_declarator>)\
-            .grep([&] ?*, *.<sym>.Str eq 'has')\
-            .map(*.<scoped>)
-    ) -> [Mu $attribute is raw, Perl6::Grammar:D $/ is raw] {
+    for $how.attributes: $package, :local -> Mu $attribute is raw {
         if Metamodel::Primitives.is_type: $attribute, Attribute {
             my Str:D $name = $attribute.name;
             if $attribute.has_accessor {
@@ -45,12 +30,22 @@ sub trace-attributes(Mu $how is raw, Mu $package is raw, %symbols --> Nil) {
                 $name = $symbol;
             }
 
-            my %rest = :$package, :$name;
-            %rest<value> := .[0].ast if .[0]:exists given $<typename>;
-            if $name.starts-with: '%' {
-                $/ := $<DECL> if $<DECL>:exists;
-                $/ := $<declarator> if $<declarator>:exists;
-                %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given $<variable_declarator><semilist>;
+            my %rest := {:$package, :$name};
+            given $name.substr: 0, 1 { # Sigil
+                my Mu $container := $attribute.container.VAR;
+                when '$' {
+                    %rest<value> := $_ unless $_ =:= Mu given $container.of;
+                }
+                when '@' {
+                    %rest<value> := $_ unless $_ =:= Mu given $container.of;
+                }
+                when '%' {
+                    %rest<value> := $_ unless $_ =:= Mu given $container.of;
+                    %rest<key>   := $_ unless $_ =:= Str(Any) given $container.keyof;
+                }
+                when '&' {
+                    %rest<value> := $_ unless $_ =:= Mu given $container.of.of;
+                }
             }
             TRACING Traced::Attribute::Event, $attribute, |%rest
         }

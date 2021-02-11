@@ -2,12 +2,12 @@ use v6;
 use Kind;
 use Trait::Traced::Utils;
 use Traced :TRACING;
+use Traced::Attribute :TRACING;
 use Traced::Routine :TRACING;
 use Traced::Stash :TRACING;
 use Traced::Variable :TRACING;
 use Tracee::Pretty;
 use Tracer::Stream;
-use MetamodelX::Traced::AdHocAttribute;
 use MetamodelX::Traced::AdHocMethod;
 use MetamodelX::Traced::AttributeContainer;
 use MetamodelX::Traced::MethodContainer;
@@ -72,26 +72,56 @@ multi sub trait_mod:<is>(Method:D $method is raw, Bool:D :traced($)! where ?*) i
 }
 
 multi sub trait_mod:<is>(Variable:D $variable, Bool:D :traced($)! where ?*) is export {
-    # We can get key/value types from the keyof/of methods on
-    # Positional/Associative, but the problem with this approach is we don't
-    # necessarily know what their defaults will be for any type doing those
-    # roles. The compiler knows what the user wrote though...
     ASSERT-COMPILING;
-    my %rest = :package($*PACKAGE), :scope($*SCOPE);
-    %rest<value> := .ast with $*OFTYPE;
-    if $variable.name.starts-with: '%' {
-        $/ := $variable.slash;
-        %rest<key> := .[0].<statement>.[0].ast.value if .[0]:exists given @<semilist>;
+    my %rest := {:package($*PACKAGE), :scope($*SCOPE)};
+    given $variable.name.substr: 0, 1 { # Sigil
+        my Mu $container := $variable.var.VAR;
+        when '$' {
+            %rest<value> := $_ unless $_ =:= Mu given $container.of;
+        }
+        when '@' {
+            %rest<value> := $_ unless $_ =:= Mu given $container.of;
+        }
+        when '%' {
+            %rest<value> := $_ unless $_ =:= Mu given $container.of;
+            %rest<key>   := $_ unless $_ =:= Str(Any) given $container.keyof;
+        }
+        when '&' {
+            %rest<value> := $_ unless $_ =:= Mu given $container.of.of;
+        }
     }
     TRACING Traced::Variable::Event, $variable, |%rest;
 }
 
 multi sub trait_mod:<is>(Attribute:D $attribute, Bool:D :traced($)! where ?*) is export {
     ASSERT-COMPILING;
-    my        %symbols := $*W.cur_lexpad.symtable;
-    my Mu     $how     := $attribute.package.HOW;
-    my Bool:D $repr    := Metamodel::Primitives.is_type: $how, Metamodel::REPRComposeProtocol;
-    $how.^mixin: MetamodelX::Traced::AdHocAttribute.^parameterize: :$attribute, :%symbols, :$repr;
+    my Mu    $package := $attribute.package;
+    my Str:D $name     = $attribute.name;
+    my Str:D $symbol  := $name.subst: '!', '';
+    if $*W.cur_lexpad.symbol: $symbol {
+        $name = $symbol;
+    } elsif $attribute.has_accessor {
+        $name .= subst: '!', '.';
+    }
+
+    my %rest := {:$package, :$name};
+    given $name.substr: 0, 1 { # Sigil
+        my Mu $container := $attribute.container.VAR;
+        when '$' {
+            %rest<value> := $_ unless $_ =:= Mu given $container.of;
+        }
+        when '@' {
+            %rest<value> := $_ unless $_ =:= Mu given $container.of;
+        }
+        when '%' {
+            %rest<value> := $_ unless $_ =:= Mu given $container.of;
+            %rest<key>   := $_ unless $_ =:= Str(Any) given $container.keyof;
+        }
+        when '&' {
+            %rest<value> := $_ unless $_ =:= Mu given $container.of.of;
+        }
+    }
+    TRACING Traced::Attribute::Event, $attribute, |%rest
 }
 
 multi sub trait_mod:<is>(Parameter:D $parameter, Bool:D :traced($)! where ?*) is export {
