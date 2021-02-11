@@ -102,7 +102,7 @@ my class ContainerDescriptor {
 
 #|[ A traced positional or associative variable container. ]
 my role Container[*%rest] {
-    method STORE(|args) is hidden-from-backtrace {
+    method STORE(|args) is raw is hidden-from-backtrace {
         my constant StoreEvent = Event[STORE].^pun;
         $*TRACER.render: StoreEvent.capture:
             callback  => self.^mixin_base.^find_method('STORE'), # XXX: nextcallee doesn't work here as of v2020.03
