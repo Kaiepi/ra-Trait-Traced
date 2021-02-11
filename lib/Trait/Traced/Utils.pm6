@@ -7,7 +7,7 @@ multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key --> Mu) is 
 
     nqp::hllize(nqp::atkey($/, nqp::decont_s($key)))
 }
-multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key, Bool:D :exists($)! where ?* --> Mu) is export {
+multi sub postcircumfix:<{ }>(Perl6::Grammar:D $/ is raw, Str:D $key, Bool:D :exists($)! where ?* --> Bool:D) is export {
     use nqp;
 
     nqp::hllbool(nqp::existskey($/, nqp::decont_s($key)))
