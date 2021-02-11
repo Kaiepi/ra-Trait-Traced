@@ -79,8 +79,8 @@ multi sub TRACING(Event:U, Variable:D $variable;; *%rest --> Mu) is export(:TRAC
 
 #|[ A container descriptor for traced scalar variables. ]
 my class ContainerDescriptor {
-    has Mu         $.descriptor is required is built(:bind);
-    has Mu         $.package    is required is built(:bind);
+    has Mu         $.descriptor is built(:bind) is required;
+    has Mu         $.package    is built(:bind) is required;
     has Str:D      $.scope      is required;
     has Variable:D $.variable   is required;
     has Mu         $.key        is built(:bind) = VOID;

@@ -84,8 +84,8 @@ multi sub TRACING(Event:U, Attribute:D $attribute;; *%rest --> Nil) is export(:T
 
 #|[ A container descriptor for traced scalar attributes. ]
 my class ContainerDescriptor {
-    has Mu          $.descriptor is required is built(:bind);
-    has Mu          $.package    is required;
+    has Mu          $.descriptor is built(:bind) is required;
+    has Mu          $.package    is built(:bind) is required;
     has Str:D       $.name       is required;
     has Attribute:D $.attribute  is required;
     has Mu          $.key        is built(:bind) = VOID;
