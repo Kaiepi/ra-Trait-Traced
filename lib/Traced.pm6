@@ -37,7 +37,7 @@ proto method capture(::?CLASS:U: *%args --> Mu) is raw is hidden-from-backtrace 
     my Int:D $calls     := @CALL-FRAMES[$thread-id]++;
     my Num:D $timestamp := Rakudo::Internals.tai-from-posix: nqp::time_n, 0;
     my Mu    $result    := {*};
-    @CALL-FRAMES[$thread-id] = $calls;
+    LEAVE @CALL-FRAMES[$thread-id] = $calls;
     CATCH { return self.bless: :$id, :$thread-id, :$calls, :$timestamp, :exception($_), |%args }
     self.bless: :$id, :$thread-id, :$calls, :$timestamp, :$result, |%args
 }
