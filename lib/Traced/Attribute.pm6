@@ -60,7 +60,7 @@ role Event[STORE] does Event {
 #|[ Marks a traced attribute. ]
 my role Wrap { method is-traced(--> True) { } }
 
-multi sub TRACING(Event:U, Wrap:D;; *%rest --> Nil) is export(:TRACING) { }
+multi sub TRACING(Event:U, Wrap:D;; *%rest --> Nil) is default is export(:TRACING) { }
 
 my class ContainerDescriptor { ... }
 
