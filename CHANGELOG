@@ -82,3 +82,11 @@ v1.0.0:
       transforming traces to output.
     - Deprecated Tracer::Default.
     - Documented the new internal API.
+
+v1.0.1:
+    - Fix traced exceptional events not restoring the call frame count after
+      tracing.
+    - Permit tracing of variables and attributes potentially carrying a
+      subclass of Scalar for a container.
+    - Prevent traced @/% containers' STORE method from giving its return value
+      an RO container.

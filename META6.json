@@ -35,7 +35,7 @@
   "source-url" : "https://github.com/Kaiepi/ra-Trait-Traced.git",
   "tags" : [ "trace", "traced", "tracee", "tracer", "metamodel" ],
   "test-depends" : [ ],
-  "version" : "1.0.0",
+  "version" : "1.0.1",
   "auth" : "github:Kaiepi",
   "api" : "2"
 }
