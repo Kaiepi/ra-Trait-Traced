@@ -1,6 +1,5 @@
 use v6;
 use Kind;
-use Trait::Traced::Utils;
 use Traced :TRACING;
 use Traced::Attribute :TRACING;
 use Traced::Routine :TRACING;

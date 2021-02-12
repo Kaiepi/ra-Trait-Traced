@@ -1,5 +1,4 @@
 use v6;
-use Trait::Traced::Utils;
 use Traced :TRACING;
 use Traced::Attribute :TRACING;
 unit package MetamodelX::Traced;

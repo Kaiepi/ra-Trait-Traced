@@ -28,8 +28,7 @@
 	"Tracer::Default" : "lib/Tracer/Default.pm6",
 	"Tracer::File" : "lib/Tracer/File.pm6",
 	"Tracer::Stream" : "lib/Tracer/Stream.pm6",
-	"Trait::Traced" : "lib/Trait/Traced.pm6",
-	"Trait::Traced::Utils" : "lib/Trait/Traced/Utils.pm6"
+	"Trait::Traced" : "lib/Trait/Traced.pm6"
   },
   "resources" : [ ],
   "source-url" : "https://github.com/Kaiepi/ra-Trait-Traced.git",
