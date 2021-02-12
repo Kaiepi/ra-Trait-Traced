@@ -90,3 +90,6 @@ v1.0.1:
       subclass of Scalar for a container.
     - Prevent traced @/% containers' STORE method from giving its return value
       an RO container.
+
+v1.0.2:
+    - Remove Trait::Traced::Utils (a module necessary in pre-v1.0.0 days).
