@@ -93,3 +93,8 @@ v1.0.1:
 
 v1.0.2:
     - Remove Trait::Traced::Utils (a module necessary in pre-v1.0.0 days).
+
+v1.0.3:
+    - Make Tracee::Bitty and Tracee::Pretty instantiable. By keeping newlines
+      as state and deconting in standard-y tracers, tracing can become around
+      10% faster in some cases.
