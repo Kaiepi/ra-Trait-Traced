@@ -15,14 +15,14 @@ sub trace(&go, &parse? --> Nil) is export {
     LEAVE $handle.path.unlink;
 }
 
-sub has-header(Str:D $output, Str:D $header, Str:D $message) is test-assertion is export {
+sub has-header(Mu $output is raw, Str:D $header, Str:D $message) is test-assertion is export {
     ok $output ~~ / ^^ '    '* '<== ' $header /, $message;
 }
 
-sub has-entry(Str:D $output, Str:D $entry, Str:D $message) is test-assertion is export {
+sub has-entry(Mu $output is raw, Str:D $entry, Str:D $message) is test-assertion is export {
     ok $output ~~ / ^^ '    '+ $entry /, $message;
 }
 
-sub has-footer(Str:D $output, Str:D $footer, Str:D $message) is test-assertion is export {
+sub has-footer(Mu $output is raw, Str:D $footer, Str:D $message) is test-assertion is export {
     ok $output ~~ / ^^ '    '* '==> ' $footer /, $message;
 }

@@ -29,7 +29,8 @@ subtest 'Metamodel::MethodContainer', {
         }, 'can call traced methods of traced classes...';
     }, {
         ok $^output, '...which produce output...';
-        nok $^output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
+        has-header $^output.none, 'sub TRACED-ROUTINE',
+            '...and do not rewrap themselves';
     };
 
     trace {
@@ -72,7 +73,8 @@ subtest 'Metamodel::MultiMethodContainer', {
         }, 'can call traced multi methods of traced classes...';
     }, {
         ok $^output, '...which produce output...';
-        nok $^output ~~ / 'TRACED-ROUTINE' /, '...and do not rewrap themselves';
+        has-header $^output.none, 'sub TRACED-ROUTINE',
+            '...and do not rewrap themselves';
     };
 
     trace {
@@ -111,7 +113,7 @@ subtest 'Metamodel::PrivateMethodContainer', {
             method public-method(|args) { self!private-method: |args }
         }.public-method;
     }, {
-        nok $^output ~~ / 'method !private-method' /,
+        has-header $^output.none, 'method !private-method',
           'private methods of roles done by traced classes do not get traced';
     };
 };
