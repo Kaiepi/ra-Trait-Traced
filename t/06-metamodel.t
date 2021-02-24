@@ -97,7 +97,7 @@ subtest 'Metamodel::PrivateMethodContainer', {
     trace {
         lives-ok {
             my class WithTracedPrivateMethod is traced {
-                method !private-method(|) is traced { }
+                method !private-method(|) { }
             }.^find_private_method('private-method').(WithTracedPrivateMethod)
         }, 'can call traced private methods of traced classes...';
     }, {
