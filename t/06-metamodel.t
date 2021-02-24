@@ -90,7 +90,7 @@ subtest 'Metamodel::MultiMethodContainer', {
 };
 
 subtest 'Metamodel::PrivateMethodContainer', {
-    plan 3;
+    plan 4;
 
     trace {
         lives-ok {
@@ -102,6 +102,17 @@ subtest 'Metamodel::PrivateMethodContainer', {
         ok $^output, '...which produce output...';
         has-header $^output, 'method !private-method',
             '...that claims private methods have the correct declarator';
+    };
+
+    trace {
+        my role WithTracedPrivateMethod { method !private-method(|) { } }
+
+        my class WithoutTracedPrivateMethod does WithTracedPrivateMethod is traced {
+            method public-method(|args) { self!private-method: |args }
+        }.public-method;
+    }, {
+        nok $^output ~~ / 'method !private-method' /,
+          'private methods of roles done by traced classes do not get traced';
     };
 };
 
