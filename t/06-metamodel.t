@@ -7,7 +7,7 @@ use Test::Trait::Traced;
 plan 5;
 
 subtest 'Metamodel::MethodContainer', {
-    plan 7;
+    plan 8;
 
     trace {
         lives-ok {
@@ -43,6 +43,16 @@ subtest 'Metamodel::MethodContainer', {
                 }
             }.proxy++;
         }, 'methods of traced classes handle containers OK';
+    };
+
+    trace {
+        my role Role { method method(::?CLASS:U: --> Nil) { } }
+
+        my class DoesRole does Role is traced { }
+
+        DoesRole.method;
+    }, {
+        nok $^output, 'traced classes do not trace methods of roles they do';
     };
 };
 
