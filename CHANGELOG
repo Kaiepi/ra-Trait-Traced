@@ -98,3 +98,7 @@ v1.0.3:
     - Make Tracee::Bitty and Tracee::Pretty instantiable. By keeping newlines
       as state and deconting in standard-y tracers, tracing can become around
       10% faster in some cases.
+
+v1.0.4:
+    - Do not trace private methods that do not belong to traced types (e.g.
+      private methods of roles done by a traced class).
