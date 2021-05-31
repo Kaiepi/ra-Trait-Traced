@@ -1,18 +1,13 @@
 use v6;
 use Tracee::Bitty;
-use Tracer::File;
+use Tracer::Memory;
 use Test;
 unit module Test::Trait::Traced;
 
 sub trace(&go, &parse? --> Nil) is export {
-    my Str:D          $filename  = 'Trait-Traced-testing-' ~ 1_000_000.rand.floor ~ '.txt';
-    my IO::Handle:D   $handle    = $*TMPDIR.child($filename).open: :w;
-    my Tracer::File:D $*TRACER  := Tracer::File[Tracee::Bitty].new: $handle;
+    my $*TRACER := Tracer::Memory[Tracee::Bitty].new;
     go;
-    $handle.flush;
-    parse $handle.path.slurp with &parse;
-    LEAVE $handle.close;
-    LEAVE $handle.path.unlink;
+    parse @$*TRACER.join: $*TRACER.tracee.nl with &parse;
 }
 
 sub has-header(Mu $output is raw, Str:D $header, Str:D $message) is test-assertion is export {
