@@ -3,7 +3,10 @@
     "Ben Davies"
   ],
   "build-depends" : [ ],
-  "depends" : [ "Kind" ],
+  "depends" : [
+	  "Concurrent::Queue",
+	  "Kind"
+  ],
   "description" : "Automagic tracing",
   "license" : "Artistic-2.0",
   "name" : "Trait::Traced",
@@ -27,6 +30,7 @@
 	"Tracer" : "lib/Tracer.pm6",
 	"Tracer::Default" : "lib/Tracer/Default.pm6",
 	"Tracer::File" : "lib/Tracer/File.pm6",
+	"Tracer::Memory" : "lib/Tracer/Memory.pm6",
 	"Tracer::Stream" : "lib/Tracer/Stream.pm6",
 	"Trait::Traced" : "lib/Trait/Traced.pm6"
   },
