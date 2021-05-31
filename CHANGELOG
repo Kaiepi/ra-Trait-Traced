@@ -102,3 +102,7 @@ v1.0.3:
 v1.0.4:
     - Do not trace private methods that do not belong to traced types (e.g.
       private methods of roles done by a traced class).
+
+v1.1.0:
+    - Introduced Tracer::Memory, a lock-free, in memory tracer.
+    - Trial run GitHub Actions in lieu of Travis as the CI.
