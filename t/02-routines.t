@@ -59,7 +59,7 @@ subtest 'tracing', {
 
     trace {
         lives-ok {
-            proto sub multi-sub() is traced {*}
+            proto sub multi-sub() is traced { {*}; Nil }
             multi sub multi-sub()           { }
             multi-sub
         }, 'traced proto routines do not throw while tracing...';
@@ -81,7 +81,7 @@ subtest 'tracing', {
 
     trace {
         lives-ok {
-            proto sub multi-sub() is traced {*}
+            proto sub multi-sub() is traced { {*} }
             multi sub multi-sub() is traced { }
             multi-sub;
         }, 'a combination of traced proto and multi routines do not throw while tracing...';
@@ -127,7 +127,7 @@ subtest 'tracing', {
             my class Foo {
                 method ^foo(\this) is traced { this.foo }
 
-                proto method foo is traced {*}
+                proto method foo is traced { {*} }
                 multi method foo is traced { self!foo }
 
                 method !foo is traced { self.&foo }
