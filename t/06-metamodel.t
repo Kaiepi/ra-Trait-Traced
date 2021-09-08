@@ -62,7 +62,7 @@ subtest 'Metamodel::MultiMethodContainer', {
     trace {
         lives-ok {
             my class WithMultiMethod is traced {
-                proto method multi-method(|)     {*}
+                proto method multi-method(|)     { {*} }
                 multi method multi-method(--> 1) { }
             }.multi-method;
         }, 'can call multi methods of traced classes...';
