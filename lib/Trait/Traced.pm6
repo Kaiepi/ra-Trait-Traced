@@ -13,7 +13,7 @@ use MetamodelX::Traced::MethodContainer;
 use MetamodelX::Traced::MultiMethodContainer;
 use MetamodelX::Traced::PrivateMethodContainer;
 use MetamodelX::Traced::MetaMethodContainer;
-unit module Trait::Traced:ver<1.1.0>:auth<github:Kaiepi>:api<2>;
+unit module Trait::Traced:ver<1.1.1>:auth<github:Kaiepi>:api<2>;
 
 INIT PROCESS::<$TRACER> := Tracer::Stream[Tracee::Pretty].new: $*OUT unless PROCESS::<$TRACER>:exists;
 

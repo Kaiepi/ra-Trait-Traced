@@ -106,3 +106,7 @@ v1.0.4:
 v1.1.0:
     - Introduced Tracer::Memory, a lock-free, in memory tracer.
     - Trial run GitHub Actions in lieu of Travis as the CI.
+
+v1.1.1:
+    - Compatibility updates for the upcoming dispatch changes to Rakudo.
+    - The default branch has been changed from master to main.
